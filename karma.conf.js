@@ -184,6 +184,10 @@ module.exports = function karma(config) {
         directDomains: ['cdn.polyfill.io'],
       },
     },
+    
+    client: {
+      captureConsole: false,
+    },
 
     // Tolerate Sauce Labs slowness/flakiness.
 
