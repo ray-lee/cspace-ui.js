@@ -5,7 +5,7 @@ import {
   applyPlugin,
   evaluatePlugin,
   normalizeConfig,
-  getRecordTypeByServiceObjectName,
+  getRecordTypeConfigByServiceObjectName,
 } from '../../../src/helpers/configHelpers';
 
 chai.should();
@@ -244,7 +244,7 @@ describe('configHelpers', function moduleSuite() {
     });
   });
 
-  describe('getRecordTypeByServiceObjectName', function suite() {
+  describe('getRecordTypeConfigByServiceObjectName', function suite() {
     const config = {
       recordTypes: {
         object: {
@@ -261,7 +261,7 @@ describe('configHelpers', function moduleSuite() {
     };
 
     it('should return the record type config with the given service object name', function test() {
-      getRecordTypeByServiceObjectName(config, 'CollectionObject').should
+      getRecordTypeConfigByServiceObjectName(config, 'CollectionObject').should
         .equal(config.recordTypes.object);
     });
   });

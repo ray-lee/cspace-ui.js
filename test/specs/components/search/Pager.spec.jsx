@@ -134,16 +134,16 @@ describe('Pager', function suite() {
       .deep.equal(['1', '...', '19', '20', '21', '22', '23', '24', '25']);
   });
 
-  it('should call onPageSelect when a page button is clicked', function test() {
-    let selectedPageNum = null;
+  it('should call onPageChange when a page button is clicked', function test() {
+    let changeToPageNum = null;
 
-    const handlePageSelect = (pageNum) => {
-      selectedPageNum = pageNum;
+    const handlePageChange = (pageNum) => {
+      changeToPageNum = pageNum;
     };
 
     render(
       <IntlProvider locale="en">
-        <Pager currentPage={10} lastPage={19} windowSize={5} onPageSelect={handlePageSelect} />
+        <Pager currentPage={10} lastPage={19} windowSize={5} onPageChange={handlePageChange} />
       </IntlProvider>, this.container);
 
     getPages(this.container).should
@@ -154,19 +154,19 @@ describe('Pager', function suite() {
 
     Simulate.click(button);
 
-    selectedPageNum.should.equal(12);
+    changeToPageNum.should.equal(12);
   });
 
-  it('should call onPageSelect when the previous page button is clicked', function test() {
-    let selectedPageNum = null;
+  it('should call onPageChange when the previous page button is clicked', function test() {
+    let changeToPageNum = null;
 
-    const handlePageSelect = (pageNum) => {
-      selectedPageNum = pageNum;
+    const handlePageChange = (pageNum) => {
+      changeToPageNum = pageNum;
     };
 
     render(
       <IntlProvider locale="en">
-        <Pager currentPage={10} lastPage={19} windowSize={5} onPageSelect={handlePageSelect} />
+        <Pager currentPage={10} lastPage={19} windowSize={5} onPageChange={handlePageChange} />
       </IntlProvider>, this.container);
 
     getPages(this.container).should
@@ -176,19 +176,19 @@ describe('Pager', function suite() {
 
     Simulate.click(buttons[0]);
 
-    selectedPageNum.should.equal(9);
+    changeToPageNum.should.equal(9);
   });
 
-  it('should call onPageSelect when the next page button is clicked', function test() {
-    let selectedPageNum = null;
+  it('should call onPageChange when the next page button is clicked', function test() {
+    let changeToPageNum = null;
 
-    const handlePageSelect = (pageNum) => {
-      selectedPageNum = pageNum;
+    const handlePageChange = (pageNum) => {
+      changeToPageNum = pageNum;
     };
 
     render(
       <IntlProvider locale="en">
-        <Pager currentPage={10} lastPage={19} windowSize={5} onPageSelect={handlePageSelect} />
+        <Pager currentPage={10} lastPage={19} windowSize={5} onPageChange={handlePageChange} />
       </IntlProvider>, this.container);
 
     getPages(this.container).should
@@ -198,6 +198,6 @@ describe('Pager', function suite() {
 
     Simulate.click(buttons[1]);
 
-    selectedPageNum.should.equal(11);
+    changeToPageNum.should.equal(11);
   });
 });

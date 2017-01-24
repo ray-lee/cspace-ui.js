@@ -6,6 +6,7 @@ import { getPrefs } from '../reducers';
 export const PREFS_LOADED = 'PREFS_LOADED';
 export const COLLAPSE_PANEL = 'COLLAPSE_PANEL';
 export const SET_SEARCH_PAGE_SIZE = 'SET_SEARCH_PAGE_SIZE';
+export const SET_SEARCH_PANEL_PAGE_SIZE = 'SET_SEARCH_PANEL_PAGE_SIZE';
 
 export const storageKey = 'cspace-ui.prefs';
 
@@ -21,6 +22,15 @@ export const collapsePanel = (recordType, name, collapsed) => ({
 export const setSearchPageSize = pageSize => ({
   type: SET_SEARCH_PAGE_SIZE,
   payload: pageSize,
+});
+
+export const setSearchPanelPageSize = (recordType, name, pageSize) => ({
+  type: SET_SEARCH_PANEL_PAGE_SIZE,
+  payload: pageSize,
+  meta: {
+    recordType,
+    name,
+  },
 });
 
 export const loadPrefs = () => {
