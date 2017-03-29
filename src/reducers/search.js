@@ -2,6 +2,7 @@ import Immutable from 'immutable';
 import { asPairs, diff } from '../helpers/objectHelpers';
 
 import {
+  CLEAR_SEARCH_RESULTS,
   SET_MOST_RECENT_SEARCH,
   CREATE_EMPTY_SEARCH_RESULT,
   SEARCH_STARTED,
@@ -231,6 +232,8 @@ const handleSearchRejected = (state, action) => {
 
 export default (state = Immutable.Map(), action) => {
   switch (action.type) {
+    case CLEAR_SEARCH_RESULTS:
+      return state.delete(action.payload);
     case SET_MOST_RECENT_SEARCH:
       return handleSetMostRecentSearch(state, action);
     case CREATE_EMPTY_SEARCH_RESULT:
@@ -251,7 +254,6 @@ export const isPending = (state, searchName, searchDescriptor) =>
 
 export const getMostRecentDescriptor = (state, searchName) =>
   state.getIn([searchName, 'byKey', state.getIn([searchName, 'mostRecentKey']), 'descriptor']);
-
 
 export const getResult = (state, searchName, searchDescriptor) =>
   state.getIn([searchName, 'byKey', searchKey(searchDescriptor), 'result']);

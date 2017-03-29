@@ -10,6 +10,7 @@ import {
   ERR_API,
 } from '../constants/errorCodes';
 
+export const CLEAR_SEARCH_RESULTS = 'CLEAR_SEARCH_RESULTS';
 export const SET_MOST_RECENT_SEARCH = 'SET_MOST_RECENT_SEARCH';
 export const CREATE_EMPTY_SEARCH_RESULT = 'CREATE_EMPTY_SEARCH_RESULT';
 export const SEARCH_STARTED = 'SEARCH_STARTED';
@@ -47,6 +48,11 @@ const getSortParam = (config, searchDescriptor, columnSetName) => {
 
   return null;
 };
+
+export const clearSearchResults = searchName => ({
+  type: CLEAR_SEARCH_RESULTS,
+  payload: searchName,
+});
 
 export const search = (config, searchName, searchDescriptor, listType = 'common', columnSetName = 'default') =>
   (dispatch, getState) => {
