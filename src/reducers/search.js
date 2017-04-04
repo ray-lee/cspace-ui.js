@@ -3,8 +3,6 @@ import { asPairs, diff } from '../helpers/objectHelpers';
 
 import {
   deepGet,
-  deepSet,
-  deepDelete,
 } from '../helpers/recordDataHelpers';
 
 import {
@@ -253,8 +251,6 @@ const handleSetSearchResultItemSelected = (state, action) => {
   const key = searchKey(searchDescriptor);
 
   if (namedSearch) {
-    // const path = ['byKey', key, 'result', listNodeName, itemNodeName, index, 'selected'];
-    // const updatedNamedSearch = selected ? deepSet(namedSearch, path, true) : deepDelete(namedSearch, path);
     const path = ['byKey', key, 'result', listNodeName, itemNodeName, index];
     const item = deepGet(namedSearch, path);
     const csid = item.get('csid');

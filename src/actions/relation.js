@@ -178,7 +178,7 @@ export const batchCreateBidirectional = (subject, objects, predicate) => dispatc
       type: SUBJECT_RELATIONS_UPDATED,
       meta: subject,
     }));
-  
+
 export const create = (subject, object, predicate) => dispatch =>
   dispatch(doCreate(subject, object, predicate))
     .then(() => dispatch({

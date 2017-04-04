@@ -38,6 +38,10 @@ const messages = defineMessages({
     id: 'searchToRelateModal.editSearch',
     defaultMessage: 'Revise search',
   },
+  relating: {
+    id: 'searchToRelateModal.relating',
+    defaultMessage: 'Relating...',
+  },
 });
 
 export const searchName = 'searchToRelate';
@@ -425,7 +429,7 @@ class SearchToRelateModal extends Component {
         onChange={this.handleCheckboxChange}
       />
     );
-  };
+  }
 
   renderSearchForm() {
     const {
@@ -603,12 +607,6 @@ class SearchToRelateModal extends Component {
     );
   }
 
-  renderRelatingMessage() {
-    return (
-      <p>Relating...</p>
-    );
-  }
-
   render() {
     const {
       config,
@@ -626,7 +624,7 @@ class SearchToRelateModal extends Component {
     let content;
 
     if (isRelating) {
-      content = this.renderRelatingMessage();
+      content = <p><FormattedMessage {...messages.relating} /></p>;
     } else if (isSearchInitiated) {
       content = this.renderSearchResultTable();
     } else {
@@ -637,7 +635,11 @@ class SearchToRelateModal extends Component {
       ? messages.relate
       : messages.search;
 
-    const acceptButtonDisabled = (isRelating || isSearchInitiated && (!selectedItems || selectedItems.size < 1));
+    const acceptButtonDisabled = (
+      isRelating ||
+      (isSearchInitiated && (!selectedItems || selectedItems.size < 1))
+    );
+
     const cancelButtonDisabled = isRelating;
 
     const searchDescriptor = this.getSearchDescriptor();

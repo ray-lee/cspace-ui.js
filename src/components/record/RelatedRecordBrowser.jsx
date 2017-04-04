@@ -58,7 +58,7 @@ class RelatedRecordBrowser extends Component {
       },
     });
   }
-  
+
   closeModal() {
     this.setState({
       isSearchToRelateModalOpen: false,
@@ -91,11 +91,11 @@ class RelatedRecordBrowser extends Component {
   handleModalCancelButtonClick() {
     this.closeModal();
   }
-  
+
   handleModalCloseButtonClick() {
     this.closeModal();
   }
-  
+
   handleRelationsCreated() {
     this.closeModal();
   }

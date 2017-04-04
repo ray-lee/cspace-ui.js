@@ -112,7 +112,7 @@ export default class RelationEditor extends Component {
       };
 
       createRelation(subject, object, predicate)
-        .then((result) => {
+        .then(() => {
           if (onRecordCreated) {
             onRecordCreated(newRecordCsid);
           }
