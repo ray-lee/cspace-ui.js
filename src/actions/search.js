@@ -16,6 +16,7 @@ export const CREATE_EMPTY_SEARCH_RESULT = 'CREATE_EMPTY_SEARCH_RESULT';
 export const SEARCH_STARTED = 'SEARCH_STARTED';
 export const SEARCH_FULFILLED = 'SEARCH_FULFILLED';
 export const SEARCH_REJECTED = 'SEARCH_REJECTED';
+export const SET_RESULT_ITEM_SELECTED = 'SET_RESULT_ITEM_SELECTED';
 
 const findColumnByName = (columns, columnName) => {
   if (!columns) return null;
@@ -166,6 +167,7 @@ export const search = (config, searchName, searchDescriptor, listType = 'common'
         ),
         csid: searchQuery.csid,
         kw: searchQuery.kw,
+        mkRtSbj: searchQuery.mkRtSbj,
         pgNum: searchQuery.p,
         pgSz: searchQuery.size,
         rtSbj: searchQuery.rel,
@@ -242,3 +244,18 @@ export const search = (config, searchName, searchDescriptor, listType = 'common'
       );
   };
 
+export const setResultItemSelected =
+  (config, searchName, searchDescriptor, listType = 'common', index, checked) => {
+    const listTypeConfig = config.listTypes[listType];
+
+    return {
+      type: SET_RESULT_ITEM_SELECTED,
+      payload: checked,
+      meta: {
+        listTypeConfig,
+        searchName,
+        searchDescriptor,
+        index,
+      },
+    };
+  };

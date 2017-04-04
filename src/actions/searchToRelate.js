@@ -22,4 +22,3 @@ export const setSearchToRelateVocabulary = vocabulary => ({
   type: SET_SEARCH_TO_RELATE_VOCABULARY,
   payload: vocabulary,
 });
-

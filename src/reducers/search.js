@@ -2,12 +2,19 @@ import Immutable from 'immutable';
 import { asPairs, diff } from '../helpers/objectHelpers';
 
 import {
+  deepGet,
+  deepSet,
+  deepDelete,
+} from '../helpers/recordDataHelpers';
+
+import {
   CLEAR_SEARCH_RESULTS,
   SET_MOST_RECENT_SEARCH,
   CREATE_EMPTY_SEARCH_RESULT,
   SEARCH_STARTED,
   SEARCH_FULFILLED,
   SEARCH_REJECTED,
+  SET_RESULT_ITEM_SELECTED,
 } from '../actions/search';
 
 /**
@@ -230,6 +237,38 @@ const handleSearchRejected = (state, action) => {
   return state;
 };
 
+const handleSetSearchResultItemSelected = (state, action) => {
+  const selected = action.payload;
+
+  const {
+    listTypeConfig,
+    searchName,
+    searchDescriptor,
+    index,
+  } = action.meta;
+
+  const { listNodeName, itemNodeName } = listTypeConfig;
+
+  const namedSearch = state.get(searchName);
+  const key = searchKey(searchDescriptor);
+
+  if (namedSearch) {
+    // const path = ['byKey', key, 'result', listNodeName, itemNodeName, index, 'selected'];
+    // const updatedNamedSearch = selected ? deepSet(namedSearch, path, true) : deepDelete(namedSearch, path);
+    const path = ['byKey', key, 'result', listNodeName, itemNodeName, index];
+    const item = deepGet(namedSearch, path);
+    const csid = item.get('csid');
+
+    const updatedNamedSearch = selected
+      ? namedSearch.setIn(['selected', csid], item)
+      : namedSearch.deleteIn(['selected', csid]);
+
+    return state.set(searchName, updatedNamedSearch);
+  }
+
+  return state;
+};
+
 export default (state = Immutable.Map(), action) => {
   switch (action.type) {
     case CLEAR_SEARCH_RESULTS:
@@ -244,6 +283,8 @@ export default (state = Immutable.Map(), action) => {
       return handleSearchFulfilled(state, action);
     case SEARCH_REJECTED:
       return handleSearchRejected(state, action);
+    case SET_RESULT_ITEM_SELECTED:
+      return handleSetSearchResultItemSelected(state, action);
     default:
       return state;
   }
@@ -260,3 +301,6 @@ export const getResult = (state, searchName, searchDescriptor) =>
 
 export const getError = (state, searchName, searchDescriptor) =>
   state.getIn([searchName, 'byKey', searchKey(searchDescriptor), 'error']);
+
+export const getSelectedItems = (state, searchName) =>
+  state.getIn([searchName, 'selected']);

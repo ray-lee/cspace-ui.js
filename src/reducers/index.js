@@ -121,6 +121,9 @@ export const getSearchResult = (state, searchName, searchDescriptor) =>
 export const getSearchError = (state, searchName, searchDescriptor) =>
   fromSearch.getError(state.search, searchName, searchDescriptor);
 
+export const getSearchSelectedItems = (state, searchName) =>
+  fromSearch.getSelectedItems(state.search, searchName);
+
 export const getRelationFindResult = (state, descriptor) =>
   fromRelation.getFindResult(state.relation, descriptor);
 

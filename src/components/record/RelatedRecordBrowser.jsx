@@ -29,6 +29,8 @@ class RelatedRecordBrowser extends Component {
     this.handleRelatedRecordCreated = this.handleRelatedRecordCreated.bind(this);
     this.handleRelatedRecordClick = this.handleRelatedRecordClick.bind(this);
     this.handleModalCancelButtonClick = this.handleModalCancelButtonClick.bind(this);
+    this.handleModalCloseButtonClick = this.handleModalCloseButtonClick.bind(this);
+    this.handleRelationsCreated = this.handleRelationsCreated.bind(this);
 
     this.state = {
       isSearchToRelateModalOpen: false,
@@ -56,6 +58,12 @@ class RelatedRecordBrowser extends Component {
       },
     });
   }
+  
+  closeModal() {
+    this.setState({
+      isSearchToRelateModalOpen: false,
+    });
+  }
 
   handleCreateButtonClick() {
     const {
@@ -81,9 +89,15 @@ class RelatedRecordBrowser extends Component {
   }
 
   handleModalCancelButtonClick() {
-    this.setState({
-      isSearchToRelateModalOpen: false,
-    });
+    this.closeModal();
+  }
+  
+  handleModalCloseButtonClick() {
+    this.closeModal();
+  }
+  
+  handleRelationsCreated() {
+    this.closeModal();
   }
 
   handleRelatedRecordClick(item) {
@@ -174,11 +188,14 @@ class RelatedRecordBrowser extends Component {
         />
         {relationEditor}
         <SearchToRelateModalContainer
+          subjectCsid={csid}
+          subjectRecordType={recordType}
           config={config}
           isOpen={isSearchToRelateModalOpen}
           defaultRecordTypeValue={relatedRecordType}
           onCancelButtonClick={this.handleModalCancelButtonClick}
-          onCloseButtonClick={this.handleModalCancelButtonClick}
+          onCloseButtonClick={this.handleModalCloseButtonClick}
+          onRelationsCreated={this.handleRelationsCreated}
         />
       </div>
     );

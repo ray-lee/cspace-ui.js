@@ -1,9 +1,13 @@
 import { connect } from 'react-redux';
-import SearchToRelateModal from '../../components/record/SearchToRelateModal';
+import SearchToRelateModal, { searchName } from '../../components/record/SearchToRelateModal';
 
 import {
   setSearchToRelatePageSize,
 } from '../../actions/prefs';
+
+import {
+  batchCreateBidirectional,
+} from '../../actions/relation';
 
 import {
   setSearchToRelateAdvanced,
@@ -13,7 +17,9 @@ import {
 } from '../../actions/searchToRelate';
 
 import {
+  clearSearchResults,
   search,
+  setResultItemSelected,
 } from '../../actions/search';
 
 import {
@@ -22,6 +28,7 @@ import {
   getSearchToRelateRecordType,
   getSearchToRelateVocabulary,
   getSearchToRelatePageSize,
+  getSearchSelectedItems,
 } from '../../reducers';
 
 const mapStateToProps = (state) => {
@@ -33,15 +40,19 @@ const mapStateToProps = (state) => {
     vocabularyValue: getSearchToRelateVocabulary(state, recordType),
     advancedSearchCondition: getSearchToRelateAdvanced(state),
     preferredPageSize: getSearchToRelatePageSize(state),
+    selectedItems: getSearchSelectedItems(state, searchName),
   };
 };
 
 const mapDispatchToProps = {
+  clearSearchResults,
   search,
   onAdvancedSearchConditionCommit: setSearchToRelateAdvanced,
   onKeywordCommit: setSearchToRelateKeyword,
   onRecordTypeCommit: setSearchToRelateRecordType,
   onVocabularyCommit: setSearchToRelateVocabulary,
+  onItemSelectChange: setResultItemSelected,
+  createRelations: batchCreateBidirectional,
   setPreferredPageSize: setSearchToRelatePageSize,
 };
 

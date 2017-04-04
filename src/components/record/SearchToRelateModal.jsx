@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { defineMessages, injectIntl, intlShape, FormattedMessage } from 'react-intl';
+import Immutable from 'immutable';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import { Modal } from 'cspace-layout';
@@ -39,7 +40,8 @@ const messages = defineMessages({
   },
 });
 
-const searchName = 'searchToRelate';
+export const searchName = 'searchToRelate';
+
 const listType = 'common';
 // FIXME: Make default page size configurable
 const defaultPageSize = 20;
@@ -56,12 +58,19 @@ const propTypes = {
   vocabularyValue: PropTypes.string,
   advancedSearchCondition: PropTypes.object,
   preferredPageSize: PropTypes.number,
+  selectedItems: PropTypes.instanceOf(Immutable.Map),
+  subjectCsid: PropTypes.string,
+  subjectRecordType: PropTypes.string,
   onAdvancedSearchConditionCommit: PropTypes.func,
   onKeywordCommit: PropTypes.func,
   onRecordTypeCommit: PropTypes.func,
   onVocabularyCommit: PropTypes.func,
   onCloseButtonClick: PropTypes.func,
   onCancelButtonClick: PropTypes.func,
+  onItemSelectChange: PropTypes.func,
+  onRelationsCreated: PropTypes.func,
+  clearSearchResults: PropTypes.func,
+  createRelations: PropTypes.func,
   search: PropTypes.func,
   setPreferredPageSize: PropTypes.func,
 };
@@ -72,12 +81,14 @@ class SearchToRelateModal extends Component {
 
     this.handleAcceptButtonClick = this.handleAcceptButtonClick.bind(this);
     this.handleCancelButtonClick = this.handleCancelButtonClick.bind(this);
+    this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     this.handleCloseButtonClick = this.handleCloseButtonClick.bind(this);
     this.handleEditSearchLinkClick = this.handleEditSearchLinkClick.bind(this);
     this.handleFormSearch = this.handleFormSearch.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
+    this.renderCheckbox = this.renderCheckbox.bind(this);
     this.renderSearchResultTableHeader = this.renderSearchResultTableHeader.bind(this);
     this.renderSearchResultTableFooter = this.renderSearchResultTableFooter.bind(this);
 
@@ -114,7 +125,16 @@ class SearchToRelateModal extends Component {
     if (isOpen && !nextIsOpen) {
       // Closing.
 
+      const {
+        clearSearchResults,
+      } = this.props;
+
+      if (clearSearchResults) {
+        clearSearchResults(searchName);
+      }
+
       this.setState({
+        isRelating: false,
         isSearchInitiated: false,
         pageNum: 0,
       });
@@ -185,6 +205,7 @@ class SearchToRelateModal extends Component {
       keywordValue: keyword,
       advancedSearchCondition,
       preferredPageSize,
+      subjectCsid,
     } = this.props;
 
     const {
@@ -195,6 +216,7 @@ class SearchToRelateModal extends Component {
     const pageSize = preferredPageSize || defaultPageSize;
 
     const searchQuery = {
+      mkRtSbj: subjectCsid,
       p: pageNum,
       size: pageSize,
     };
@@ -224,7 +246,37 @@ class SearchToRelateModal extends Component {
   }
 
   relate() {
+    const {
+      selectedItems,
+      subjectCsid,
+      subjectRecordType,
+      createRelations,
+      onRelationsCreated,
+    } = this.props;
 
+    const searchDescriptor = this.getSearchDescriptor();
+
+    this.setState({
+      isRelating: true,
+      isSearchInitiated: false,
+    });
+
+    const subject = {
+      csid: subjectCsid,
+      type: subjectRecordType,
+    };
+
+    const objects = selectedItems.valueSeq().map(item => ({
+      csid: item.get('csid'),
+      type: searchDescriptor.recordType, // TODO: Check the item's docType first
+    })).toJS();
+
+    createRelations(subject, objects, 'affects')
+      .then(() => {
+        if (onRelationsCreated) {
+          onRelationsCreated();
+        }
+      });
   }
 
   search() {
@@ -277,6 +329,14 @@ class SearchToRelateModal extends Component {
   }
 
   handleEditSearchLinkClick() {
+    const {
+      clearSearchResults,
+    } = this.props;
+
+    if (clearSearchResults) {
+      clearSearchResults(searchName);
+    }
+
     this.setState({
       isSearchInitiated: false,
     });
@@ -284,6 +344,23 @@ class SearchToRelateModal extends Component {
 
   handleFormSearch() {
     this.search();
+  }
+
+  handleCheckboxChange(event) {
+    const checkbox = event.target;
+    const index = parseInt(checkbox.name, 10);
+    const checked = checkbox.checked;
+
+    const {
+      config,
+      onItemSelectChange,
+    } = this.props;
+
+    if (onItemSelectChange) {
+      const searchDescriptor = this.getSearchDescriptor();
+
+      onItemSelectChange(config, searchName, searchDescriptor, listType, index, checked);
+    }
   }
 
   handlePageChange(pageNum) {
@@ -308,6 +385,10 @@ class SearchToRelateModal extends Component {
     }
 
     if (setPreferredPageSize) {
+      this.setState({
+        pageNum: 0,
+      });
+
       setPreferredPageSize(normalizedPageSize);
     }
   }
@@ -317,6 +398,34 @@ class SearchToRelateModal extends Component {
       sort,
     });
   }
+
+  renderCheckbox({ rowData, rowIndex }) {
+    const {
+      subjectCsid,
+      selectedItems,
+    } = this.props;
+
+    if (rowData.get('related') === 'true') {
+      return null;
+    }
+
+    const itemCsid = rowData.get('csid');
+
+    if (itemCsid === subjectCsid) {
+      return null;
+    }
+
+    const selected = selectedItems ? selectedItems.has(itemCsid) : false;
+
+    return (
+      <input
+        checked={selected}
+        name={rowIndex}
+        type="checkbox"
+        onChange={this.handleCheckboxChange}
+      />
+    );
+  };
 
   renderSearchForm() {
     const {
@@ -484,11 +593,19 @@ class SearchToRelateModal extends Component {
         recordType={recordTypeValue}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
+        showCheckboxColumn
+        renderCheckbox={this.renderCheckbox}
         renderHeader={this.renderSearchResultTableHeader}
         renderFooter={this.renderSearchResultTableFooter}
         onItemClick={handleItemClick}
         onSortChange={this.handleSortChange}
       />
+    );
+  }
+
+  renderRelatingMessage() {
+    return (
+      <p>Relating...</p>
     );
   }
 
@@ -498,19 +615,30 @@ class SearchToRelateModal extends Component {
       intl,
       isOpen,
       recordTypeValue,
+      selectedItems,
     } = this.props;
 
     const {
+      isRelating,
       isSearchInitiated,
     } = this.state;
 
-    const content = isSearchInitiated
-      ? this.renderSearchResultTable()
-      : this.renderSearchForm();
+    let content;
+
+    if (isRelating) {
+      content = this.renderRelatingMessage();
+    } else if (isSearchInitiated) {
+      content = this.renderSearchResultTable();
+    } else {
+      content = this.renderSearchForm();
+    }
 
     const acceptButtonMessage = isSearchInitiated
       ? messages.relate
       : messages.search;
+
+    const acceptButtonDisabled = (isRelating || isSearchInitiated && (!selectedItems || selectedItems.size < 1));
+    const cancelButtonDisabled = isRelating;
 
     const searchDescriptor = this.getSearchDescriptor();
 
@@ -529,10 +657,13 @@ class SearchToRelateModal extends Component {
         contentLabel={intl.formatMessage(messages.label)}
         title={title}
         isOpen={isOpen}
+        showCloseButton={!isRelating}
         closeButtonClassName="material-icons"
         closeButtonLabel="close"
         cancelButtonLabel={intl.formatMessage(messages.cancel)}
+        cancelButtonDisabled={cancelButtonDisabled}
         acceptButtonLabel={intl.formatMessage(acceptButtonMessage)}
+        acceptButtonDisabled={acceptButtonDisabled}
         onAcceptButtonClick={this.handleAcceptButtonClick}
         onCancelButtonClick={this.handleCancelButtonClick}
         onCloseButtonClick={this.handleCloseButtonClick}
