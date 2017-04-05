@@ -147,18 +147,22 @@ const doCreate = (subject, object, predicate) => (dispatch) => {
         predicate,
       },
     }))
-    .catch(error => dispatch({
-      type: RELATION_SAVE_REJECTED,
-      payload: {
-        code: ERR_API,
-        error,
-      },
-      meta: {
-        subject,
-        object,
-        predicate,
-      },
-    }));
+    .catch((error) => {
+      dispatch({
+        type: RELATION_SAVE_REJECTED,
+        payload: {
+          code: ERR_API,
+          error,
+        },
+        meta: {
+          subject,
+          object,
+          predicate,
+        },
+      });
+
+      return Promise.reject(error);
+    });
 };
 
 export const batchCreate = (subject, objects, predicate) => dispatch =>
@@ -177,14 +181,16 @@ export const batchCreateBidirectional = (subject, objects, predicate) => dispatc
     .then(() => dispatch({
       type: SUBJECT_RELATIONS_UPDATED,
       meta: subject,
-    }));
+    }))
+    .catch(() => {});
 
 export const create = (subject, object, predicate) => dispatch =>
   dispatch(doCreate(subject, object, predicate))
     .then(() => dispatch({
       type: SUBJECT_RELATIONS_UPDATED,
       meta: subject,
-    }));
+    }))
+    .catch(() => {});
 
 export const createBidirectional = (subject, object, predicate) => dispatch =>
   dispatch(doCreate(subject, object, predicate))
@@ -192,4 +198,5 @@ export const createBidirectional = (subject, object, predicate) => dispatch =>
     .then(() => dispatch({
       type: SUBJECT_RELATIONS_UPDATED,
       meta: subject,
-    }));
+    }))
+    .catch(() => {});
