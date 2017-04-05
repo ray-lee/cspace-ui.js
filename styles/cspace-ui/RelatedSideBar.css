@@ -1,0 +1,18 @@
+.common {
+  width: 30%;
+  margin: 10px 10px 10px 0;
+  background-color: #F0F5FB;
+}
+
+.common > header > :global(.cspace-ui-ButtonBar--common) {
+  padding-bottom: 10px;
+}
+
+.common > :global(.cspace-layout-Panel--common) {
+  margin: 0;
+  background-color: rgba(156, 185, 211, .2);
+}
+
+.common :global(.cspace-layout-Table--common) {
+  font-size: 12px;
+}

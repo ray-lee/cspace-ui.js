@@ -38,6 +38,7 @@ const propTypes = {
   data: PropTypes.instanceOf(Immutable.Map),
   isModified: PropTypes.bool,
   isSavePending: PropTypes.bool,
+  showSidebar: PropTypes.bool,
   createNewRecord: PropTypes.func,
   readRecord: PropTypes.func,
   onAddInstance: PropTypes.func,
@@ -172,6 +173,7 @@ export default class RecordEditor extends Component {
       isModified,
       isSavePending,
       recordType,
+      vocabulary,
       onAddInstance,
       onCommit,
       onMoveInstance,
@@ -207,10 +209,7 @@ export default class RecordEditor extends Component {
     });
 
     return (
-      <form
-        autoComplete="off"
-        className={styles.common}
-      >
+      <form autoComplete="off" className={styles.common}>
         <header>
           <RecordButtonBar
             csid={csid}

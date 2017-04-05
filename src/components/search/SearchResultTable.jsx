@@ -179,7 +179,10 @@ export default class SearchResultTable extends Component {
         ? config.subresources[subresource]
         : config.recordTypes[recordType];
 
-      const columnConfig = get(columnConfigurer, ['columns', columnSetName]) || [];
+      const columnConfig =
+        get(columnConfigurer, ['columns', columnSetName]) || 
+        get(columnConfigurer, ['columns', 'default']) || 
+        [];
 
       const columns = columnConfig.map(column => ({
         cellDataGetter: ({ dataKey, rowData }) =>

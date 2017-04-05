@@ -6,6 +6,7 @@ import RelatedRecordPanelContainer from '../../containers/record/RelatedRecordPa
 import RelationEditorContainer from '../../containers/record/RelationEditorContainer';
 import SearchToRelateModalContainer from '../../containers/search/SearchToRelateModalContainer';
 import styles from '../../../styles/cspace-ui/RelatedRecordBrowser.css';
+import sidebarStyles from '../../../styles/cspace-ui/RelatedSideBar.css';
 
 const propTypes = {
   cloneCsid: PropTypes.string,
@@ -295,24 +296,29 @@ class RelatedRecordBrowser extends Component {
 
     return (
       <div className={styles.common}>
-        <header>
-          <RelatedRecordButtonBar
-            onCreateButtonClick={this.handleCreateButtonClick}
-            onRelateButtonClick={this.handleRelateButtonClick}
-          />
-        </header>
-        <RelatedRecordPanelContainer
-          collapsed={false}
-          csid={csid}
-          config={config}
-          name={this.getRelatedRecordPanelName()}
-          recordType={recordType}
-          relatedRecordType={relatedRecordType}
-          showCheckboxColumn
-          onItemClick={this.handleRelatedRecordClick}
-          onUnrelated={this.handleRelatedRecordPanelUnrelated}
-        />
-        {relationEditor}
+        <div>
+          <div className={sidebarStyles.common}>
+            <header>
+              <RelatedRecordButtonBar
+                onCreateButtonClick={this.handleCreateButtonClick}
+                onRelateButtonClick={this.handleRelateButtonClick}
+              />
+            </header>
+            <RelatedRecordPanelContainer
+              collapsed={false}
+              csid={csid}
+              columnSetName="narrow"
+              config={config}
+              name={this.getRelatedRecordPanelName()}
+              recordType={recordType}
+              relatedRecordType={relatedRecordType}
+              showCheckboxColumn
+              onItemClick={this.handleRelatedRecordClick}
+              onUnrelated={this.handleRelatedRecordPanelUnrelated}
+            />
+          </div>
+          {relationEditor}
+        </div>
         <SearchToRelateModalContainer
           subjects={[{ csid, recordType }]}
           config={config}

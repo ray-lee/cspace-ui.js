@@ -3,8 +3,10 @@ import { withRouter } from 'react-router';
 import { routerShape } from 'react-router/lib/PropTypes';
 import RecordBrowserNavBarContainer from '../../containers/record/RecordBrowserNavBarContainer';
 import RecordEditorContainer from '../../containers/record/RecordEditorContainer';
+import RecordSideBar from './RecordSideBar';
 import RelatedRecordBrowserContainer from '../../containers/record/RelatedRecordBrowserContainer';
 import styles from '../../../styles/cspace-ui/RecordBrowser.css';
+import primaryRecordEditorStyles from '../../../styles/cspace-ui/PrimaryRecordEditor.css';
 
 const propTypes = {
   cloneCsid: PropTypes.string,
@@ -119,15 +121,24 @@ class RecordBrowser extends Component {
       );
     } else {
       content = (
-        <RecordEditorContainer
-          cloneCsid={cloneCsid}
-          config={config}
-          csid={csid}
-          recordType={recordType}
-          vocabulary={vocabulary}
-          clone={this.cloneRecord}
-          onRecordCreated={this.handleRecordCreated}
-        />
+        <div className={primaryRecordEditorStyles.common}>
+          <RecordEditorContainer
+            cloneCsid={cloneCsid}
+            config={config}
+            csid={csid}
+            recordType={recordType}
+            vocabulary={vocabulary}
+            showSidebar
+            clone={this.cloneRecord}
+            onRecordCreated={this.handleRecordCreated}
+          />
+          <RecordSideBar
+            csid={csid}
+            recordType={recordType}
+            vocabulary={vocabulary}
+            config={config}
+          />
+        </div>
       );
     }
 

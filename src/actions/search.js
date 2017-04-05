@@ -43,7 +43,10 @@ const getSortParam = (config, searchDescriptor, columnSetName) => {
     return null;
   }
 
-  const columns = get(config, ['recordTypes', searchDescriptor.recordType, 'columns', columnSetName]);
+  const columns =
+    get(config, ['recordTypes', searchDescriptor.recordType, 'columns', columnSetName]) ||
+    get(config, ['recordTypes', searchDescriptor.recordType, 'columns', 'default']);
+
   const column = findColumnByName(columns, sortColumnName);
 
   if (column && column.sortBy) {
