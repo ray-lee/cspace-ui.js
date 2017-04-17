@@ -38,7 +38,6 @@ const propTypes = {
   data: PropTypes.instanceOf(Immutable.Map),
   isModified: PropTypes.bool,
   isSavePending: PropTypes.bool,
-  showSidebar: PropTypes.bool,
   createNewRecord: PropTypes.func,
   readRecord: PropTypes.func,
   onAddInstance: PropTypes.func,

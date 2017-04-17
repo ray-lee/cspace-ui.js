@@ -1,3 +1,8 @@
+.common {
+  flex: 1;
+  margin-top: 10px;
+}
+
 .common > header {
   display: flex;
   align-items: baseline;
@@ -20,3 +25,4 @@
   text-align: right;
   white-space: nowrap;
 }
+

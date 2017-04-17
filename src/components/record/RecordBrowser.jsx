@@ -128,7 +128,6 @@ class RecordBrowser extends Component {
             csid={csid}
             recordType={recordType}
             vocabulary={vocabulary}
-            showSidebar
             clone={this.cloneRecord}
             onRecordCreated={this.handleRecordCreated}
           />

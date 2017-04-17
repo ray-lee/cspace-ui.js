@@ -6,6 +6,7 @@
 
 .common > header > :global(.cspace-ui-ButtonBar--common) {
   padding-bottom: 10px;
+  background-color: white;
 }
 
 .common > :global(.cspace-layout-Panel--common) {
