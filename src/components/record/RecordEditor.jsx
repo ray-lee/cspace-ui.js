@@ -172,7 +172,6 @@ export default class RecordEditor extends Component {
       isModified,
       isSavePending,
       recordType,
-      vocabulary,
       onAddInstance,
       onCommit,
       onMoveInstance,
