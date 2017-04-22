@@ -1,6 +1,6 @@
 .common {
   width: 30%;
-  margin: 10px 10px 10px 0;
+  margin: 10px 0;
   background-color: #F0F5FB;
 }
 
@@ -9,7 +9,7 @@
   background-color: white;
 }
 
-.common > :global(.cspace-layout-Panel--common) {
+.common > div > :global(.cspace-layout-Panel--common) {
   margin: 0;
   background-color: rgba(156, 185, 211, .2);
 }
