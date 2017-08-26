@@ -88,7 +88,7 @@ const template = (pluginContext) => {
         </Field>
       </Panel>
 
-      <Panel name="desc" collapsible>
+      <Panel name="desc" collapsible collapsed>
         <Row>
           <div>
             <Field name="copyNumber" />
@@ -577,7 +577,7 @@ export default pluginContext => ({
   messages: defineMessages({
     name: {
       id: 'form.collectionobject.default.name',
-      defaultMessage: 'Default Template',
+      defaultMessage: 'Standard Template',
     },
   }),
   sortOrder: 0,

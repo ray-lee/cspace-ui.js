@@ -178,6 +178,12 @@ export default (pluginContext) => {
           },
           otherNumber: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.otherNumber.fullName',
+                  defaultMessage: 'Other number',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -193,6 +199,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.numberValue.name',
                     defaultMessage: 'Number',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.numberValue.fullName',
+                    defaultMessage: 'Other number',
+                  },
                 }),
                 view: {
                   type: TextInput,
@@ -205,6 +215,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.numberType.name',
                     defaultMessage: 'Type',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.numberType.fullName',
+                    defaultMessage: 'Other number type',
                   },
                 }),
                 view: {
@@ -294,6 +308,12 @@ export default (pluginContext) => {
           },
           briefDescription: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.briefDescription.fullName',
+                  defaultMessage: 'Brief description',
+                },
+              }),
               repeating: true,
               view: {
                 type: TextInput,
@@ -334,6 +354,12 @@ export default (pluginContext) => {
           },
           comment: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.comment.fullName',
+                  defaultMessage: 'Comment',
+                },
+              }),
               repeating: true,
               view: {
                 type: TextInput,
@@ -376,6 +402,12 @@ export default (pluginContext) => {
           },
           titleGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.titleGroup.fullName',
+                  defaultMessage: 'Title',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -401,6 +433,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.titleLanguage.name',
                     defaultMessage: 'Language',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.titleLanguage.fullName',
+                    defaultMessage: 'Title language',
+                  },
                 }),
                 view: {
                   type: TermPickerInput,
@@ -424,6 +460,12 @@ export default (pluginContext) => {
               },
               titleTranslationSubGroup: {
                 [config]: {
+                  messages: defineMessages({
+                    fullName: {
+                      id: 'field.collectionobjects_common.titleTranslationSubGroup.fullName',
+                      defaultMessage: 'Title translation',
+                    },
+                  }),
                   repeating: true,
                   view: {
                     type: CompoundInput,
@@ -439,6 +481,10 @@ export default (pluginContext) => {
                         id: 'field.collectionobjects_common.titleTranslation.name',
                         defaultMessage: 'Translation',
                       },
+                      fullName: {
+                        id: 'field.collectionobjects_common.titleTranslation.fullName',
+                        defaultMessage: 'Title translation',
+                      },
                     }),
                     view: {
                       type: TextInput,
@@ -451,6 +497,10 @@ export default (pluginContext) => {
                       name: {
                         id: 'field.collectionobjects_common.titleTranslationLanguage.name',
                         defaultMessage: 'Language',
+                      },
+                      fullName: {
+                        id: 'field.collectionobjects_common.titleTranslationLanguage.fullName',
+                        defaultMessage: 'Title translation language',
                       },
                     }),
                     view: {
@@ -469,6 +519,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.titleType.name',
                     defaultMessage: 'Type',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.titleType.fullName',
+                    defaultMessage: 'Title type',
                   },
                 }),
                 view: {
@@ -495,6 +549,12 @@ export default (pluginContext) => {
           },
           objectNameGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.objectNameGroup.fullName',
+                  defaultMessage: 'Object name',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -510,6 +570,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.objectName.name',
                     defaultMessage: 'Name',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectName.fullName',
+                    defaultMessage: 'Object name',
+                  },
                 }),
                 view: {
                   type: TextInput,
@@ -522,6 +586,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.objectNameCurrency.name',
                     defaultMessage: 'Currency',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameCurrency.fullName',
+                    defaultMessage: 'Object name currency',
                   },
                 }),
                 view: {
@@ -539,6 +607,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.objectNameLevel.name',
                     defaultMessage: 'Level',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameLevel.fullName',
+                    defaultMessage: 'Object name level',
+                  },
                 }),
                 view: {
                   type: OptionPickerInput,
@@ -554,6 +626,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.objectNameSystem.name',
                     defaultMessage: 'System',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameSystem.fullName',
+                    defaultMessage: 'Object name system',
                   },
                 }),
                 view: {
@@ -571,6 +647,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.objectNameType.name',
                     defaultMessage: 'Type',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameType.fullName',
+                    defaultMessage: 'Object name type',
+                  },
                 }),
                 view: {
                   type: OptionPickerInput,
@@ -587,6 +667,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.objectNameLanguage.name',
                     defaultMessage: 'Language',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameLanguage.fullName',
+                    defaultMessage: 'Object name language',
+                  },
                 }),
                 view: {
                   type: TermPickerInput,
@@ -602,6 +686,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.objectNameNote.name',
                     defaultMessage: 'Note',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectNameNote.fullName',
+                    defaultMessage: 'Object name note',
                   },
                 }),
                 view: {
@@ -729,26 +817,16 @@ export default (pluginContext) => {
             },
           },
         },
-        age: {
-          [config]: {
-            dataType: DATA_TYPE_INT,
-            messages: defineMessages({
-              name: {
-                id: 'field.collectionobjects_common.age.name',
-                defaultMessage: 'Age',
-              },
-            }),
-            view: {
-              type: TextInput,
-            },
-          },
-        },
         ageQualifier: {
           [config]: {
             messages: defineMessages({
               name: {
                 id: 'field.collectionobjects_common.ageQualifier.name',
                 defaultMessage: 'Qualifier',
+              },
+              fullName: {
+                id: 'field.collectionobjects_common.ageQualifier.fullName',
+                defaultMessage: 'Age qualifier',
               },
             }),
             view: {
@@ -759,12 +837,34 @@ export default (pluginContext) => {
             },
           },
         },
+        age: {
+          [config]: {
+            dataType: DATA_TYPE_INT,
+            messages: defineMessages({
+              name: {
+                id: 'field.collectionobjects_common.age.name',
+                defaultMessage: 'Value',
+              },
+              fullName: {
+                id: 'field.collectionobjects_common.age.fullName',
+                defaultMessage: 'Age value',
+              },
+            }),
+            view: {
+              type: TextInput,
+            },
+          },
+        },
         ageUnit: {
           [config]: {
             messages: defineMessages({
               name: {
                 id: 'field.collectionobjects_common.ageUnit.name',
                 defaultMessage: 'Unit',
+              },
+              fullName: {
+                id: 'field.collectionobjects_common.ageUnit.fullName',
+                defaultMessage: 'Age unit',
               },
             }),
             view: {
@@ -816,6 +916,12 @@ export default (pluginContext) => {
           },
           color: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.color.fullName',
+                  defaultMessage: 'Color',
+                },
+              }),
               repeating: true,
               view: {
                 type: TextInput,
@@ -837,6 +943,12 @@ export default (pluginContext) => {
           },
           materialGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.materialGroup.fullName',
+                  defaultMessage: 'Material',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -861,13 +973,13 @@ export default (pluginContext) => {
             materialComponent: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.materialComponent.fullName',
-                    defaultMessage: 'Material component',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.materialComponent.name',
                     defaultMessage: 'Component',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.materialComponent.fullName',
+                    defaultMessage: 'Material component',
                   },
                 }),
                 view: {
@@ -878,13 +990,13 @@ export default (pluginContext) => {
             materialComponentNote: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.materialComponentNote.fullName',
-                    defaultMessage: 'Material component note',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.materialComponentNote.name',
                     defaultMessage: 'Component note',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.materialComponentNote.fullName',
+                    defaultMessage: 'Material component note',
                   },
                 }),
                 view: {
@@ -895,13 +1007,13 @@ export default (pluginContext) => {
             materialName: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.materialName.fullName',
-                    defaultMessage: 'Material name',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.materialName.name',
                     defaultMessage: 'Name',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.materialName.fullName',
+                    defaultMessage: 'Material name',
                   },
                 }),
                 view: {
@@ -912,13 +1024,13 @@ export default (pluginContext) => {
             materialSource: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.materialSource.fullName',
-                    defaultMessage: 'Material source',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.materialSource.name',
                     defaultMessage: 'Source',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.materialSource.fullName',
+                    defaultMessage: 'Material source',
                   },
                 }),
                 view: {
@@ -958,6 +1070,12 @@ export default (pluginContext) => {
           },
           objectComponentGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.objectComponentGroup.fullName',
+                  defaultMessage: 'Object component',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -969,13 +1087,13 @@ export default (pluginContext) => {
             objectComponentName: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.objectComponentName.fullName',
-                    defaultMessage: 'Object component name',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.objectComponentName.name',
                     defaultMessage: 'Name',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectComponentName.fullName',
+                    defaultMessage: 'Object component name',
                   },
                 }),
                 view: {
@@ -992,6 +1110,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.objectComponentInformation.name',
                     defaultMessage: 'Information',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.objectComponentInformation.fullName',
+                    defaultMessage: 'Object component information',
                   },
                 }),
                 view: {
@@ -1015,6 +1137,12 @@ export default (pluginContext) => {
           },
           technicalAttributeGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.technicalAttributeGroup.fullName',
+                  defaultMessage: 'Technical attribute',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -1026,13 +1154,13 @@ export default (pluginContext) => {
             technicalAttribute: {
               [config]: {
                 messages: defineMessages({
-                  fullName: {
-                    id: 'field.collectionobjects_common.technicalAttribute.fullName',
-                    defaultMessage: 'Technical attribute',
-                  },
                   name: {
                     id: 'field.collectionobjects_common.technicalAttribute.name',
                     defaultMessage: 'Attribute',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.technicalAttribute.fullName',
+                    defaultMessage: 'Technical attribute',
                   },
                 }),
                 view: {
@@ -1050,6 +1178,10 @@ export default (pluginContext) => {
                     id: 'field.collectionobjects_common.technicalAttributeMeasurement.name',
                     defaultMessage: 'Measurement',
                   },
+                  fullName: {
+                    id: 'field.collectionobjects_common.technicalAttributeMeasurement.fullName',
+                    defaultMessage: 'Technical attribute measurement',
+                  },
                 }),
                 view: {
                   type: OptionPickerInput,
@@ -1065,6 +1197,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.technicalAttributeMeasurementUnit.name',
                     defaultMessage: 'Unit',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.technicalAttributeMeasurementUnit.fullName',
+                    defaultMessage: 'Technical attribute measurement unit',
                   },
                 }),
                 view: {
@@ -1091,6 +1227,12 @@ export default (pluginContext) => {
           },
           measuredPartGroup: {
             [config]: {
+              messages: defineMessages({
+                fullName: {
+                  id: 'field.collectionobjects_common.measuredPartGroup.fullName',
+                  defaultMessage: 'Dimensions',
+                },
+              }),
               repeating: true,
               view: {
                 type: CompoundInput,
@@ -1102,6 +1244,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.measuredPart.name',
                     defaultMessage: 'Part',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.measuredPart.fullName',
+                    defaultMessage: 'Dimensioned part',
                   },
                 }),
                 view: {
@@ -1118,6 +1264,10 @@ export default (pluginContext) => {
                   name: {
                     id: 'field.collectionobjects_common.dimensionSummary.name',
                     defaultMessage: 'Summary',
+                  },
+                  fullName: {
+                    id: 'field.collectionobjects_common.dimensionSummary.fullName',
+                    defaultMessage: 'Dimension summary',
                   },
                 }),
                 view: {
@@ -1139,6 +1289,12 @@ export default (pluginContext) => {
               },
               dimensionSubGroup: {
                 [config]: {
+                  messages: defineMessages({
+                    fullName: {
+                      id: 'field.collectionobjects_common.dimensionSubGroup.fullName',
+                      defaultMessage: 'Measurements',
+                    },
+                  }),
                   repeating: true,
                   view: {
                     type: CompoundInput,
@@ -1186,6 +1342,10 @@ export default (pluginContext) => {
                         id: 'field.collectionobjects_common.measurementMethod.name',
                         defaultMessage: 'Method',
                       },
+                      fullName: {
+                        id: 'field.collectionobjects_common.measurementMethod.fullName',
+                        defaultMessage: 'Measurement method',
+                      },
                     }),
                     view: {
                       type: OptionPickerInput,
@@ -1199,13 +1359,13 @@ export default (pluginContext) => {
                   [config]: {
                     dataType: DATA_TYPE_FLOAT,
                     messages: defineMessages({
-                      fullName: {
-                        id: 'field.collectionobjects_common.value.fullName',
-                        defaultMessage: 'Measurement value',
-                      },
                       name: {
                         id: 'field.collectionobjects_common.value.name',
                         defaultMessage: 'Value',
+                      },
+                      fullName: {
+                        id: 'field.collectionobjects_common.value.fullName',
+                        defaultMessage: 'Measurement value',
                       },
                     }),
                     view: {
@@ -1219,6 +1379,10 @@ export default (pluginContext) => {
                       name: {
                         id: 'field.collectionobjects_common.measurementUnit.name',
                         defaultMessage: 'Unit',
+                      },
+                      fullName: {
+                        id: 'field.collectionobjects_common.measurementUnit.fullName',
+                        defaultMessage: 'Measurement unit',
                       },
                     }),
                     view: {
@@ -1236,6 +1400,10 @@ export default (pluginContext) => {
                         id: 'field.collectionobjects_common.valueQualifier.name',
                         defaultMessage: 'Qualifier',
                       },
+                      fullName: {
+                        id: 'field.collectionobjects_common.valueQualifier.fullName',
+                        defaultMessage: 'Measurement qualifier',
+                      },
                     }),
                     view: {
                       type: TextInput,
@@ -1249,6 +1417,10 @@ export default (pluginContext) => {
                       name: {
                         id: 'field.collectionobjects_common.valueDate.name',
                         defaultMessage: 'Date',
+                      },
+                      fullName: {
+                        id: 'field.collectionobjects_common.valueDate.fullName',
+                        defaultMessage: 'Measurement date',
                       },
                     }),
                     view: {
