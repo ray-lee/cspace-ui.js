@@ -381,6 +381,7 @@ export default (configContext) => {
         },
         titleGroupList: {
           [config]: {
+            sticky: true,
             view: {
               type: CompoundInput,
             },
@@ -433,6 +434,7 @@ export default (configContext) => {
             },
             titleTranslationSubGroupList: {
               [config]: {
+                sticky: true,
                 view: {
                   type: CompoundInput,
                 },
@@ -540,6 +542,7 @@ export default (configContext) => {
                     defaultMessage: 'Name',
                   },
                 }),
+                sticky: true,
                 view: {
                   type: TextInput,
                 },
@@ -689,6 +692,7 @@ export default (configContext) => {
                 defaultMessage: 'Sex',
               },
             }),
+            sticky: true,
             view: {
               type: OptionPickerInput,
               props: {
@@ -840,6 +844,7 @@ export default (configContext) => {
                 },
               }),
               repeating: true,
+              sticky: true,
               view: {
                 type: TextInput,
               },

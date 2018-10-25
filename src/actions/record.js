@@ -57,6 +57,7 @@ import {
   STATUS_PENDING,
   STATUS_SUCCESS,
 } from '../constants/notificationStatusCodes';
+import { setStickyFields } from './prefs';
 
 const deleteMessages = defineMessages({
   deleting: {
@@ -732,6 +733,7 @@ export const saveRecord =
           return dispatch(saveSubrecords(
             config, currentRecordTypeConfig, currentVocabularyConfig, currentCsid, 'before'
           ))
+          .then(() => dispatch(setStickyFields(currentRecordTypeConfig, currentCsid)))
           .then(() => {
             const data = getRecordData(getState(), currentCsid);
             const isExisting = isExistingRecord(data);

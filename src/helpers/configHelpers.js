@@ -449,6 +449,24 @@ export const getDefaults = (fieldDescriptor, currentPath = []) => {
   return results;
 };
 
+export const getStickyFields = (fieldDescriptor, currentPath = []) => {
+  const isSticky = get(fieldDescriptor, [configKey, 'sticky']);
+
+  if (isSticky) {
+    return [currentPath];
+  }
+
+  return Object.keys(fieldDescriptor)
+    .filter(key => key !== configKey)
+    .reduce((results, childKey) => {
+      const childPath = currentPath.concat(childKey);
+      const childfieldDescriptor = fieldDescriptor[childKey];
+      const childResults = getStickyFields(childfieldDescriptor, childPath);
+
+      return results.concat(childResults);
+    }, []);
+};
+
 export const isFieldCloneable = (fieldDescriptor) => {
   const config = fieldDescriptor[configKey];
 

@@ -18,6 +18,7 @@ import {
   isFieldCloneable,
   isFieldRepeating,
   isFieldRequired,
+  getStickyFields,
 } from './configHelpers';
 
 import {
@@ -219,6 +220,34 @@ export const createBlankRecord = (recordTypeConfig) => {
     [documentKey]: document,
   });
 };
+
+export const copySpreadValue = (fieldDescriptorPath, sourceData, destData) => {
+  if (
+    !fieldDescriptorPath ||
+    fieldDescriptorPath.length === 0 ||
+    !Immutable.Map.isMap(sourceData))
+  {
+    return sourceData;
+  }
+
+  const [key, ...rest] = fieldDescriptorPath;
+  const sourceChild = sourceData.get(key);
+
+  let destChild = destData.get(key);
+
+  if (!Immutable.Map.isMap(destChild)) {
+    destChild = Immutable.Map();
+  }
+
+  if (Immutable.List.isList(sourceChild)) {
+    return (
+      sourceChild.reduce((updatedDestData, instance, index) =>
+        updatedDestData.setIn([key, index], copySpreadValue(rest, instance, destChild)), destData)
+    );
+  }
+
+  return destData.set(key, copySpreadValue(rest, sourceChild, destChild));
+}
 
 /**
  * Set a default value into record data. When declared on a repeating field, a default value will
@@ -962,4 +991,13 @@ export const hasNarrowerHierarchyRelations = (csid, data) => {
       relation.getIn(['object', 'csid']) === csid
     )
   );
+};
+
+export const getStickyFieldValues = (recordTypeConfig, data) => {
+  const stickyFields = getStickyFields(recordTypeConfig.fields);
+
+  const stickyData = stickyFields.reduce((updatedData, path) =>
+    copySpreadValue(path, data, updatedData), Immutable.Map());
+
+  return stickyData;
 };
