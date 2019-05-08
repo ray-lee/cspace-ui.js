@@ -1,3 +1,5 @@
+# UCB
+To publish package to npmjs.com, use instructions here: https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package
 # cspace-ui
 
 [![npm package](https://img.shields.io/npm/v/cspace-ui.svg)](https://www.npmjs.com/package/cspace-ui)
