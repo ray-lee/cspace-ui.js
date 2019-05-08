@@ -1,6 +1,6 @@
 {
-  "name": "cspace-ui",
-  "version": "2.0.2",
+  "name": "@ucb-cspace/cspace-ui",
+  "version": "2.0.3",
   "description": "CollectionSpace user interface for browsers",
   "author": "Ray Lee <rhlee@berkeley.edu>",
   "license": "ECL-2.0",
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/collectionspace/cspace-ui.js.git"
+    "url": "git+https://github.com/cspace-deployment/cspace-ui.js.git"
   },
   "main": "src/index.jsx",
   "files": [
@@ -133,5 +133,14 @@
     "sourceMap": false,
     "instrument": false,
     "cache": true
+  },
+  "bugs": {
+    "url": "https://github.com/cspace-deployment/cspace-ui.js/issues"
+  },
+  "homepage": "https://github.com/cspace-deployment/cspace-ui.js#readme",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
   }
 }
