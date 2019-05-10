@@ -43,7 +43,7 @@
 
 .procedure {
   composes: common;
-  background-color: #F0F5FB;
+  background-color: rgb(241, 251, 240);
   color: #305A8D;
 }
 
