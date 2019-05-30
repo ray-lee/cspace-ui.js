@@ -2,10 +2,10 @@ import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
 
 import {
-  COLLAPSE_PANEL,
   PREFS_LOADED,
+  COLLAPSE_PANEL,
   SET_ADMIN_TAB,
-  SET_FORM,
+  SET_TOOL_TAB,
   SET_RECORD_BROWSER_NAV_BAR_ITEMS,
   SET_SEARCH_PAGE_RECORD_TYPE,
   SET_SEARCH_PAGE_VOCABULARY,
@@ -14,18 +14,13 @@ import {
   SET_SEARCH_PANEL_PAGE_SIZE,
   SET_SEARCH_RESULT_PAGE_PAGE_SIZE,
   SET_SEARCH_TO_RELATE_PAGE_SIZE,
-  SET_STICKY_FIELDS,
+  SET_FORM,
   SET_UPLOAD_TYPE,
   TOGGLE_RECORD_SIDEBAR,
-} from '../../../src/actions/prefs';
-
-import {
+  SET_STICKY_FIELDS,
   SET_SEARCH_PAGE_ADVANCED,
-} from '../../../src/actions/searchPage';
-
-import {
   SET_SEARCH_TO_RELATE_ADVANCED,
-} from '../../../src/actions/searchToRelate';
+} from '../../../src/constants/actionCodes';
 
 import reducer, {
   getAdminTab,
@@ -40,6 +35,7 @@ import reducer, {
   getSearchResultPagePageSize,
   getSearchToRelatePageSize,
   getStickyFields,
+  getToolTab,
   getUploadType,
   isPanelCollapsed,
   isRecordSidebarOpen,
@@ -93,6 +89,21 @@ describe('prefs reducer', function suite() {
     }));
 
     getAdminTab(state).should.equal(tabName);
+  });
+
+  it('should handle SET_TOOL_TAB', function test() {
+    const tabName = 'report';
+
+    const state = reducer(undefined, {
+      type: SET_TOOL_TAB,
+      payload: tabName,
+    });
+
+    state.should.deep.equal(Immutable.fromJS({
+      toolTab: tabName,
+    }));
+
+    getToolTab(state).should.equal(tabName);
   });
 
   it('should handle SET_FORM', function test() {

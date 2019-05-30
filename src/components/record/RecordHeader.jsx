@@ -17,6 +17,7 @@ const propTypes = {
   isModified: PropTypes.bool,
   isReadPending: PropTypes.bool,
   isSavePending: PropTypes.bool,
+  isRunnable: PropTypes.bool,
   readOnly: PropTypes.bool,
   recordType: PropTypes.string.isRequired,
   showDeprecationButtons: PropTypes.bool,
@@ -29,6 +30,7 @@ const propTypes = {
   onSaveButtonClick: PropTypes.func,
   onSaveButtonErrorBadgeClick: PropTypes.func,
   onUndeprecateButtonClick: PropTypes.func,
+  onRunButtonClick: PropTypes.func,
 };
 
 export default function RecordHeader(props) {
@@ -43,6 +45,7 @@ export default function RecordHeader(props) {
     isModified,
     isReadPending,
     isSavePending,
+    isRunnable,
     readOnly,
     recordType,
     showDeprecationButtons,
@@ -55,6 +58,7 @@ export default function RecordHeader(props) {
     onSaveButtonClick,
     onSaveButtonErrorBadgeClick,
     onUndeprecateButtonClick,
+    onRunButtonClick,
   } = props;
 
   return (
@@ -63,6 +67,7 @@ export default function RecordHeader(props) {
         isCloneable={isCloneable}
         isDeletable={isDeletable}
         isDeprecatable={isDeprecatable}
+        isRunnable={isRunnable}
         isUndeprecatable={isUndeprecatable}
         isModified={isModified}
         isReadPending={isReadPending}
@@ -77,6 +82,7 @@ export default function RecordHeader(props) {
         onSaveButtonClick={onSaveButtonClick}
         onSaveButtonErrorBadgeClick={onSaveButtonErrorBadgeClick}
         onUndeprecateButtonClick={onUndeprecateButtonClick}
+        onRunButtonClick={onRunButtonClick}
       />
       <RecordFormSelector
         config={config}

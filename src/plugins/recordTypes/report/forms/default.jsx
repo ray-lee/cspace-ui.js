@@ -6,12 +6,19 @@ const template = (configContext) => {
   } = configContext.lib;
 
   const {
+    Col,
+  } = configContext.layoutComponents;
+
+  const {
     Field,
   } = configContext.recordComponents;
 
   return (
-    <Field name="params">
-      <Field name="objectNumber" />
+    <Field name="document">
+      <Col>
+        <Field name="name" />
+        <Field name="notes" />
+      </Col>
     </Field>
   );
 };
@@ -19,10 +26,9 @@ const template = (configContext) => {
 export default configContext => ({
   messages: defineMessages({
     name: {
-      id: 'form.report.Update Object And Crate Location.default.name',
+      id: 'form.report.default.name',
       defaultMessage: 'Standard Template',
     },
   }),
-  sortOrder: 0,
   template: template(configContext),
 });

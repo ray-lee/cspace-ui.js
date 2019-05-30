@@ -12,9 +12,7 @@ import { MemoryRouter as Router } from 'react-router';
 import Immutable from 'immutable';
 import merge from 'lodash/merge';
 import { components as inputComponents } from 'cspace-input';
-
 import createTestContainer from '../../../helpers/createTestContainer';
-
 import Panel from '../../../../src/containers/layout/PanelContainer';
 import RecordEditor from '../../../../src/components/record/RecordEditor';
 import RecordHeader from '../../../../src/components/record/RecordHeader';
@@ -197,6 +195,39 @@ const config = {
       },
       title: () => 'Title',
     },
+    report: {
+      defaultForm: 'other',
+      fields: {},
+      forms: {
+        default: {
+          messages: {
+            name: {
+              id: 'form.report.default.name',
+              defaultMessage: 'Reporting template',
+            },
+          },
+          template: <div>Default</div>,
+        },
+        other: {
+          messages: {
+            name: {
+              id: 'form.loanout.other.name',
+              defaultMessage: 'Other Template',
+            },
+          },
+          template: <div>Other</div>,
+        },
+      },
+      messages: {
+        record: {
+          name: {
+            id: 'name',
+            defaultMessage: 'Reporting',
+          },
+        },
+      },
+      title: () => 'Title',
+    },
   },
 };
 
@@ -215,6 +246,9 @@ const perms = Immutable.fromJS({
   },
   loanout: {
     data: 'CRUDL',
+  },
+  reporting: {
+    data: 'RUL',
   },
 });
 

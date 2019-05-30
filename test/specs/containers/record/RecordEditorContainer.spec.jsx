@@ -10,6 +10,21 @@ import RecordEditor from '../../../../src/components/record/RecordEditor';
 import RecordEditorContainer from '../../../../src/containers/record/RecordEditorContainer';
 
 import {
+  REMOVE_NOTIFICATION,
+  SHOW_NOTIFICATION,
+  CLOSE_MODAL,
+  OPEN_MODAL,
+  CREATE_NEW_RECORD,
+  RECORD_DELETE_STARTED,
+  RECORD_READ_STARTED,
+  RECORD_SAVE_STARTED,
+  RECORD_TRANSITION_STARTED,
+  REVERT_RECORD,
+  VALIDATION_PASSED,
+  SET_FORM,
+} from '../../../../src/constants/actionCodes';
+
+import {
   STATUS_PENDING,
 } from '../../../../src/constants/notificationStatusCodes';
 
@@ -18,26 +33,8 @@ import {
 } from '../../../../src/actions/cspace';
 
 import {
-  REMOVE_NOTIFICATION,
-  SHOW_NOTIFICATION,
-  CLOSE_MODAL,
-  OPEN_MODAL,
   NOTIFICATION_ID_VALIDATION,
 } from '../../../../src/actions/notification';
-
-import {
-  CREATE_NEW_RECORD,
-  RECORD_DELETE_STARTED,
-  RECORD_READ_STARTED,
-  RECORD_SAVE_STARTED,
-  RECORD_TRANSITION_STARTED,
-  REVERT_RECORD,
-  VALIDATION_PASSED,
-} from '../../../../src/actions/record';
-
-import {
-  SET_FORM,
-} from '../../../../src/actions/prefs';
 
 chai.should();
 
@@ -50,6 +47,7 @@ describe('RecordEditorContainer', function suite() {
   const authRecordType = 'person';
   const vocabulary = 'ulan';
   const data = Immutable.Map();
+  const reportRecordType = 'report';
 
   const recordTypeConfig = {
     serviceConfig: {
@@ -63,6 +61,14 @@ describe('RecordEditorContainer', function suite() {
     serviceConfig: {
       servicePath: 'urn:cspace:name(ulan)',
     },
+  };
+
+  const reportConfig = {
+    serviceConfig: {
+      servicePath: 'reports',
+    },
+    fields: {},
+    title: () => '',
   };
 
   const authRecordTypeConfig = {
@@ -80,6 +86,7 @@ describe('RecordEditorContainer', function suite() {
     recordTypes: {
       [recordType]: recordTypeConfig,
       [authRecordType]: authRecordTypeConfig,
+      [reportRecordType]: reportConfig,
     },
   };
 

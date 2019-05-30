@@ -60,6 +60,7 @@ const propTypes = {
   onRecordReadComplete: PropTypes.func,
   onRecordDeleted: PropTypes.func,
   onRecordTransitioned: PropTypes.func,
+  onRunButtonClick: PropTypes.func,
 };
 
 const defaultProps = {
@@ -551,6 +552,7 @@ export default class RecordEditor extends Component {
       vocabulary,
       vocabularyWorkflowState,
       checkDeletable,
+      onRunButtonClick,
     } = this.props;
 
     const recordTypeConfig = config.recordTypes[recordType];
@@ -571,6 +573,8 @@ export default class RecordEditor extends Component {
       immutable ||
       !(csid ? canUpdate(recordType, perms) : canCreate(recordType, perms))
     );
+
+    const isRunnable = !!onRunButtonClick;
 
     const isCloneable = (
       // The record must be saved.
@@ -624,6 +628,7 @@ export default class RecordEditor extends Component {
             config={config}
             data={data}
             formName={selectedFormName}
+            isRunnable={isRunnable}
             isCloneable={isCloneable}
             isDeletable={isDeletable}
             isDeprecatable={isDeprecatable}
@@ -642,6 +647,7 @@ export default class RecordEditor extends Component {
             onSaveButtonErrorBadgeClick={this.handleSaveButtonErrorBadgeClick}
             onRevertButtonClick={this.handleRevertButtonClick}
             onUndeprecateButtonClick={this.handleUndeprecateButtonClick}
+            onRunButtonClick={onRunButtonClick}
           />
         </Dock>
 
@@ -658,6 +664,7 @@ export default class RecordEditor extends Component {
 
         <footer>
           <RecordButtonBar
+            isRunnable={isRunnable}
             isCloneable={isCloneable}
             isDeletable={isDeletable}
             isDeprecatable={isDeprecatable}
@@ -672,6 +679,7 @@ export default class RecordEditor extends Component {
             onRevertButtonClick={this.handleRevertButtonClick}
             onCloneButtonClick={this.handleCloneButtonClick}
             onDeleteButtonClick={this.handleDeleteButtonClick}
+            onRunButtonClick={onRunButtonClick}
           />
         </footer>
 
@@ -690,4 +698,3 @@ export default class RecordEditor extends Component {
 
 RecordEditor.propTypes = propTypes;
 RecordEditor.defaultProps = defaultProps;
-

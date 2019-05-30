@@ -23,6 +23,10 @@ const messages = defineMessages({
     id: 'navBar.search',
     defaultMessage: 'Search',
   },
+  tool: {
+    id: 'navBar.tool',
+    defaultMessage: 'Tools',
+  },
 });
 
 const propTypes = {
@@ -48,6 +52,7 @@ export default function NavBar(props) {
         <li><NavLink to="/dashboard"><FormattedMessage {...messages.dashboard} /></NavLink></li>
         {createLink}
         <li><NavLink to="/search"><FormattedMessage {...messages.search} /></NavLink></li>
+        <li><NavLink to="/tool"><FormattedMessage {...messages.tool} /></NavLink></li>
         {adminLink}
       </ul>
     </nav>

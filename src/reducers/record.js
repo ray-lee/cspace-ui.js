@@ -2,30 +2,8 @@ import Immutable from 'immutable';
 import get from 'lodash/get';
 
 import {
-  applyDefaults,
-  cloneRecordData,
-  createRecordData,
-  deepGet,
-  deepSet,
-  deepDelete,
-  getUpdatedTimestamp,
-  initializeChildren,
-  normalizeRecordData,
-} from '../helpers/recordDataHelpers';
-
-import {
-  dataPathToFieldDescriptorPath,
-} from '../helpers/configHelpers';
-
-import {
   LOGIN_FULFILLED,
-} from '../actions/login';
-
-import {
   LOGOUT_FULFILLED,
-} from '../actions/logout';
-
-import {
   ADD_FIELD_INSTANCE,
   CLEAR_RECORD,
   CREATE_NEW_RECORD,
@@ -54,21 +32,28 @@ import {
   SUBRECORD_READ_FULFILLED,
   VALIDATION_FAILED,
   VALIDATION_PASSED,
-} from '../actions/record';
-
-import {
   SUBJECT_RELATIONS_UPDATED,
-} from '../actions/relation';
-
-import {
   CREATE_ID_FULFILLED,
-} from '../actions/idGenerator';
-
-import {
   READ_VOCABULARY_ITEM_REFS_STARTED,
   READ_VOCABULARY_ITEM_REFS_FULFILLED,
   READ_VOCABULARY_ITEM_REFS_REJECTED,
-} from '../actions/vocabulary';
+} from '../constants/actionCodes';
+
+import {
+  applyDefaults,
+  cloneRecordData,
+  createRecordData,
+  deepGet,
+  deepSet,
+  deepDelete,
+  getUpdatedTimestamp,
+  initializeChildren,
+  normalizeRecordData,
+} from '../helpers/recordDataHelpers';
+
+import {
+  dataPathToFieldDescriptorPath,
+} from '../helpers/configHelpers';
 
 const BASE_NEW_RECORD_KEY = '';
 
@@ -143,10 +128,10 @@ const addFieldInstance = (state, action) => {
 
 const sortFieldInstances = (state, action) => {
   const {
+    config,
     csid,
     path,
     byField,
-    // recordTypeConfig,
   } = action.meta;
 
   const data = getCurrentData(state, csid);
@@ -161,7 +146,7 @@ const sortFieldInstances = (state, action) => {
   // TODO: Check for a custom sort comparator function in field config.
   // For now just use the default.
 
-  const comparator = undefined;
+  const comparator = (str1, str2) => str1.localeCompare(str2, config.locale);
 
   const sortedList = byField
     ? list.sortBy(item => item.get(byField), comparator)
