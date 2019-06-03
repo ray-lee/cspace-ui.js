@@ -27,8 +27,7 @@ const propTypes = {
   csid: PropTypes.string,
   data: PropTypes.instanceOf(Immutable.Map),
   initialInvocationDescriptor: PropTypes.shape({
-    csid: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
-    recordType: PropTypes.string,
+    mode: PropTypes.string,
   }),
   isOpen: PropTypes.bool,
   isRecordModified: PropTypes.bool,
@@ -129,6 +128,7 @@ export default class InvocationModal extends Component {
       config,
       csid,
       data,
+      initialInvocationDescriptor,
       isOpen,
       isRecordModified,
       recordType,
@@ -166,6 +166,7 @@ export default class InvocationModal extends Component {
         <InvocationEditorContainer
           config={config}
           metadata={data}
+          initialInvocationDescriptor={initialInvocationDescriptor}
           invocableName={invocableName}
           recordType={recordType}
         />
