@@ -40,6 +40,7 @@ export default function ModePickerInput(props) {
   const {
     modes,
     value,
+    ...remainingProps
   } = props;
 
   const options = modes.map(mode => (
@@ -52,6 +53,7 @@ export default function ModePickerInput(props) {
       label={<Label><FormattedMessage {...messages.label} /></Label>}
       options={options}
       value={value}
+      {...remainingProps}
     />
   );
 };

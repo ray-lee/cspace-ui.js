@@ -26,9 +26,7 @@ const propTypes = {
   config: PropTypes.object.isRequired,
   csid: PropTypes.string,
   data: PropTypes.instanceOf(Immutable.Map),
-  initialInvocationDescriptor: PropTypes.shape({
-    mode: PropTypes.string,
-  }),
+  initialInvocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   isOpen: PropTypes.bool,
   isRecordModified: PropTypes.bool,
   recordType: PropTypes.oneOf(['report', 'batch']),

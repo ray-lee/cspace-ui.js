@@ -9,7 +9,7 @@ import { IntlProvider } from 'react-intl';
 import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
-import SearchToRelateModal, { searchName } from '../../../../src/components/search/SearchToRelateModal';
+import SearchToRelateModal, { BaseSearchToRelateModal, searchName } from '../../../../src/components/search/SearchToRelateModal';
 import RelateButton from '../../../../src/components/record/RelateButton';
 import SearchButton from '../../../../src/components/search/SearchButton';
 import CancelButton from '../../../../src/components/navigation/CancelButton';
@@ -249,7 +249,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -283,7 +283,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -318,7 +318,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -367,7 +367,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -430,7 +430,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -491,7 +491,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -547,7 +547,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -600,7 +600,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -659,7 +659,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -728,7 +728,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -776,7 +776,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -817,7 +817,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -875,7 +875,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -925,7 +925,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -971,7 +971,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -1039,7 +1039,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -1123,7 +1123,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen
@@ -1193,7 +1193,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <SearchToRelateModal
+      <BaseSearchToRelateModal
         config={config}
         intl={intl}
         isOpen

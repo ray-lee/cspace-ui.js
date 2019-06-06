@@ -29,9 +29,7 @@ const renderLoading = () => (
 
 const propTypes = {
   config: PropTypes.object,
-  initialInvocationDescriptor: PropTypes.shape({
-    mode: PropTypes.string,
-  }),
+  initialInvocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   metadata: PropTypes.instanceOf(Immutable.Map),
   paramData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
@@ -72,7 +70,8 @@ export default class InvocationEditor extends Component {
       modes.push('group');
     }
 
-    return modes;
+    return ['nocontext', 'single', 'list', 'group'];
+    // return modes;
   }
 
   initRecord() {
@@ -109,6 +108,7 @@ export default class InvocationEditor extends Component {
         <p>{description}</p>
 
         <InvocationDescriptorEditor
+          config={config}
           invocationDescriptor={initialInvocationDescriptor}
           modes={this.getSupportedModes()}
         />

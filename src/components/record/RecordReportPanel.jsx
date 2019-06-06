@@ -169,11 +169,11 @@ export default class RecordReportPanel extends Component {
         <InvocationModalContainer
           config={config}
           csid={selectedItem && selectedItem.get('csid')}
-          initialInvocationDescriptor={{
+          initialInvocationDescriptor={Immutable.Map({
             csid,
             recordType,
             mode: 'single',
-          }}
+          })}
           isOpen={isModalOpen}
           isRecordModified={isRecordModified}
           recordType="report"

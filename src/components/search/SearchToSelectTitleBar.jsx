@@ -4,36 +4,45 @@ import { defineMessages, FormattedMessage } from 'react-intl';
 import get from 'lodash/get';
 import Immutable from 'immutable';
 import AdvancedSearchBuilder from './AdvancedSearchBuilder';
-import styles from '../../../styles/cspace-ui/SearchToRelateTitleBar.css';
+import styles from '../../../styles/cspace-ui/SearchToSelectTitleBar.css';
 import subtitleStyles from '../../../styles/cspace-ui/Subtitle.css';
 
 const messages = defineMessages({
   title: {
-    id: 'searchToRelateTitleBar.title',
-    defaultMessage: 'Relate {collectionName} {query}',
+    id: 'searchToSelectTitleBar.title',
+    defaultMessage: 'Select {typeName} {query}',
   },
   keyword: {
-    id: 'searchToRelateTitleBar.keyword',
-    defaultMessage: 'containing {keyword}',
+    id: 'searchToSelectTitleBar.keyword',
+    defaultMessage: 'containing "{keyword}"',
   },
 });
 
 const propTypes = {
   config: PropTypes.object,
   isSearchInitiated: PropTypes.bool,
+  titleMessage: PropTypes.shape({
+    id: PropTypes.string,
+    defaultMessage: PropTypes.string,
+  }),
   recordType: PropTypes.string,
   vocabulary: PropTypes.string,
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
+  singleSelect: PropTypes.bool,
 };
 
-export default function SearchToRelateTitleBar(props) {
+const defaultProps = {
+  titleMessage: messages.title,
+};
+
+export default function SearchToSelectTitleBar(props) {
   const {
     config,
     isSearchInitiated,
     searchDescriptor,
+    singleSelect,
+    titleMessage,
   } = props;
-
-  let collectionName;
 
   if (!isSearchInitiated) {
     const {
@@ -49,23 +58,16 @@ export default function SearchToRelateTitleBar(props) {
 
     const vocabularyConfig = vocabulary ? get(recordTypeConfig, ['vocabularies', vocabulary]) : undefined;
 
-    if (vocabularyConfig) {
-      collectionName = (
-        <FormattedMessage
-          {...vocabularyConfig.messages.collectionName}
-        />
-      );
-    } else {
-      collectionName = (
-        <FormattedMessage
-          {...recordTypeConfig.messages.record.collectionName}
-        />
-      );
-    }
+    const messages = vocabularyConfig
+      ? vocabularyConfig.messages
+      : recordTypeConfig.messages.record;
+
+    const typeNameMessage = singleSelect ? messages.name : messages.collectionName;
+    const typeName = <FormattedMessage {...typeNameMessage} />;
 
     return (
       <header className={styles.common}>
-        <h1><FormattedMessage {...messages.title} values={{ collectionName, query: '' }} /></h1>
+        <h1><FormattedMessage {...titleMessage} values={{ typeName, query: '' }} /></h1>
       </header>
     );
   }
@@ -84,19 +86,12 @@ export default function SearchToRelateTitleBar(props) {
     ? <FormattedMessage {...messages.keyword} values={{ keyword: kw }} />
     : null;
 
-  if (vocabularyConfig) {
-    collectionName = (
-      <FormattedMessage
-        {...vocabularyConfig.messages.collectionName}
-      />
-    );
-  } else {
-    collectionName = (
-      <FormattedMessage
-        {...recordTypeConfig.messages.record.collectionName}
-      />
-    );
-  }
+  const messages = vocabularyConfig
+    ? vocabularyConfig.messages
+    : recordTypeConfig.messages.record;
+
+  const typeNameMessage = singleSelect ? messages.name : messages.collectionName;
+  const typeName = <FormattedMessage {...typeNameMessage} />;
 
   let subtitle;
 
@@ -117,11 +112,12 @@ export default function SearchToRelateTitleBar(props) {
   return (
     <header className={styles.common}>
       <h1>
-        <FormattedMessage {...messages.title} values={{ collectionName, query: queryTitle }} />
+        <FormattedMessage {...titleMessage} values={{ typeName, query: queryTitle }} />
       </h1>
       {subtitle}
     </header>
   );
 }
 
-SearchToRelateTitleBar.propTypes = propTypes;
+SearchToSelectTitleBar.propTypes = propTypes;
+SearchToSelectTitleBar.defaultProps = defaultProps;
