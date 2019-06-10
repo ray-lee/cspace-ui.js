@@ -61,7 +61,7 @@ const propTypes = {
   onRelationsCreated: PropTypes.func,
 };
 
-export default class  SearchToRelateModal extends Component {
+export default class SearchToRelateModal extends Component {
   constructor(props) {
     super(props);
 
@@ -154,10 +154,12 @@ export default class  SearchToRelateModal extends Component {
 
   render() {
     const {
+      /* eslint-disable no-unused-vars */
       subjects,
       createRelations,
       showRelationNotification,
       onRelationsCreated,
+      /* eslint-enable no-unused-vars */
       ...remainingProps
     } = this.props;
 

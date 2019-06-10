@@ -44,6 +44,7 @@ const stopPropagation = (event) => {
 const propTypes = {
   acceptButtonClassName: PropTypes.string,
   acceptButtonLabel: PropTypes.node,
+  allowedRecordTypes: PropTypes.arrayOf(PropTypes.string),
   allowedServiceTypes: PropTypes.arrayOf(PropTypes.string),
   config: PropTypes.object,
   intl: intlShape,
@@ -59,10 +60,7 @@ const propTypes = {
   perms: PropTypes.instanceOf(Immutable.Map),
   selectedItems: PropTypes.instanceOf(Immutable.Map),
   singleSelect: PropTypes.bool,
-  titleMessage: PropTypes.shape({
-    id: PropTypes.string,
-    defaultMessage: PropTypes.string,
-  }),
+  titleMessage: PropTypes.objectOf(PropTypes.string),
   getAuthorityVocabCsid: PropTypes.func,
   onAdvancedSearchConditionCommit: PropTypes.func,
   onKeywordCommit: PropTypes.func,
@@ -228,14 +226,12 @@ export class BaseSearchToSelectModal extends Component {
       ) {
         this.search();
       }
-    } else {
-      if (recordTypeValue !== prevRecordTypeValue) {
-        const serviceType =
-          get(config, ['recordTypes', recordTypeValue, 'serviceConfig', 'serviceType']);
+    } else if (recordTypeValue !== prevRecordTypeValue) {
+      const serviceType =
+        get(config, ['recordTypes', recordTypeValue, 'serviceConfig', 'serviceType']);
 
-        if (serviceType === 'authority') {
-          onVocabularyCommit('all');
-        }
+      if (serviceType === 'authority') {
+        onVocabularyCommit('all');
       }
     }
   }
@@ -293,23 +289,6 @@ export class BaseSearchToSelectModal extends Component {
     return searchDescriptor;
   }
 
-  search() {
-    const {
-      config,
-      search,
-    } = this.props;
-
-    if (search) {
-      const searchDescriptor = this.getSearchDescriptor();
-
-      search(config, searchName, searchDescriptor);
-
-      this.setState({
-        isSearchInitiated: true,
-      });
-    }
-  }
-
   setItemSelected(index, selected) {
     const {
       config,
@@ -326,6 +305,23 @@ export class BaseSearchToSelectModal extends Component {
       }
 
       onItemSelectChange(config, searchName, searchDescriptor, listType, index, selected);
+    }
+  }
+
+  search() {
+    const {
+      config,
+      search,
+    } = this.props;
+
+    if (search) {
+      const searchDescriptor = this.getSearchDescriptor();
+
+      search(config, searchName, searchDescriptor);
+
+      this.setState({
+        isSearchInitiated: true,
+      });
     }
   }
 
@@ -466,7 +462,8 @@ export class BaseSearchToSelectModal extends Component {
           name={`${rowIndex}`}
           value={selected}
           onCommit={this.handleCheckboxCommit}
-          // Prevent click on the checkbox from propagating to the row, which would cause double-toggling of the selected state.
+          // Prevent click on the checkbox from propagating to the row, which would cause
+          // double-toggling of the selected state.
           onClick={stopPropagation}
         />
       );
@@ -477,6 +474,7 @@ export class BaseSearchToSelectModal extends Component {
 
   renderSearchForm() {
     const {
+      allowedRecordTypes,
       allowedServiceTypes,
       config,
       intl,
@@ -498,12 +496,12 @@ export class BaseSearchToSelectModal extends Component {
 
     if (allowedServiceTypes) {
       // Allow the record type to be changed.
-
       recordTypeInputReadOnly = false;
 
       // Don't show the All Records option.
-
       recordTypeInputRootType = '';
+    } else if (allowedRecordTypes) {
+      recordTypeInputReadOnly = (allowedRecordTypes.length < 2);
     }
 
     return (
@@ -518,6 +516,7 @@ export class BaseSearchToSelectModal extends Component {
         preferredAdvancedSearchBooleanOp={preferredAdvancedSearchBooleanOp}
         recordTypeInputReadOnly={recordTypeInputReadOnly}
         recordTypeInputRootType={recordTypeInputRootType}
+        recordTypeInputRecordTypes={allowedRecordTypes}
         recordTypeInputServiceTypes={allowedServiceTypes}
         getAuthorityVocabCsid={getAuthorityVocabCsid}
         onAdvancedSearchConditionCommit={onAdvancedSearchConditionCommit}

@@ -21,10 +21,7 @@ const messages = defineMessages({
 const propTypes = {
   config: PropTypes.object,
   isSearchInitiated: PropTypes.bool,
-  titleMessage: PropTypes.shape({
-    id: PropTypes.string,
-    defaultMessage: PropTypes.string,
-  }),
+  titleMessage: PropTypes.objectOf(PropTypes.string),
   recordType: PropTypes.string,
   vocabulary: PropTypes.string,
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
@@ -58,11 +55,14 @@ export default function SearchToSelectTitleBar(props) {
 
     const vocabularyConfig = vocabulary ? get(recordTypeConfig, ['vocabularies', vocabulary]) : undefined;
 
-    const messages = vocabularyConfig
+    const nameMessages = vocabularyConfig
       ? vocabularyConfig.messages
       : recordTypeConfig.messages.record;
 
-    const typeNameMessage = singleSelect ? messages.name : messages.collectionName;
+    const typeNameMessage = singleSelect
+      ? (nameMessages.itemName || nameMessages.name)
+      : nameMessages.collectionName;
+
     const typeName = <FormattedMessage {...typeNameMessage} />;
 
     return (
@@ -86,11 +86,14 @@ export default function SearchToSelectTitleBar(props) {
     ? <FormattedMessage {...messages.keyword} values={{ keyword: kw }} />
     : null;
 
-  const messages = vocabularyConfig
+  const nameMessages = vocabularyConfig
     ? vocabularyConfig.messages
     : recordTypeConfig.messages.record;
 
-  const typeNameMessage = singleSelect ? messages.name : messages.collectionName;
+  const typeNameMessage = singleSelect
+    ? (nameMessages.itemName || nameMessages.name)
+    : nameMessages.collectionName;
+
   const typeName = <FormattedMessage {...typeNameMessage} />;
 
   let subtitle;

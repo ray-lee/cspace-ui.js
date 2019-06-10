@@ -4,6 +4,7 @@ import Immutable from 'immutable';
 import { defineMessages, FormattedMessage } from 'react-intl';
 import get from 'lodash/get';
 import InvocationDescriptorEditor from './InvocationDescriptorEditor';
+import { getRecordTypeNameByServiceObjectName } from '../../helpers/configHelpers';
 import { getCommonFieldValue } from '../../helpers/recordDataHelpers';
 import RecordFormContainer from '../../containers/record/RecordFormContainer';
 import styles from '../../../styles/cspace-ui/InvocationEditor.css';
@@ -29,11 +30,12 @@ const renderLoading = () => (
 
 const propTypes = {
   config: PropTypes.object,
-  initialInvocationDescriptor: PropTypes.instanceOf(Immutable.Map),
+  invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   metadata: PropTypes.instanceOf(Immutable.Map),
   paramData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   createNewRecord: PropTypes.func,
+  onInvocationDescriptorCommit: PropTypes.func,
 };
 
 export default class InvocationEditor extends Component {
@@ -58,10 +60,6 @@ export default class InvocationEditor extends Component {
       modes.push('nocontext');
     }
 
-    if (getCommonFieldValue(metadata, 'supportsSingleDoc') === 'true') {
-      modes.push('single');
-    }
-
     if (getCommonFieldValue(metadata, 'supportsDocList') === 'true') {
       modes.push('list');
     }
@@ -70,8 +68,36 @@ export default class InvocationEditor extends Component {
       modes.push('group');
     }
 
-    return ['nocontext', 'single', 'list', 'group'];
-    // return modes;
+    if (getCommonFieldValue(metadata, 'supportsSingleDoc') === 'true') {
+      modes.push('single');
+    }
+
+    return modes;
+  }
+
+  getSupportedRecordTypes() {
+    const {
+      config,
+      metadata,
+    } = this.props;
+
+    const forDocTypesContainer = getCommonFieldValue(metadata, 'forDocTypes');
+
+    let forDocTypes = forDocTypesContainer && forDocTypesContainer.get('forDocType');
+
+    if (forDocTypes) {
+      if (!Immutable.List.isList(forDocTypes)) {
+        forDocTypes = Immutable.List.of(forDocTypes);
+      }
+
+      const recordTypes = forDocTypes.map(
+        forDocType => getRecordTypeNameByServiceObjectName(config, forDocType)
+      ).toJS();
+
+      return recordTypes;
+    }
+
+    return [];
   }
 
   initRecord() {
@@ -85,10 +111,11 @@ export default class InvocationEditor extends Component {
   render() {
     const {
       config,
-      initialInvocationDescriptor,
+      invocationDescriptor,
       metadata,
       paramData,
       recordType,
+      onInvocationDescriptorCommit,
     } = this.props;
 
     if (!metadata) {
@@ -109,8 +136,10 @@ export default class InvocationEditor extends Component {
 
         <InvocationDescriptorEditor
           config={config}
-          invocationDescriptor={initialInvocationDescriptor}
+          invocationDescriptor={invocationDescriptor}
           modes={this.getSupportedModes()}
+          recordTypes={this.getSupportedRecordTypes()}
+          onCommit={onInvocationDescriptorCommit}
         />
 
         <RecordFormContainer

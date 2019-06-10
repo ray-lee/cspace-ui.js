@@ -1,11 +1,12 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage } from 'react-intl';
-import OptionPickerInput from '../record/OptionPickerInput';
 
 import {
   components as inputComponents,
 } from 'cspace-input';
+
+import OptionPickerInput from '../record/OptionPickerInput';
 
 const messages = defineMessages({
   label: {
@@ -36,6 +37,11 @@ const modeMessages = defineMessages({
 
 const { Label } = inputComponents;
 
+const propTypes = {
+  modes: PropTypes.arrayOf(PropTypes.string),
+  value: PropTypes.string,
+};
+
 export default function ModePickerInput(props) {
   const {
     modes,
@@ -56,4 +62,6 @@ export default function ModePickerInput(props) {
       {...remainingProps}
     />
   );
-};
+}
+
+ModePickerInput.propTypes = propTypes;

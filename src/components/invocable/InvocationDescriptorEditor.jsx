@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
-import { Col, Cols, Row } from 'cspace-layout';
 import SearchToSelectModalContainer from '../../containers/search/SearchToSelectModalContainer';
 import InvocationTargetInput from './InvocationTargetInput';
 import ModePickerInput from './ModePickerInput';
+import styles from '../../../styles/cspace-ui/InvocationDescriptorEditor.css';
 
 const propTypes = {
   config: PropTypes.object,
   invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   modes: PropTypes.arrayOf(PropTypes.string),
+  recordTypes: PropTypes.arrayOf(PropTypes.string),
+  onCommit: PropTypes.func,
 };
 
 const defaultProps = {
@@ -21,16 +23,32 @@ export default class InvocationDescriptorEditor extends Component {
     super(props);
 
     this.handleModePickerCommit = this.handleModePickerCommit.bind(this);
+    this.handleSearchModalAccept = this.handleSearchModalAccept.bind(this);
     this.handleSearchModalCancelButtonClick = this.handleSearchModalCancelButtonClick.bind(this);
     this.openSearchModal = this.openSearchModal.bind(this);
 
+    this.state = {
+      isSearchModalOpen: false,
+    };
+  }
+
+  handleSearchModalAccept(selectedItems, searchDescriptor) {
     const {
       invocationDescriptor,
-    } = props;
+      onCommit,
+    } = this.props;
 
-    this.state = {
-      invocationDescriptor,
-    };
+    if (onCommit) {
+      onCommit(
+        invocationDescriptor
+          .set('recordType', searchDescriptor.get('recordType'))
+          .set('items', selectedItems)
+      );
+    }
+
+    this.setState({
+      isSearchModalOpen: false,
+    });
   }
 
   handleSearchModalCancelButtonClick() {
@@ -42,11 +60,12 @@ export default class InvocationDescriptorEditor extends Component {
   handleModePickerCommit(path, value) {
     const {
       invocationDescriptor,
-    } = this.state;
+      onCommit,
+    } = this.props;
 
-    this.setState({
-      invocationDescriptor: invocationDescriptor.set('mode', value),
-    });
+    if (onCommit) {
+      onCommit(invocationDescriptor.set('mode', value));
+    }
   }
 
   openSearchModal() {
@@ -58,19 +77,22 @@ export default class InvocationDescriptorEditor extends Component {
   render() {
     const {
       config,
+      invocationDescriptor,
       modes,
+      recordTypes,
     } = this.props;
 
     const {
-      invocationDescriptor,
       isSearchModalOpen,
     } = this.state;
 
     const mode = invocationDescriptor.get('mode');
+    const recordType = invocationDescriptor.get('recordType');
+    const allowedRecordTypes = (mode === 'group') ? ['group'] : recordTypes;
 
     return (
-      <div>
-        <Row>
+      <div className={styles.common}>
+        <div>
           <ModePickerInput
             modes={modes}
             value={mode}
@@ -78,17 +100,22 @@ export default class InvocationDescriptorEditor extends Component {
           />
 
           <InvocationTargetInput
+            config={config}
             mode={mode}
             openSearchModal={this.openSearchModal}
+            value={invocationDescriptor.get('items')}
           />
-        </Row>
+        </div>
 
         <SearchToSelectModalContainer
-          allowedServiceTypes={['object', 'procedure', 'authority']}
+          // allowedServiceGroups={['object', 'procedure', 'authority']}
+          allowedRecordTypes={allowedRecordTypes}
           config={config}
           isOpen={isSearchModalOpen}
-          defaultRecordTypeValue="collectionobject"
+          defaultRecordTypeValue={allowedRecordTypes && allowedRecordTypes[0]}
+          recordTypeValue={recordType}
           singleSelect={mode === 'single' || mode === 'group'}
+          onAccept={this.handleSearchModalAccept}
           onCancelButtonClick={this.handleSearchModalCancelButtonClick}
           onCloseButtonClick={this.handleSearchModalCancelButtonClick}
         />

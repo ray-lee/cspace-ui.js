@@ -1,11 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage } from 'react-intl';
+import { components as inputComponents } from 'cspace-input';
 import RecordSearchInput from '../search/RecordSearchInput';
-
-import {
-  components as inputComponents,
-} from 'cspace-input';
 
 const { Label } = inputComponents;
 

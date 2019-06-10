@@ -37,11 +37,33 @@ const propTypes = {
 };
 
 export default class InvocationModal extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
+    this.handleInvocationDescriptorCommit = this.handleInvocationDescriptorCommit.bind(this);
     this.handleInvokeButtonClick = this.handleInvokeButtonClick.bind(this);
     this.renderButtonBar = this.renderButtonBar.bind(this);
+
+    this.state = {
+      invocationDescriptor: props.initialInvocationDescriptor,
+    };
+  }
+
+  componentWillUpdate(nextProps) {
+    const {
+      isOpen,
+    } = this.props;
+
+    const {
+      initialInvocationDescriptor: nextInitialInvocationDescriptor,
+      isOpen: nextIsOpen,
+    } = nextProps;
+
+    if (!isOpen && nextIsOpen) {
+      this.setState({
+        invocationDescriptor: nextInitialInvocationDescriptor,
+      });
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -60,15 +82,36 @@ export default class InvocationModal extends Component {
     }
   }
 
+  handleInvocationDescriptorCommit(invocationDescriptor) {
+    this.setState({
+      invocationDescriptor,
+    });
+  }
+
   handleInvokeButtonClick() {
     const {
       data,
-      initialInvocationDescriptor,
       onInvokeButtonClick,
     } = this.props;
 
+    const {
+      invocationDescriptor,
+    } = this.state;
+
+    const mode = invocationDescriptor.get('mode');
+
+    // Translate the items map to csids.
+
+    const items = invocationDescriptor.get('items') || Immutable.Map();
+
+    let csid = items.keySeq().toJS();
+
+    if (mode === 'single' || mode === 'group') {
+      csid = csid[0];
+    }
+
     if (onInvokeButtonClick) {
-      onInvokeButtonClick(data, initialInvocationDescriptor);
+      onInvokeButtonClick(data, invocationDescriptor.set('csid', csid));
     }
   }
 
@@ -126,12 +169,15 @@ export default class InvocationModal extends Component {
       config,
       csid,
       data,
-      initialInvocationDescriptor,
       isOpen,
       isRecordModified,
       recordType,
       onCloseButtonClick,
     } = this.props;
+
+    const {
+      invocationDescriptor,
+    } = this.state;
 
     if (!isOpen || !csid) {
       return null;
@@ -164,9 +210,10 @@ export default class InvocationModal extends Component {
         <InvocationEditorContainer
           config={config}
           metadata={data}
-          initialInvocationDescriptor={initialInvocationDescriptor}
+          invocationDescriptor={invocationDescriptor}
           invocableName={invocableName}
           recordType={recordType}
+          onInvocationDescriptorCommit={this.handleInvocationDescriptorCommit}
         />
       </Modal>
     );
