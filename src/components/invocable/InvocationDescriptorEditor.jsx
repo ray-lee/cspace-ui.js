@@ -10,6 +10,7 @@ const propTypes = {
   config: PropTypes.object,
   invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   modes: PropTypes.arrayOf(PropTypes.string),
+  readOnly: PropTypes.bool,
   recordTypes: PropTypes.arrayOf(PropTypes.string),
   onCommit: PropTypes.func,
 };
@@ -79,6 +80,7 @@ export default class InvocationDescriptorEditor extends Component {
       config,
       invocationDescriptor,
       modes,
+      readOnly,
       recordTypes,
     } = this.props;
 
@@ -95,6 +97,7 @@ export default class InvocationDescriptorEditor extends Component {
         <div>
           <ModePickerInput
             modes={modes}
+            readOnly={readOnly}
             value={mode}
             onCommit={this.handleModePickerCommit}
           />
@@ -102,6 +105,7 @@ export default class InvocationDescriptorEditor extends Component {
           <InvocationTargetInput
             config={config}
             mode={mode}
+            readOnly={readOnly}
             openSearchModal={this.openSearchModal}
             value={invocationDescriptor.get('items')}
           />
@@ -112,7 +116,7 @@ export default class InvocationDescriptorEditor extends Component {
           allowedRecordTypes={allowedRecordTypes}
           config={config}
           isOpen={isSearchModalOpen}
-          defaultRecordTypeValue={allowedRecordTypes && allowedRecordTypes[0]}
+          // defaultRecordTypeValue={allowedRecordTypes && allowedRecordTypes[0]}
           recordTypeValue={recordType}
           singleSelect={mode === 'single' || mode === 'group'}
           onAccept={this.handleSearchModalAccept}

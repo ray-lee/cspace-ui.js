@@ -174,6 +174,7 @@ export default class RecordReportPanel extends Component {
             recordType,
             mode: 'single',
           })}
+          invocationDescriptorReadOnly
           isOpen={isModalOpen}
           isRecordModified={isRecordModified}
           recordType="report"

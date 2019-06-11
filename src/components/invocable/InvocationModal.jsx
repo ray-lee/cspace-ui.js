@@ -27,6 +27,7 @@ const propTypes = {
   csid: PropTypes.string,
   data: PropTypes.instanceOf(Immutable.Map),
   initialInvocationDescriptor: PropTypes.instanceOf(Immutable.Map),
+  invocationDescriptorReadOnly: PropTypes.bool,
   isOpen: PropTypes.bool,
   isRecordModified: PropTypes.bool,
   recordType: PropTypes.oneOf(['report', 'batch']),
@@ -169,6 +170,7 @@ export default class InvocationModal extends Component {
       config,
       csid,
       data,
+      invocationDescriptorReadOnly,
       isOpen,
       isRecordModified,
       recordType,
@@ -211,6 +213,7 @@ export default class InvocationModal extends Component {
           config={config}
           metadata={data}
           invocationDescriptor={invocationDescriptor}
+          invocationDescriptorReadOnly={invocationDescriptorReadOnly}
           invocableName={invocableName}
           recordType={recordType}
           onInvocationDescriptorCommit={this.handleInvocationDescriptorCommit}

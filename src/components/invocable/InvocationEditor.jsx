@@ -31,6 +31,7 @@ const renderLoading = () => (
 const propTypes = {
   config: PropTypes.object,
   invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
+  invocationDescriptorReadOnly: PropTypes.bool,
   metadata: PropTypes.instanceOf(Immutable.Map),
   paramData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
@@ -112,6 +113,7 @@ export default class InvocationEditor extends Component {
     const {
       config,
       invocationDescriptor,
+      invocationDescriptorReadOnly,
       metadata,
       paramData,
       recordType,
@@ -138,6 +140,7 @@ export default class InvocationEditor extends Component {
           config={config}
           invocationDescriptor={invocationDescriptor}
           modes={this.getSupportedModes()}
+          readOnly={invocationDescriptorReadOnly}
           recordTypes={this.getSupportedRecordTypes()}
           onCommit={onInvocationDescriptorCommit}
         />

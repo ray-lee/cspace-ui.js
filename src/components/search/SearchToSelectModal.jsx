@@ -82,7 +82,7 @@ const propTypes = {
 };
 
 const defaultProps = {
-  defaultRecordTypeValue: 'collectionobject',
+  // defaultRecordTypeValue: 'collectionobject',
   defaultVocabularyValue: 'all',
   selectedItems: Immutable.Map(),
   renderAcceptPending: () => <p />,
@@ -726,27 +726,30 @@ export class BaseSearchToSelectModal extends Component {
     } = this.state;
 
     let content;
+    let title;
 
-    if (isAcceptHandlerPending) {
-      content = renderAcceptPending();
-    } else if (isSearchInitiated) {
-      content = this.renderSearchResultTable();
-    } else {
-      content = this.renderSearchForm();
+    if (isOpen) {
+      if (isAcceptHandlerPending) {
+        content = renderAcceptPending();
+      } else if (isSearchInitiated) {
+        content = this.renderSearchResultTable();
+      } else {
+        content = this.renderSearchForm();
+      }
+
+      const searchDescriptor = this.getSearchDescriptor();
+
+      title = (
+        <SearchToSelectTitleBar
+          config={config}
+          isSearchInitiated={isSearchInitiated}
+          recordType={recordTypeValue}
+          searchDescriptor={searchDescriptor}
+          singleSelect={singleSelect}
+          titleMessage={titleMessage}
+        />
+      );
     }
-
-    const searchDescriptor = this.getSearchDescriptor();
-
-    const title = (
-      <SearchToSelectTitleBar
-        config={config}
-        isSearchInitiated={isSearchInitiated}
-        recordType={recordTypeValue}
-        searchDescriptor={searchDescriptor}
-        singleSelect={singleSelect}
-        titleMessage={titleMessage}
-      />
-    );
 
     return (
       <Modal

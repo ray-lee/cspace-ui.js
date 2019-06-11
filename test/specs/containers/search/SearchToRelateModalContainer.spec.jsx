@@ -13,7 +13,7 @@ const mockStore = configureMockStore([thunk]);
 describe('SearchToRelateModalContainer', function suite() {
   it('should set props on SearchToRelateModal', function test() {
     const store = mockStore({
-      searchToRelate: Immutable.fromJS({
+      searchToSelect: Immutable.fromJS({
         keyword: 'foo',
         recordType: 'person',
         vocabulary: {
@@ -55,7 +55,7 @@ describe('SearchToRelateModalContainer', function suite() {
 
   it('should connect getAuthorityVocabCsid to getAuthorityVocabCsid selector', function test() {
     const store = mockStore({
-      searchToRelate: Immutable.fromJS({
+      searchToSelect: Immutable.fromJS({
         keyword: 'foo',
         recordType: 'person',
         vocabulary: {

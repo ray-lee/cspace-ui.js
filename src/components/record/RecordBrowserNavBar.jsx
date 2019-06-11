@@ -92,7 +92,7 @@ class RecordBrowserNavBar extends Component {
     if (setItems && relatedRecordType && !items.includes(relatedRecordType)) {
       // We entered a related record page via URL, but there isn't currently a tab open for that
       // record type. Open the tab.
-
+console.log('init setitems')
       setItems(recordType, items.push(relatedRecordType));
     }
   }
@@ -136,6 +136,7 @@ class RecordBrowserNavBar extends Component {
     const updatedItems = itemSet.delete(closedType).toList();
 
     if (setItems) {
+      console.log('close setItems');
       setItems(recordType, updatedItems);
     }
 
@@ -161,6 +162,7 @@ class RecordBrowserNavBar extends Component {
     } = this.props;
 
     if (setItems) {
+      console.log('record type commit setitems');
       const updatedItems = items.toOrderedSet().add(value).toList();
 
       setItems(recordType, updatedItems);

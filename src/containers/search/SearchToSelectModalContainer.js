@@ -3,16 +3,16 @@ import get from 'lodash/get';
 import SearchToSelectModal, { searchName } from '../../components/search/SearchToSelectModal';
 
 import {
-  setSearchToRelatePageSize,
+  setSearchToSelectPageSize,
 } from '../../actions/prefs';
 
 import {
-  clearSearchToRelate,
-  setSearchToRelateAdvanced,
-  setSearchToRelateKeyword,
-  setSearchToRelateRecordType,
-  setSearchToRelateVocabulary,
-} from '../../actions/searchToRelate';
+  clearSearchToSelect,
+  setSearchToSelectAdvanced,
+  setSearchToSelectKeyword,
+  setSearchToSelectRecordType,
+  setSearchToSelectVocabulary,
+} from '../../actions/searchToSelect';
 
 import {
   clearSearchResults,
@@ -24,28 +24,28 @@ import {
 import {
   getAdvancedSearchBooleanOp,
   getAuthorityVocabCsid,
-  getSearchToRelateAdvanced,
-  getSearchToRelateKeyword,
-  getSearchToRelateRecordType,
-  getSearchToRelateVocabulary,
-  getSearchToRelatePageSize,
+  getSearchToSelectAdvanced,
+  getSearchToSelectKeyword,
+  getSearchToSelectRecordType,
+  getSearchToSelectVocabulary,
+  getSearchToSelectPageSize,
   getSearchSelectedItems,
   getUserPerms,
 } from '../../reducers';
 
 const mapStateToProps = (state, ownProps) => {
-  const searchToRelateRecordType = getSearchToRelateRecordType(state);
+  const searchToSelectRecordType = getSearchToSelectRecordType(state);
 
   return {
-    keywordValue: getSearchToRelateKeyword(state),
-    recordTypeValue: searchToRelateRecordType,
-    vocabularyValue: getSearchToRelateVocabulary(state, searchToRelateRecordType),
-    advancedSearchCondition: getSearchToRelateAdvanced(state),
+    keywordValue: getSearchToSelectKeyword(state),
+    recordTypeValue: searchToSelectRecordType,
+    vocabularyValue: getSearchToSelectVocabulary(state, searchToSelectRecordType),
+    advancedSearchCondition: getSearchToSelectAdvanced(state),
     perms: getUserPerms(state),
     preferredAdvancedSearchBooleanOp:
       getAdvancedSearchBooleanOp(state) ||
       get(ownProps, ['config', 'defaultAdvancedSearchBooleanOp']),
-    preferredPageSize: getSearchToRelatePageSize(state),
+    preferredPageSize: getSearchToSelectPageSize(state),
     selectedItems: getSearchSelectedItems(state, searchName),
     getAuthorityVocabCsid: (recordType, vocabulary) =>
       getAuthorityVocabCsid(state, recordType, vocabulary),
@@ -55,14 +55,14 @@ const mapStateToProps = (state, ownProps) => {
 const mapDispatchToProps = {
   clearSearchResults,
   search,
-  onAdvancedSearchConditionCommit: setSearchToRelateAdvanced,
-  onClearButtonClick: clearSearchToRelate,
-  onKeywordCommit: setSearchToRelateKeyword,
-  onRecordTypeCommit: setSearchToRelateRecordType,
-  onVocabularyCommit: setSearchToRelateVocabulary,
+  onAdvancedSearchConditionCommit: setSearchToSelectAdvanced,
+  onClearButtonClick: clearSearchToSelect,
+  onKeywordCommit: setSearchToSelectKeyword,
+  onRecordTypeCommit: setSearchToSelectRecordType,
+  onVocabularyCommit: setSearchToSelectVocabulary,
   onItemSelectChange: setResultItemSelected,
   setAllItemsSelected: setAllResultItemsSelected,
-  setPreferredPageSize: setSearchToRelatePageSize,
+  setPreferredPageSize: setSearchToSelectPageSize,
 };
 
 export default connect(
