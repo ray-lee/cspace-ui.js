@@ -8,6 +8,7 @@ import { getRecordTypeNameByServiceObjectName } from '../../helpers/configHelper
 import { getCommonFieldValue } from '../../helpers/recordDataHelpers';
 import RecordFormContainer from '../../containers/record/RecordFormContainer';
 import styles from '../../../styles/cspace-ui/InvocationEditor.css';
+import warningStyles from '../../../styles/cspace-ui/Warning.css';
 
 const messages = defineMessages({
   loading: {
@@ -32,21 +33,23 @@ const propTypes = {
   config: PropTypes.object,
   invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   invocationDescriptorReadOnly: PropTypes.bool,
+  isInvocationTargetModified: PropTypes.bool,
   metadata: PropTypes.instanceOf(Immutable.Map),
   paramData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   createNewRecord: PropTypes.func,
+  searchCsid: PropTypes.func,
   onInvocationDescriptorCommit: PropTypes.func,
 };
 
 export default class InvocationEditor extends Component {
   componentDidMount() {
-    this.initRecord();
+    this.init();
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.metadata !== this.props.metadata) {
-      this.initRecord();
+      this.init();
     }
   }
 
@@ -101,10 +104,12 @@ export default class InvocationEditor extends Component {
     return [];
   }
 
-  initRecord() {
+  init() {
     const {
       createNewRecord,
     } = this.props;
+
+    // Create a params record.
 
     createNewRecord();
   }
@@ -114,6 +119,7 @@ export default class InvocationEditor extends Component {
       config,
       invocationDescriptor,
       invocationDescriptorReadOnly,
+      isInvocationTargetModified,
       metadata,
       paramData,
       recordType,
@@ -132,6 +138,19 @@ export default class InvocationEditor extends Component {
     const description = getCommonFieldValue(metadata, 'notes')
       || <FormattedMessage {...messages.noDescription} />;
 
+    const recordTypeConfig = get(config, ['recordTypes', recordType]);
+    const recordTypeMessages = get(recordTypeConfig, ['messages', 'record']);
+
+    let unsavedWarning;
+
+    if (isInvocationTargetModified) {
+      unsavedWarning = (
+        <p className={warningStyles.common}>
+          <FormattedMessage {...recordTypeMessages.invokeUnsaved} />
+        </p>
+      );
+    }
+
     return (
       <div className={styles.common}>
         <p>{description}</p>
@@ -144,6 +163,8 @@ export default class InvocationEditor extends Component {
           recordTypes={this.getSupportedRecordTypes()}
           onCommit={onInvocationDescriptorCommit}
         />
+
+        {unsavedWarning}
 
         <RecordFormContainer
           config={config}

@@ -82,7 +82,6 @@ const propTypes = {
 };
 
 const defaultProps = {
-  // defaultRecordTypeValue: 'collectionobject',
   defaultVocabularyValue: 'all',
   selectedItems: Immutable.Map(),
   renderAcceptPending: () => <p />,
@@ -174,9 +173,6 @@ export class BaseSearchToSelectModal extends Component {
 
       if (onRecordTypeCommit) {
         onRecordTypeCommit(defaultRecordTypeValue);
-
-        // TODO: If search to relate is ever used on authorities, need to set the default vocabulary
-        // if this is an authority record type, and vocabularyValue is not provided.
 
         if (onVocabularyCommit) {
           const serviceType = get(config, ['recordTypes', defaultRecordTypeValue, 'serviceConfig', 'serviceType']);

@@ -112,11 +112,9 @@ export default class InvocationDescriptorEditor extends Component {
         </div>
 
         <SearchToSelectModalContainer
-          // allowedServiceGroups={['object', 'procedure', 'authority']}
           allowedRecordTypes={allowedRecordTypes}
           config={config}
           isOpen={isSearchModalOpen}
-          // defaultRecordTypeValue={allowedRecordTypes && allowedRecordTypes[0]}
           recordTypeValue={recordType}
           singleSelect={mode === 'single' || mode === 'group'}
           onAccept={this.handleSearchModalAccept}

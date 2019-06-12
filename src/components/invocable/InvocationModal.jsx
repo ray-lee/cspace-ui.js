@@ -50,23 +50,6 @@ export default class InvocationModal extends Component {
     };
   }
 
-  componentWillUpdate(nextProps) {
-    const {
-      isOpen,
-    } = this.props;
-
-    const {
-      initialInvocationDescriptor: nextInitialInvocationDescriptor,
-      isOpen: nextIsOpen,
-    } = nextProps;
-
-    if (!isOpen && nextIsOpen) {
-      this.setState({
-        invocationDescriptor: nextInitialInvocationDescriptor,
-      });
-    }
-  }
-
   componentDidUpdate(prevProps) {
     const {
       csid,
@@ -80,6 +63,8 @@ export default class InvocationModal extends Component {
 
     if (csid && (csid !== prevCsid) && isOpen && readRecord) {
       readRecord();
+
+      this.readInvocationItem();
     }
   }
 
@@ -113,6 +98,38 @@ export default class InvocationModal extends Component {
 
     if (onInvokeButtonClick) {
       onInvokeButtonClick(data, invocationDescriptor.set('csid', csid));
+    }
+  }
+
+  readInvocationItem() {
+    const {
+      config,
+      searchCsid,
+    } = this.props;
+
+    const {
+      invocationDescriptor,
+    } = this.state;
+
+    if (invocationDescriptor) {
+      const invocationCsid = invocationDescriptor.get('csid');
+
+      if (invocationCsid && !invocationDescriptor.get('items')) {
+        searchCsid(config, invocationDescriptor.get('recordType'), invocationCsid)
+          .then((response) => {
+            const item = get(response, ['data', 'ns2:abstract-common-list', 'list-item']);
+
+            const nextInvocationDescriptor = this.state.invocationDescriptor.set(
+              'items', Immutable.fromJS({
+                [invocationCsid]: item,
+              })
+            );
+
+            this.setState({
+              invocationDescriptor: nextInvocationDescriptor,
+            });
+          });
+      }
     }
   }
 
@@ -186,16 +203,8 @@ export default class InvocationModal extends Component {
     }
 
     const recordTypeConfig = get(config, ['recordTypes', recordType]);
-    const recordTypeMessages = get(recordTypeConfig, ['messages', 'record']);
-
     const invocableNameGetter = get(recordTypeConfig, 'invocableName');
     const invocableName = invocableNameGetter && invocableNameGetter(data);
-
-    let unsavedWarning;
-
-    if (isRecordModified) {
-      unsavedWarning = <p><FormattedMessage {...recordTypeMessages.invokeUnsaved} /></p>;
-    }
 
     return (
       <Modal
@@ -207,14 +216,13 @@ export default class InvocationModal extends Component {
         renderButtonBar={this.renderButtonBar}
         onCloseButtonClick={onCloseButtonClick}
       >
-        {unsavedWarning}
-
         <InvocationEditorContainer
           config={config}
           metadata={data}
           invocationDescriptor={invocationDescriptor}
           invocationDescriptorReadOnly={invocationDescriptorReadOnly}
           invocableName={invocableName}
+          isInvocationTargetModified={isRecordModified}
           recordType={recordType}
           onInvocationDescriptorCommit={this.handleInvocationDescriptorCommit}
         />
