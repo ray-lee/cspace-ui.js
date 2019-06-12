@@ -65,7 +65,13 @@ export default class InvocationDescriptorEditor extends Component {
     } = this.props;
 
     if (onCommit) {
-      onCommit(invocationDescriptor.set('mode', value));
+      onCommit(
+        invocationDescriptor
+          .set('mode', value)
+          .delete('csid')
+          .delete('recordType')
+          .delete('items')
+      );
     }
   }
 

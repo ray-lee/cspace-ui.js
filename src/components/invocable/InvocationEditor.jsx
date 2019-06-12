@@ -38,7 +38,6 @@ const propTypes = {
   paramData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   createNewRecord: PropTypes.func,
-  searchCsid: PropTypes.func,
   onInvocationDescriptorCommit: PropTypes.func,
 };
 

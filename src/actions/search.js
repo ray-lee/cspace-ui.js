@@ -259,7 +259,7 @@ export const search = (config, searchName, searchDescriptor, listType = 'common'
       }));
   };
 
-export const searchCsid = (config, recordType, csid) => (dispatch) => {
+export const searchCsid = (config, recordType, csid) => () => {
   const requestConfig = {
     params: {
       as: `(ecm:name = "${csid}")`,

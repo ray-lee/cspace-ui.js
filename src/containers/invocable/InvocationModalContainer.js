@@ -27,8 +27,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
   return {
     readRecord: () =>
       dispatch(readRecord(config, recordTypeConfig, undefined, csid)),
-    searchCsid: (config, recordType, csid) =>
-      dispatch(searchCsid(config, recordType, csid)),
+    searchCsid: (...args) =>
+      dispatch(searchCsid(...args)),
   };
 };
 

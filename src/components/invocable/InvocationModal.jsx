@@ -32,6 +32,7 @@ const propTypes = {
   isRecordModified: PropTypes.bool,
   recordType: PropTypes.oneOf(['report', 'batch']),
   readRecord: PropTypes.func,
+  searchCsid: PropTypes.func,
   onCancelButtonClick: PropTypes.func,
   onCloseButtonClick: PropTypes.func,
   onInvokeButtonClick: PropTypes.func,
@@ -50,6 +51,22 @@ export default class InvocationModal extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    const {
+      isOpen,
+    } = this.props;
+
+    const {
+      isOpen: nextIsOpen,
+    } = nextProps;
+
+    if (!isOpen && nextIsOpen) {
+      this.setState({
+        invocationDescriptor: nextProps.initialInvocationDescriptor,
+      });
+    }
+  }
+
   componentDidUpdate(prevProps) {
     const {
       csid,
@@ -58,11 +75,13 @@ export default class InvocationModal extends Component {
     } = this.props;
 
     const {
-      csid: prevCsid,
+      isOpen: prevIsOpen,
     } = prevProps;
 
-    if (csid && (csid !== prevCsid) && isOpen && readRecord) {
-      readRecord();
+    if (csid && !prevIsOpen && isOpen) {
+      if (readRecord) {
+        readRecord();
+      }
 
       this.readInvocationItem();
     }
