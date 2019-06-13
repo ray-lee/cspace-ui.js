@@ -73,7 +73,7 @@ export default (configContext) => {
             view: {
               type: IDGeneratorInput,
               props: {
-                source: 'proj' // FIX ME
+                source: 'proj',
               },
             },
           },
@@ -151,7 +151,7 @@ export default (configContext) => {
                 type: CompoundInput,
                 props: {
                   tabular: true,
-                }
+                },
               },
             },
             authorizedBy: {
@@ -242,7 +242,7 @@ export default (configContext) => {
                 type: CompoundInput,
                 props: {
                   tabular: true,
-                }
+                },
               },
             },
             startSingleDate: {
@@ -261,7 +261,7 @@ export default (configContext) => {
             },
             numberOfVisitors: {
               [config]: {
-                messages: defineMessages({ 
+                messages: defineMessages({
                   name: {
                     id: 'field.uoc_common.numberOfVisitors.name',
                     defaultMessage: 'No. of vistors',
@@ -270,7 +270,7 @@ export default (configContext) => {
                 dataType: DATA_TYPE_INT,
                 view: {
                   type: TextInput,
-                }
+                },
               },
             },
             hoursSpent: {
