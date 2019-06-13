@@ -10,6 +10,7 @@ import thunk from 'redux-thunk';
 import { Provider as StoreProvider } from 'react-redux';
 import InvocationModal from '../../../../src/components/invocable/InvocationModal';
 import createTestContainer from '../../../helpers/createTestContainer';
+import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 
 const expect = chai.expect;
 
@@ -18,7 +19,11 @@ chai.should();
 const mockStore = configureMockStore([thunk]);
 
 const store = mockStore({
+  searchToSelect: Immutable.Map(),
+  prefs: Immutable.Map(),
   record: Immutable.Map(),
+  search: Immutable.Map(),
+  user: Immutable.Map(),
 });
 
 const csid = '1234';
@@ -55,6 +60,10 @@ const config = {
   },
 };
 
+const invocationDescriptor = Immutable.Map({
+  mode: 'single',
+});
+
 describe('InvocationModal', function suite() {
   beforeEach(function before() {
     this.container = createTestContainer(this);
@@ -64,13 +73,16 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            isOpen
-            csid={csid}
-            data={reportData}
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              csid={csid}
+              data={reportData}
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -83,13 +95,16 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            isOpen={false}
-            csid={csid}
-            data={reportData}
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen={false}
+              csid={csid}
+              data={reportData}
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -100,14 +115,17 @@ describe('InvocationModal', function suite() {
   it('should render nothing if data is not supplied', function test() {
     render(
       <IntlProvider locale="en">
-        <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen={false}
-            recordType="report"
-          />
-        </StoreProvider>
+        <ConfigProvider config={config}>
+          <StoreProvider store={store}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen={false}
+              recordType="report"
+            />
+          </StoreProvider>
+        </ConfigProvider>
       </IntlProvider>, this.container);
 
     expect(this.container.firstElementChild).to.equal(null);
@@ -118,14 +136,17 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            isRecordModified
-            data={reportData}
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              isRecordModified
+              data={reportData}
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -140,14 +161,17 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            isRecordModified
-            data={Immutable.Map()}
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              isRecordModified
+              data={Immutable.Map()}
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -162,13 +186,16 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            isRecordModified
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              isRecordModified
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -183,20 +210,23 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            isRecordModified
-            data={reportData}
-            recordType="report"
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              isRecordModified
+              data={reportData}
+              recordType="report"
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
     const modal = document.querySelector('.ReactModal__Content--after-open');
 
-    modal.querySelector('p').textContent.should.equal('Unsaved changes!');
+    modal.querySelector('.cspace-ui-Warning--common').textContent.should.equal('Unsaved changes!');
 
     unmountComponentAtNode(this.container);
   });
@@ -211,14 +241,17 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            data={reportData}
-            recordType="report"
-            onInvokeButtonClick={handleInvokeButtonClick}
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={csid}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              data={reportData}
+              recordType="report"
+              onInvokeButtonClick={handleInvokeButtonClick}
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
@@ -232,7 +265,7 @@ describe('InvocationModal', function suite() {
     unmountComponentAtNode(this.container);
   });
 
-  it('should call readRecord when the csid changes', function test() {
+  it('should call readRecord when opened', function test() {
     let readRecordCalled;
 
     const readRecord = () => {
@@ -242,28 +275,34 @@ describe('InvocationModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={csid}
-            isOpen
-            data={reportData}
-            recordType="report"
-            readRecord={readRecord}
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              initialInvocationDescriptor={invocationDescriptor}
+              csid={csid}
+              isOpen={false}
+              data={reportData}
+              recordType="report"
+              readRecord={readRecord}
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <InvocationModal
-            config={config}
-            csid={`${csid}999`}
-            isOpen
-            data={reportData}
-            recordType="report"
-            readRecord={readRecord}
-          />
+          <ConfigProvider config={config}>
+            <InvocationModal
+              config={config}
+              csid={`${csid}999`}
+              initialInvocationDescriptor={invocationDescriptor}
+              isOpen
+              data={reportData}
+              recordType="report"
+              readRecord={readRecord}
+            />
+          </ConfigProvider>
         </StoreProvider>
       </IntlProvider>, this.container);
 

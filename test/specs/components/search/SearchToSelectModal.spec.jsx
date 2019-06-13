@@ -9,8 +9,7 @@ import { IntlProvider } from 'react-intl';
 import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
-import SearchToRelateModal, { BaseSearchToRelateModal, searchName } from '../../../../src/components/search/SearchToRelateModal';
-import RelateButton from '../../../../src/components/record/RelateButton';
+import SearchToSelectModal, { BaseSearchToSelectModal, searchName } from '../../../../src/components/search/SearchToSelectModal';
 import SearchButton from '../../../../src/components/search/SearchButton';
 import CancelButton from '../../../../src/components/navigation/CancelButton';
 import SearchForm from '../../../../src/components/search/SearchForm';
@@ -79,7 +78,7 @@ const intl = {
   now: () => null,
 };
 
-describe('SearchToRelateModal', function suite() {
+describe('SearchToSelectModal', function suite() {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -93,7 +92,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             isOpen
             recordTypeValue="collectionobject"
@@ -124,7 +123,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             defaultRecordTypeValue={defaultRecordTypeValue}
             recordTypeValue="collectionobject"
@@ -139,7 +138,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             defaultRecordTypeValue={defaultRecordTypeValue}
             isOpen
@@ -178,7 +177,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             defaultRecordTypeValue={defaultRecordTypeValue}
             isOpen
@@ -196,7 +195,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             defaultRecordTypeValue={defaultRecordTypeValue}
             recordTypeValue="collectionobject"
@@ -222,7 +221,7 @@ describe('SearchToRelateModal', function suite() {
     render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
-          <SearchToRelateModal
+          <SearchToSelectModal
             config={config}
             isOpen
             recordTypeValue="collectionobject"
@@ -249,7 +248,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -283,7 +282,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -318,7 +317,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -367,7 +366,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -402,7 +401,6 @@ describe('SearchToRelateModal', function suite() {
       searchQuery: {
         as: advancedSearchCondition,
         kw: keywordValue,
-        mkRtSbj: subject.csid,
         p: 0,
         size: 20,
       },
@@ -430,7 +428,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -453,7 +451,6 @@ describe('SearchToRelateModal', function suite() {
       recordType: recordTypeValue,
       vocabulary: undefined,
       searchQuery: {
-        mkRtSbj: subject.csid,
         p: 0,
         size: 20,
       },
@@ -491,7 +488,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -547,7 +544,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -600,7 +597,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -659,7 +656,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -728,7 +725,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -776,7 +773,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -804,54 +801,6 @@ describe('SearchToRelateModal', function suite() {
     expect(footer).to.equal(null);
   });
 
-  it('should render a checkbox for items that are not already related and not locked', function test() {
-    const recordTypeValue = 'collectionobject';
-
-    const subject = {
-      csid: '1234',
-      recordType: 'collectionobject',
-    };
-
-    const search = () => {};
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(
-      <BaseSearchToRelateModal
-        config={config}
-        intl={intl}
-        isOpen
-        isSearchInitiated
-        perms={perms}
-        recordTypeValue={recordTypeValue}
-        subjects={[subject]}
-        search={search}
-      />
-    );
-
-    let result;
-
-    result = shallowRenderer.getRenderOutput();
-
-    const buttonBar = result.props.renderButtonBar();
-    const searchButton = findWithType(buttonBar, SearchButton);
-
-    searchButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-
-    const searchResultTable = findWithType(result, SearchResultTableContainer);
-
-    const unrelatedItem = Immutable.Map({ uri: '/collectionobjects/1111' });
-    const relatedItem = Immutable.Map({ related: 'true', uri: '/collectionobjects/2222' });
-    const lockedItem = Immutable.Map({ workflowState: 'locked', uri: '/collectionobjects/3333' });
-
-    expect(searchResultTable.props.renderCheckbox({ rowData: relatedItem })).to.equal(null);
-    expect(searchResultTable.props.renderCheckbox({ rowData: lockedItem })).to.equal(null);
-
-    searchResultTable.props.renderCheckbox({ rowData: unrelatedItem }).should.not.equal(null);
-  });
-
   it('should call onItemSelectChange when a checkbox value is committed', function test() {
     const recordTypeValue = 'collectionobject';
 
@@ -875,7 +824,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -912,48 +861,6 @@ describe('SearchToRelateModal', function suite() {
     changedChecked.should.equal(newValue);
   });
 
-  it('should not render a checkbox for the subject result item, if there is only one subject', function test() {
-    const recordTypeValue = 'collectionobject';
-
-    const subject = {
-      csid: '1234',
-      recordType: 'collectionobject',
-    };
-
-    const search = () => {};
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(
-      <BaseSearchToRelateModal
-        config={config}
-        intl={intl}
-        isOpen
-        isSearchInitiated
-        recordTypeValue={recordTypeValue}
-        subjects={[subject]}
-        search={search}
-      />
-    );
-
-    let result;
-
-    result = shallowRenderer.getRenderOutput();
-
-    const buttonBar = result.props.renderButtonBar();
-    const searchButton = findWithType(buttonBar, SearchButton);
-
-    searchButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-
-    const searchResultTable = findWithType(result, SearchResultTableContainer);
-
-    const subjectItem = Immutable.Map({ csid: subject.csid });
-
-    expect(searchResultTable.props.renderCheckbox({ rowData: subjectItem })).to.equal(null);
-  });
-
   it('should update the sort direction of future searches when the sort direction is changed in the result table', function test() {
     const recordTypeValue = 'collectionobject';
 
@@ -971,7 +878,7 @@ describe('SearchToRelateModal', function suite() {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <BaseSearchToRelateModal
+      <BaseSearchToSelectModal
         config={config}
         intl={intl}
         isOpen
@@ -1001,228 +908,5 @@ describe('SearchToRelateModal', function suite() {
     searchButton.props.onClick();
 
     searchedSearchDescriptor.getIn(['searchQuery', 'sort']).should.equal(newSort);
-  });
-
-  it('should render a relating message and call createRelations followed by onRelationsCreated when the relate button is clicked', function test() {
-    const recordTypeValue = 'collectionobject';
-
-    const subject = {
-      csid: '1234',
-      recordType: 'group',
-    };
-
-    const selectedItems = Immutable.fromJS({
-      1111: { csid: '1111', recordType: recordTypeValue },
-      2222: { csid: '2222', recordType: recordTypeValue },
-    });
-
-    const search = () => {};
-
-    let createdSubject = null;
-    let createdObjects = null;
-    let createdPredicate = null;
-
-    const createRelations = (subjectArg, objectsArg, predicateArg) => {
-      createdSubject = subjectArg;
-      createdObjects = objectsArg;
-      createdPredicate = predicateArg;
-
-      return Promise.resolve();
-    };
-
-    let createdHandlerCalled = false;
-
-    const handleRelationsCreated = () => {
-      createdHandlerCalled = true;
-    };
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(
-      <BaseSearchToRelateModal
-        config={config}
-        intl={intl}
-        isOpen
-        isSearchInitiated
-        recordTypeValue={recordTypeValue}
-        subjects={[subject]}
-        selectedItems={selectedItems}
-        search={search}
-        createRelations={createRelations}
-        onRelationsCreated={handleRelationsCreated}
-      />
-    );
-
-    let result;
-    let buttonBar;
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const searchButton = findWithType(buttonBar, SearchButton);
-
-    searchButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const relateButton = findWithType(buttonBar, RelateButton);
-
-    relateButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-
-    findWithType(result, 'p').should.not.equal(null);
-
-    createdSubject.should.deep.equal(subject);
-
-    createdObjects.should.deep.equal([
-      { csid: '1111', recordType: recordTypeValue },
-      { csid: '2222', recordType: recordTypeValue },
-    ]);
-
-    createdPredicate.should.equal('affects');
-
-    return new Promise((resolve) => {
-      window.setTimeout(() => {
-        createdHandlerCalled.should.equal(true);
-
-        resolve();
-      }, 0);
-    });
-  });
-
-  it('should call showRelationNotification if multiple subjects are successfully related', function test() {
-    const recordTypeValue = 'collectionobject';
-
-    const subjects = [
-      {
-        csid: '1234',
-        recordType: 'group',
-      },
-      {
-        csid: '5678',
-        recordType: 'group',
-      },
-    ];
-
-    const selectedItems = Immutable.fromJS({
-      1111: { csid: '1111', recordType: recordTypeValue },
-      2222: { csid: '2222', recordType: recordTypeValue },
-    });
-
-    const search = () => {};
-    const createRelations = () => {};
-
-    let notificationValues = null;
-
-    const showRelationNotification = (messageArg, valuesArg) => {
-      notificationValues = valuesArg;
-    };
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(
-      <BaseSearchToRelateModal
-        config={config}
-        intl={intl}
-        isOpen
-        isSearchInitiated
-        recordTypeValue={recordTypeValue}
-        subjects={subjects}
-        selectedItems={selectedItems}
-        search={search}
-        createRelations={createRelations}
-        showRelationNotification={showRelationNotification}
-      />
-    );
-
-    let result;
-    let buttonBar;
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const searchButton = findWithType(buttonBar, SearchButton);
-
-    searchButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const relateButton = findWithType(buttonBar, RelateButton);
-
-    relateButton.props.onClick();
-
-    return new Promise((resolve) => {
-      window.setTimeout(() => {
-        notificationValues.should.deep.equal({
-          subjectCount: 2,
-          objectCount: 2,
-        });
-
-        resolve();
-      }, 0);
-    });
-  });
-
-  it('should call subjects to retrieve subjects if it is a function', function test() {
-    const recordTypeValue = 'collectionobject';
-
-    const subject = {
-      csid: '1234',
-      recordType: 'group',
-    };
-
-    const selectedItems = Immutable.fromJS({
-      1111: { csid: '1111', recordType: recordTypeValue },
-      2222: { csid: '2222', recordType: recordTypeValue },
-    });
-
-    const search = () => {};
-    const getSubjects = () => [subject];
-
-    let createdSubject = null;
-
-    const createRelations = (subjectArg) => {
-      createdSubject = subjectArg;
-
-      return Promise.resolve();
-    };
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(
-      <BaseSearchToRelateModal
-        config={config}
-        intl={intl}
-        isOpen
-        isSearchInitiated
-        recordTypeValue={recordTypeValue}
-        subjects={getSubjects}
-        selectedItems={selectedItems}
-        search={search}
-        createRelations={createRelations}
-      />
-    );
-
-    let result;
-    let buttonBar;
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const searchButton = findWithType(buttonBar, SearchButton);
-
-    searchButton.props.onClick();
-
-    result = shallowRenderer.getRenderOutput();
-    buttonBar = result.props.renderButtonBar();
-
-    const relateButton = findWithType(buttonBar, RelateButton);
-
-    relateButton.props.onClick();
-
-    createdSubject.should.deep.equal(subject);
   });
 });

@@ -139,7 +139,7 @@ describe('SearchToSelectTitleBar', function suite() {
         </ConfigProvider>
       </IntlProvider>, this.container);
 
-    this.container.querySelector('h1').textContent.should.match(/containing keyword/);
+    this.container.querySelector('h1').textContent.should.match(/containing "keyword"/);
     this.container.querySelector('.cspace-ui-FieldConditionInput--common').should.not.equal(null);
   });
 
