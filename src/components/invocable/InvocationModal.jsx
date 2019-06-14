@@ -133,15 +133,17 @@ export default class InvocationModal extends Component {
     if (invocationDescriptor) {
       const invocationCsid = invocationDescriptor.get('csid');
 
-      if (invocationCsid && !invocationDescriptor.get('items')) {
+      if (
+        invocationCsid
+        && typeof invocationCsid === 'string'
+        && !invocationDescriptor.get('items')
+      ) {
         searchCsid(config, invocationDescriptor.get('recordType'), invocationCsid)
           .then((response) => {
             const item = get(response, ['data', 'ns2:abstract-common-list', 'list-item']);
 
             const nextInvocationDescriptor = this.state.invocationDescriptor.set(
-              'items', Immutable.fromJS({
-                [invocationCsid]: item,
-              })
+              'items', Immutable.fromJS([item])
             );
 
             this.setState({
