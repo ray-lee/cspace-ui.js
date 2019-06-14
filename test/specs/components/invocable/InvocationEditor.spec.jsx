@@ -7,6 +7,7 @@ import { IntlProvider } from 'react-intl';
 import configureMockStore from 'redux-mock-store';
 import { Provider as StoreProvider } from 'react-redux';
 import InvocationEditor from '../../../../src/components/invocable/InvocationEditor';
+import InvocationDescriptorEditor from '../../../../src/components/invocable/InvocationDescriptorEditor';
 import RecordFormContainer from '../../../../src/containers/record/RecordFormContainer';
 import createTestContainer from '../../../helpers/createTestContainer';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
@@ -41,9 +42,24 @@ describe('InvocationEditor', function suite() {
       },
     },
     recordTypes: {
+      collectionobject: {
+        name: 'collectionobject',
+        serviceConfig: {
+          objectName: 'CollectionObject',
+        },
+      },
+      group: {
+        name: 'group',
+        serviceConfig: {
+          objectName: 'Group',
+        },
+      },
       report: {
         invocableName: data =>
           data.getIn(['document', 'ns2:reports_common', 'filename']),
+        serviceConfig: {
+          objectName: 'Report',
+        },
       },
     },
   };
@@ -52,6 +68,16 @@ describe('InvocationEditor', function suite() {
     document: {
       'ns2:reports_common': {
         filename: reportName,
+        forDocTypes: {
+          forDocType: [
+            'Group',
+            'CollectionObject',
+          ],
+        },
+        supportsNoContext: 'true',
+        supportsDocList: 'true',
+        supportsGroup: 'true',
+        supportsSingleDoc: 'true',
       },
     },
   });
@@ -64,6 +90,57 @@ describe('InvocationEditor', function suite() {
 
   beforeEach(function before() {
     this.container = createTestContainer(this);
+  });
+
+  it('should render an InvocationDescriptorEditor with the supported modes and record types', function test() {
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(
+      <InvocationEditor
+        config={config}
+        invocationDescriptor={invocationDescriptor}
+        metadata={reportMetadata}
+        recordType="report"
+      />
+    );
+
+    const result = shallowRenderer.getRenderOutput();
+    const invocationDescriptorEditor = findWithType(result, InvocationDescriptorEditor);
+
+    invocationDescriptorEditor.should.not.equal(null);
+
+    invocationDescriptorEditor.props.config.should.equal(config);
+    invocationDescriptorEditor.props.recordTypes.should.deep.equal(['group', 'collectionobject']);
+    invocationDescriptorEditor.props.modes.should.deep.equal(['nocontext', 'list', 'group', 'single']);
+  });
+
+  it('should support an invocable with a single (non-list) forDocTypes', function test() {
+    const singleForDocTypeReportMetadata = Immutable.fromJS({
+      document: {
+        'ns2:reports_common': {
+          filename: reportName,
+          forDocTypes: {
+            forDocType: 'CollectionObject',
+          },
+        },
+      },
+    });
+
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(
+      <InvocationEditor
+        config={config}
+        invocationDescriptor={invocationDescriptor}
+        metadata={singleForDocTypeReportMetadata}
+        recordType="report"
+      />
+    );
+
+    const result = shallowRenderer.getRenderOutput();
+    const invocationDescriptorEditor = findWithType(result, InvocationDescriptorEditor);
+
+    invocationDescriptorEditor.props.recordTypes.should.deep.equal(['collectionobject']);
   });
 
   it('should render a RecordFormContainer if the invocable has a record type config', function test() {
