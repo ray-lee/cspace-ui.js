@@ -192,6 +192,7 @@ export class BaseSearchToSelectModal extends Component {
 
     const {
       config,
+      defaultVocabularyValue,
       recordTypeValue,
       vocabularyValue,
       advancedSearchCondition,
@@ -227,7 +228,7 @@ export class BaseSearchToSelectModal extends Component {
         get(config, ['recordTypes', recordTypeValue, 'serviceConfig', 'serviceType']);
 
       if (serviceType === 'authority') {
-        onVocabularyCommit('all');
+        onVocabularyCommit(defaultVocabularyValue);
       }
     }
   }
