@@ -67,7 +67,7 @@ export default (configContext) => {
             messages: defineMessages({
               name: {
                 id: 'field.uoc_common.projectId.name',
-                defaultMessage: 'Project ID 2',
+                defaultMessage: 'Project ID',
               },
             }),
             view: {
