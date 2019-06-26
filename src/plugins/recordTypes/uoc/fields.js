@@ -16,6 +16,7 @@ export default (configContext) => {
 
   const {
     DATA_TYPE_DATE,
+    DATA_TYPE_INT,
   } = configContext.dataTypes;
 
   const {
@@ -60,6 +61,38 @@ export default (configContext) => {
             },
           },
         },
+        projectId: {
+          [config]: {
+            messages: defineMessages({
+              name: {
+                id: 'field.uoc_common.projectId.name',
+                defaultMessage: 'Project ID',
+              },
+            }),
+            view: {
+              type: IDGeneratorInput,
+              props: {
+                source: 'proj',
+              },
+            },
+          },
+        },
+        projectDescription: {
+          [config]: {
+            messages: defineMessages({
+              name: {
+                id: 'field.uoc_common.projectDescription.name',
+                defaultMessage: 'Project Description',
+              },
+            }),
+            view: {
+              type: TextInput,
+              props: {
+                multiline: true,
+              },
+            },
+          },
+        },
         methodList: {
           [config]: {
             view: {
@@ -98,68 +131,160 @@ export default (configContext) => {
             },
           },
         },
-        authorizedBy: {
+        authorizationGroupList: {
           [config]: {
-            messages: defineMessages({
-              name: {
-                id: 'field.uoc_common.authorizedBy.name',
-                defaultMessage: 'Authorized by',
-              },
-            }),
             view: {
-              type: AutocompleteInput,
-              props: {
-                source: 'person/local,person/shared',
+              type: CompoundInput,
+            },
+          },
+          authorizationGroup: {
+            [config]: {
+              messages: defineMessages({
+                name: {
+                  id: 'field.uoc_common.authorizationGroup.name',
+                  defaultMessage: 'Authorization',
+                },
+              }),
+              repeating: true,
+              view: {
+                type: CompoundInput,
+                props: {
+                  tabular: true,
+                },
+              },
+            },
+            authorizedBy: {
+              [config]: {
+                messages: defineMessages({
+                  name: {
+                    id: 'field.uoc_common.authorizedBy.name',
+                    defaultMessage: 'Authorized by',
+                  },
+                }),
+                view: {
+                  type: AutocompleteInput,
+                  props: {
+                    source: 'person/local,person/shared',
+                  },
+                },
+              },
+            },
+            authorizationDate: {
+              [config]: {
+                dataType: DATA_TYPE_DATE,
+                messages: defineMessages({
+                  fulName: {
+                    id: 'field.uoc_common.authorizationDate.fulName',
+                    defaultMessage: 'Authorization date',
+                  },
+                  name: {
+                    id: 'field.uoc_common.authorizationDate.name',
+                    defaultMessage: 'Date',
+                  },
+                }),
+                view: {
+                  type: DateInput,
+                },
+              },
+            },
+            authorizationNote: {
+              [config]: {
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.authorizationNote.fullName',
+                    defaultMessage: 'Authorization note',
+                  },
+                  name: {
+                    id: 'field.uoc_common.authorizationNote.name',
+                    defaultMessage: 'Note',
+                  },
+                }),
+                view: {
+                  type: TextInput,
+                },
+              },
+            },
+            authorizationStatus: {
+              [config]: {
+                messages: defineMessages({
+                  name: {
+                    id: 'field.uoc_common.authorizationStatus.name',
+                    defaultMessage: 'Status',
+                  },
+                }),
+                view: {
+                  type: TermPickerInput,
+                  props: {
+                    source: 'authorizationStatuses',
+                  },
+                },
               },
             },
           },
         },
-        authorizationDate: {
+        startSingleDateGroupList: {
           [config]: {
-            dataType: DATA_TYPE_DATE,
-            messages: defineMessages({
-              fulName: {
-                id: 'field.uoc_common.authorizationDate.fulName',
-                defaultMessage: 'Authorization date',
-              },
-              name: {
-                id: 'field.uoc_common.authorizationDate.name',
-                defaultMessage: 'Date',
-              },
-            }),
             view: {
-              type: DateInput,
+              type: CompoundInput,
             },
           },
-        },
-        authorizationNote: {
-          [config]: {
-            messages: defineMessages({
-              fullName: {
-                id: 'field.uoc_common.authorizationNote.fullName',
-                defaultMessage: 'Authorization note',
+          startSingleDateGroup: {
+            [config]: {
+              messages: defineMessages({
+                name: {
+                  id: 'field.uoc_common.startSingleDateGroup.name',
+                  defaultMessage: 'Start/single dates', // FIX ME
+                },
+              }),
+              repeating: true,
+              view: {
+                type: CompoundInput,
+                props: {
+                  tabular: true,
+                },
               },
-              name: {
-                id: 'field.uoc_common.authorizationNote.name',
-                defaultMessage: 'Note',
-              },
-            }),
-            view: {
-              type: TextInput,
             },
-          },
-        },
-        startSingleDate: {
-          [config]: {
-            dataType: DATA_TYPE_DATE,
-            messages: defineMessages({
-              name: {
-                id: 'field.uoc_common.startSingleDate.name',
-                defaultMessage: 'Start/single date',
+            startSingleDate: {
+              [config]: {
+                dataType: DATA_TYPE_DATE,
+                messages: defineMessages({
+                  name: {
+                    id: 'field.uoc_common.startSingleDate.name',
+                    defaultMessage: 'Date',
+                  },
+                }),
+                view: {
+                  type: DateInput,
+                },
               },
-            }),
-            view: {
-              type: DateInput,
+            },
+            numberOfVisitors: {
+              [config]: {
+                messages: defineMessages({
+                  name: {
+                    id: 'field.uoc_common.numberOfVisitors.name',
+                    defaultMessage: 'No. of vistors',
+                  },
+                }),
+                dataType: DATA_TYPE_INT,
+                view: {
+                  type: TextInput,
+                },
+              },
+            },
+            hoursSpent: {
+              [config]: {
+                messages: defineMessages({
+                  name: {
+                    id: 'field.uoc_common.hoursSpent.name',
+                    defaultMessage: 'Hours spent',
+                  },
+                }),
+                dataType: DATA_TYPE_INT,
+                view: {
+                  type: TextInput,
+                },
+              },
             },
           },
         },
@@ -239,6 +364,47 @@ export default (configContext) => {
                 },
               },
             },
+            userRole: {
+              [config]: {
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.userRole.fullName',
+                    defaultMessage: 'User role',
+                  },
+                  name: {
+                    id: 'field.uoc_common.userRole.name',
+                    defaultMessage: 'Role',
+                  },
+                }),
+                view: {
+                  type: TermPickerInput,
+                  props: {
+                    source: 'userRoles',
+                  },
+                },
+              },
+            },
+            userInstitution: {
+              [config]: {
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.userInstitution.fullName',
+                    defaultMessage: 'User institution',
+                  },
+                  name: {
+                    id: 'field.uoc_common.userInstitution.name',
+                    defaultMessage: 'Institution',
+                  },
+                }),
+                view: {
+                  type: AutocompleteInput,
+                  props: {
+                    source: 'organization/local,organization/all,organization/shared',
+                  },
+                },
+              },
+            },
+
           },
         },
         location: {

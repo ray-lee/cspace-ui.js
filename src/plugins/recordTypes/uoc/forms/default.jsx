@@ -14,7 +14,6 @@ const template = (configContext) => {
 
   const {
     Field,
-    InputTable,
   } = configContext.recordComponents;
 
   return (
@@ -24,6 +23,8 @@ const template = (configContext) => {
         <Row>
           <Col>
             <Field name="referenceNumber" />
+            <Field name="projectId" />
+            <Field name="projectDescription" />
           </Col>
 
           <Col>
@@ -35,21 +36,32 @@ const template = (configContext) => {
 
         <Field name="title" />
 
-        <InputTable name="authorizedBy">
-          <Field name="authorizedBy" />
-          <Field name="authorizationDate" />
-          <Field name="authorizationNote" />
-        </InputTable>
+        <Field name="authorizationGroupList">
+          <Field name="authorizationGroup">
+            <Field name="authorizedBy" />
+            <Field name="authorizationDate" />
+            <Field name="authorizationNote" />
+            <Field name="authorizationStatus" />
+          </Field>
+        </Field>
 
         <Cols>
           <Col>
-            <Field name="startSingleDate" />
+            <Field name="startSingleDateGroupList">
+              <Field name="startSingleDateGroup" >
+                <Field name="startSingleDate" />
+                <Field name="numberOfVisitors" />
+                <Field name="hoursSpent" />
+              </Field>
+            </Field>
             <Field name="endDate" />
 
             <Field name="userGroupList">
               <Field name="userGroup">
                 <Field name="user" />
                 <Field name="userType" />
+                <Field name="userRole" />
+                <Field name="userInstitution" />
               </Field>
             </Field>
 
