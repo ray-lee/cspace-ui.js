@@ -109,13 +109,7 @@ const template = (configContext) => {
               <Field name="location" />
             </Field>
 
-            <Row>
-              <InputTable name="feeCharged">
-                <Field name="feeAmount" />
-                <Field name="feeNote" />
-              </InputTable>
-            <Field name="feePaid" />
-            </Row>
+
           </Col>
 
           <Col>
@@ -123,6 +117,14 @@ const template = (configContext) => {
             <Row>
               <Field name="provisos" />
               <Field name="obligationsFulfilled" />
+            </Row>
+
+            <Row>
+              <InputTable name="feeCharged">
+                <Field name="feeAmount" />
+                <Field name="feeNote" />
+              </InputTable>
+            <Field name="feePaid" />
             </Row>
           </Col>
         </Cols>
