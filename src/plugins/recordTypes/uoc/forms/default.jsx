@@ -14,7 +14,6 @@ const template = (configContext) => {
 
   const {
     Field,
-    InputTable,
   } = configContext.recordComponents;
 
   return (
@@ -73,7 +72,15 @@ const template = (configContext) => {
           </Col>
         </Cols>
 
-        <Field name="linkToContract" />
+        <Cols>
+          <Col>
+            <Field name="linkToContractList">
+              <Field name="linkToContract" />
+            </Field>
+          </Col>
+          <Col />
+        </Cols>
+
         <Field name="authorizationGroupList">
           <Field name="authorizationGroup">
             <Field name="authorizedBy" />
@@ -83,52 +90,53 @@ const template = (configContext) => {
           </Field>
         </Field>
 
+        <Field name="useDateGroupList">
+          <Field name="useDateGroup" >
+            <Field name="useDate" />
+            <Field name="useDateNumberOfVisitors" />
+            <Field name="useDateHoursSpent" />
+            <Field name="useDateVisitorNote" />
+          </Field>
+        </Field>
+
         <Cols>
           <Col>
-            <Field name="useDateGroupList">
-              <Field name="useDateGroup" >
-                <Field name="useDate" />
-                <Field name="useDateNumberOfVisitors" />
-                <Field name="useDateHoursSpent" />
-                <Field name="useDateVisitorNote" />
-              </Field>
-            </Field>
-
             <Field name="endDate" />
+          </Col>
+          <Col />
+        </Cols>
 
-            <Field name="staffGroupList">
-              <Field name="staffGroup">
-                <Field name="staffName" />
-                <Field name="staffRole" />
-                <Field name="staffHours" />
-                <Field name="staffNote" />
+        <Field name="staffGroupList">
+          <Field name="staffGroup">
+            <Field name="staffName" />
+            <Field name="staffRole" />
+            <Field name="staffHours" />
+            <Field name="staffNote" />
+          </Field>
+        </Field>
+
+        <Row>
+          <Field name="locationList">
+            <Field name="location" />
+
+          </Field>
+          <Row>
+            <Field name="feeGroupList">
+              <Field name="feeGroup">
+                <Field name="feeCurrency" />
+                <Field name="feeValue" />
+                <Field name="feeNote" />
+                <Field name="feePaid" />
               </Field>
             </Field>
+          </Row>
+        </Row>
 
-            <Field name="locationList">
-              <Field name="location" />
-            </Field>
-
-
-          </Col>
-
-          <Col>
-            <Field name="note" />
-            <Row>
-              <Field name="provisos" />
-              <Field name="obligationsFulfilled" />
-            </Row>
-
-            <Row>
-              <InputTable name="feeCharged">
-                <Field name="feeAmount" />
-                <Field name="feeNote" />
-              </InputTable>
-
-              <Field name="feePaid" />
-            </Row>
-          </Col>
-        </Cols>
+        <Field name="note" />
+        <Row>
+          <Field name="provisos" />
+          <Field name="obligationsFulfilled" />
+        </Row>
 
         <Field name="result" />
       </Panel>
