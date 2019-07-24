@@ -23,6 +23,8 @@ import {
   DESELECT_RESULT_ITEM,
 } from '../constants/actionCodes';
 
+const toJS = obj => ((obj && typeof obj === 'object' && obj.toJS) ? obj.toJS() : obj);
+
 const getSortParam = (config, searchDescriptor, columnSetName) => {
   const sortSpec = searchDescriptor.getIn(['searchQuery', 'sort']);
   const [sortColumnName, sortDir] = sortSpec.split(' ');
@@ -180,6 +182,7 @@ export const search = (config, searchName, searchDescriptor, listType = 'common'
         doctype: searchQuery.get('doctype'),
         kw: searchQuery.get('kw'),
         mkRtSbj: searchQuery.get('mkRtSbj'),
+        mode: toJS(searchQuery.get('mode')),
         pgNum: searchQuery.get('p'),
         pgSz: searchQuery.get('size'),
         rtSbj: searchQuery.get('rel'),
@@ -258,6 +261,47 @@ export const search = (config, searchName, searchDescriptor, listType = 'common'
         },
       }));
   };
+
+export const searchCsid = (config, recordType, csid) => () => {
+  const requestConfig = {
+    params: {
+      as: `(ecm:name = "${csid}")`,
+      pgSz: 1,
+      wf_deleted: false,
+    },
+  };
+
+  const recordTypeConfig = config.recordTypes[recordType];
+
+  if (!recordTypeConfig) {
+    return Promise.reject();
+  }
+
+  const recordTypeServicePath = get(recordTypeConfig, ['serviceConfig', 'servicePath']);
+
+  if (!recordTypeServicePath) {
+    return Promise.reject();
+  }
+
+  const pathParts = [recordTypeServicePath];
+  const serviceType = get(recordTypeConfig, ['serviceConfig', 'serviceType']);
+
+  if (serviceType === 'authority') {
+    const vocabularyServicePath =
+      get(recordTypeConfig, ['vocabularies', 'all', 'serviceConfig', 'servicePath']);
+
+    if (!vocabularyServicePath) {
+      return Promise.reject();
+    }
+
+    pathParts.push(vocabularyServicePath);
+    pathParts.push('items');
+  }
+
+  const path = pathParts.join('/');
+
+  return getSession().read(path, requestConfig);
+};
 
 export const setResultItemSelected =
   (config, searchName, searchDescriptor, listType = 'common', index, isSelected) => {

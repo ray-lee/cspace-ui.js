@@ -43,6 +43,7 @@ const propTypes = {
   recordType: PropTypes.string,
   recordData: PropTypes.instanceOf(Immutable.Map),
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
+  searchError: PropTypes.instanceOf(Immutable.Map),
   searchResult: PropTypes.instanceOf(Immutable.Map),
   listType: PropTypes.string,
   title: PropTypes.node,
@@ -110,14 +111,16 @@ export default class SearchPanel extends Component {
 
     const {
       searchDescriptor,
+      searchError,
       searchResult,
       onSearchDescriptorChange,
     } = this.props;
 
     if (
       !Immutable.is(prevSearchDescriptor, searchDescriptor) ||
-      // If the search result was cleared from the store, redo the search.
-      (typeof searchResult === 'undefined' && prevSearchResult)
+      // If the search result was cleared from the store (not due to the search failing), redo the
+      // search.
+      (typeof searchResult === 'undefined' && prevSearchResult && !searchError)
     ) {
       this.search();
 

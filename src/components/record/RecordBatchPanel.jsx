@@ -19,14 +19,19 @@ const messages = defineMessages({
   },
 });
 
-const getSearchDescriptor = objectName => Immutable.fromJS({
-  recordType: 'batch',
-  searchQuery: {
-    p: 0,
-    size: 5,
-    doctype: objectName,
-  },
-});
+const getSearchDescriptor = (config, recordType) => {
+  const objectName = get(config, ['recordTypes', recordType, 'serviceConfig', 'objectName']);
+
+  return Immutable.fromJS({
+    recordType: 'batch',
+    searchQuery: {
+      p: 0,
+      size: 5,
+      doctype: objectName,
+      mode: (recordType === 'group' ? ['single', 'group'] : 'single'),
+    },
+  });
+};
 
 const propTypes = {
   color: PropTypes.string,
@@ -54,10 +59,8 @@ export default class RecordBatchPanel extends Component {
       recordType,
     } = this.props;
 
-    const objectName = get(config, ['recordTypes', recordType, 'serviceConfig', 'objectName']);
-
     this.state = {
-      searchDescriptor: getSearchDescriptor(objectName),
+      searchDescriptor: getSearchDescriptor(config, recordType),
     };
   }
 
@@ -72,10 +75,8 @@ export default class RecordBatchPanel extends Component {
     } = nextProps;
 
     if (nextRecordType !== recordType) {
-      const nextObjectName = get(config, ['recordTypes', nextRecordType, 'serviceConfig', 'objectName']);
-
       this.setState({
-        searchDescriptor: getSearchDescriptor(nextObjectName),
+        searchDescriptor: getSearchDescriptor(config, nextRecordType),
       });
     }
   }
@@ -124,6 +125,10 @@ export default class RecordBatchPanel extends Component {
           });
         }
       };
+
+      this.setState({
+        isRunning: true,
+      });
 
       invoke(config, batchMetadata, invocationDescriptor, handleValidationSuccess)
         .then((response) => {
@@ -187,7 +192,6 @@ export default class RecordBatchPanel extends Component {
           collapsed
           color={color}
           config={config}
-          csid={csid}
           linkItems={false}
           name={RECORD_BATCH_PANEL_SEARCH_NAME}
           searchDescriptor={searchDescriptor}
@@ -198,13 +202,16 @@ export default class RecordBatchPanel extends Component {
           onSearchDescriptorChange={this.handleSearchDescriptorChange}
         />
         <InvocationModalContainer
+          allowedModes={recordType === 'group' ? ['group', 'single'] : undefined}
           config={config}
           csid={selectedItem && selectedItem.get('csid')}
-          initialInvocationDescriptor={{
+          initialInvocationDescriptor={Immutable.Map({
             csid,
             recordType,
-            mode: 'single',
-          }}
+            mode: (recordType === 'group' ? 'group' : 'single'),
+          })}
+          modeReadOnly={recordType !== 'group'}
+          invocationTargetReadOnly
           isOpen={isModalOpen}
           isRunning={isRunning}
           recordType="batch"

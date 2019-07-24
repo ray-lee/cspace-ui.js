@@ -103,6 +103,7 @@ describe('RecordReportPanel', function suite() {
       recordType: 'report',
       searchQuery: {
         doctype: 'Group',
+        mode: ['single', 'group'],
         p: 0,
         size: 5,
       },
@@ -185,6 +186,7 @@ describe('RecordReportPanel', function suite() {
       recordType: 'report',
       searchQuery: {
         doctype: 'Group',
+        mode: ['single', 'group'],
         p: 0,
         size: 5,
       },
@@ -208,6 +210,7 @@ describe('RecordReportPanel', function suite() {
       recordType: 'report',
       searchQuery: {
         doctype: 'CollectionObject',
+        mode: 'single',
         p: 0,
         size: 5,
       },
@@ -348,9 +351,15 @@ describe('RecordReportPanel', function suite() {
 
     modal.props.onInvokeButtonClick(reportMetadata, invocationDescriptor);
 
-    openedConfig.should.equal(config);
-    openedReportMetadata.should.equal(reportMetadata);
-    openedInvocationDescriptor.should.equal(invocationDescriptor);
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        openedConfig.should.equal(config);
+        openedReportMetadata.should.equal(reportMetadata);
+        openedInvocationDescriptor.should.equal(invocationDescriptor);
+
+        resolve();
+      }, 0);
+    });
   });
 
   it('should update the search panel when it changes the search descriptor', function test() {
@@ -380,6 +389,7 @@ describe('RecordReportPanel', function suite() {
       recordType: 'report',
       searchQuery: {
         doctype: 'Group',
+        mode: ['single', 'group'],
         p: 0,
         size: 5,
       },

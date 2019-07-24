@@ -9,11 +9,13 @@ import qs from 'qs';
 import CheckboxInput from 'cspace-input/lib/components/CheckboxInput';
 import ErrorPage from './ErrorPage';
 import RelateButton from '../record/RelateButton';
-import SearchResultTitleBar from '../search/SearchResultTitleBar';
 import Pager from '../search/Pager';
+import SearchResultSidebar from '../search/SearchResultSidebar';
 import SearchResultSummary from '../search/SearchResultSummary';
+import SearchResultTitleBar from '../search/SearchResultTitleBar';
 import SelectBar from '../search/SelectBar';
-import SearchResultTableContainer from '../../containers/search/SearchResultTableContainer';
+import WatchedSearchResultTableContainer from '../../containers/search/WatchedSearchResultTableContainer';
+import SearchResultSidebarToggleButtonContainer from '../../containers/search/SearchResultSidebarToggleButtonContainer';
 import SearchToRelateModalContainer from '../../containers/search/SearchToRelateModalContainer';
 import { canRelate } from '../../helpers/permissionHelpers';
 import { getListType } from '../../helpers/searchHelpers';
@@ -28,7 +30,7 @@ import {
 
 import styles from '../../../styles/cspace-ui/SearchResultPage.css';
 import pageBodyStyles from '../../../styles/cspace-ui/PageBody.css';
-import searchResultSidebarStyles from '../../../styles/cspace-ui/SearchResultSidebar.css';
+import sidebarToggleBarStyles from '../../../styles/cspace-ui/SidebarToggleBar.css';
 
 // FIXME: Make default page size configurable
 const defaultPageSize = 20;
@@ -46,6 +48,7 @@ const messages = defineMessages({
 });
 
 const propTypes = {
+  isSidebarOpen: PropTypes.bool,
   history: PropTypes.object,
   location: PropTypes.object,
   match: PropTypes.object,
@@ -58,6 +61,10 @@ const propTypes = {
   setSearchPageKeyword: PropTypes.func,
   setAllItemsSelected: PropTypes.func,
   onItemSelectChange: PropTypes.func,
+};
+
+const defaultProps = {
+  isSidebarOpen: true,
 };
 
 const contextTypes = {
@@ -82,7 +89,7 @@ export default class SearchResultPage extends Component {
     this.renderCheckbox = this.renderCheckbox.bind(this);
     this.renderFooter = this.renderFooter.bind(this);
     this.renderHeader = this.renderHeader.bind(this);
-    this.shouldShowCheckbox = this.shouldShowCheckbox.bind(this);
+    this.search = this.search.bind(this);
 
     this.state = {
       isSearchToRelateModalOpen: false,
@@ -163,11 +170,6 @@ export default class SearchResultPage extends Component {
   }
 
   getSearchDescriptor() {
-    // FIXME: Make the search descriptor consistently an Immutable. Currently only the advanced
-    // search condition is an Immutable. The whole search descriptor gets converted to an Immutable
-    // when stored in the Redux store, but components expect it to be an object (except for the
-    // advanced search condition, which is always Immutable). This is confusing.
-
     // FIXME: Refactor this into a wrapper component that calculates the search descriptor from
     // location and params, and passes it into a child. This will eliminate the multiple calls to
     // this method from the various render methods in this class.
@@ -264,6 +266,7 @@ export default class SearchResultPage extends Component {
   closeModal() {
     this.setState({
       isSearchToRelateModalOpen: false,
+      selectionValidationError: undefined,
     });
   }
 
@@ -320,19 +323,53 @@ export default class SearchResultPage extends Component {
     return false;
   }
 
-  shouldShowCheckbox(item) {
+  validateSelectedItemsRelatable() {
     const {
       perms,
+      selectedItems,
     } = this.props;
 
     const {
       config,
     } = this.context;
 
-    return (
-      item.get('workflowState') !== 'locked' &&
-      canRelate(getRecordTypeNameByUri(config, item.get('uri')), perms, config)
-    );
+    if (selectedItems) {
+      let err;
+
+      selectedItems.valueSeq().find((item) => {
+        if (item.get('workflowState') === 'locked') {
+          err = {
+            code: 'locked',
+          };
+
+          return true;
+        }
+
+        const recordType = getRecordTypeNameByUri(config, item.get('uri'));
+
+        if (!canRelate(recordType, perms, config)) {
+          const recordMessages = get(config, ['recordTypes', recordType, 'messages', 'record']);
+
+          err = {
+            code: 'notPermitted',
+            values: {
+              name: <FormattedMessage {...recordMessages.name} />,
+              collectionName: <FormattedMessage {...recordMessages.collectionName} />,
+            },
+          };
+
+          return true;
+        }
+
+        return false;
+      });
+
+      if (err) {
+        return err;
+      }
+    }
+
+    return undefined;
   }
 
   handleCheckboxClick(event) {
@@ -461,6 +498,7 @@ export default class SearchResultPage extends Component {
   handleRelateButtonClick() {
     this.setState({
       isSearchToRelateModalOpen: true,
+      selectionValidationError: this.validateSelectedItemsRelatable(),
     });
   }
 
@@ -514,27 +552,23 @@ export default class SearchResultPage extends Component {
       selectedItems,
     } = this.props;
 
-    if (this.shouldShowCheckbox(rowData)) {
-      const itemCsid = rowData.get('csid');
-      const selected = selectedItems ? selectedItems.has(itemCsid) : false;
+    const itemCsid = rowData.get('csid');
+    const selected = selectedItems ? selectedItems.has(itemCsid) : false;
 
-      return (
-        <CheckboxInput
-          embedded
-          name={`${rowIndex}`}
-          value={selected}
+    return (
+      <CheckboxInput
+        embedded
+        name={`${rowIndex}`}
+        value={selected}
 
-          // DRYD-252: Elaborate workaround for Firefox, part II. Use this onClick instead of the
-          // onCommit and onClick below.
-          onClick={this.handleCheckboxClick}
-          // onCommit={this.handleCheckboxCommit}
-          // Prevent clicking on the checkbox from selecting the record.
-          // onClick={stopPropagation}
-        />
-      );
-    }
-
-    return null;
+        // DRYD-252: Elaborate workaround for Firefox, part II. Use this onClick instead of the
+        // onCommit and onClick below.
+        onClick={this.handleCheckboxClick}
+        // onCommit={this.handleCheckboxCommit}
+        // Prevent clicking on the checkbox from selecting the record.
+        // onClick={stopPropagation}
+      />
+    );
   }
 
   renderHeader({ searchError, searchResult }) {
@@ -552,18 +586,22 @@ export default class SearchResultPage extends Component {
 
     let selectBar;
 
-    if (!searchError && this.isResultRelatable(searchDescriptor)) {
+    if (!searchError) {
       const selectedCount = selectedItems ? selectedItems.size : 0;
 
-      const relateButton = (
-        <RelateButton
-          disabled={selectedCount < 1}
-          key="relate"
-          label={<FormattedMessage {...messages.relate} />}
-          name="relate"
-          onClick={this.handleRelateButtonClick}
-        />
-      );
+      let relateButton;
+
+      if (this.isResultRelatable(searchDescriptor)) {
+        relateButton = (
+          <RelateButton
+            disabled={selectedCount < 1}
+            key="relate"
+            label={<FormattedMessage {...messages.relate} />}
+            name="relate"
+            onClick={this.handleRelateButtonClick}
+          />
+        );
+      }
 
       selectBar = (
         <SelectBar
@@ -575,7 +613,6 @@ export default class SearchResultPage extends Component {
           searchResult={searchResult}
           selectedItems={selectedItems}
           setAllItemsSelected={setAllItemsSelected}
-          showCheckboxFilter={this.shouldShowCheckbox}
         />
       );
     }
@@ -633,6 +670,8 @@ export default class SearchResultPage extends Component {
   render() {
     const {
       history,
+      isSidebarOpen,
+      selectedItems,
     } = this.props;
 
     const {
@@ -641,9 +680,12 @@ export default class SearchResultPage extends Component {
 
     const {
       isSearchToRelateModalOpen,
+      selectionValidationError,
     } = this.state;
 
     const searchDescriptor = this.getSearchDescriptor();
+    const advancedSearchCondition = searchDescriptor.getIn(['searchQuery', 'as']);
+
     const listType = this.getListType(searchDescriptor);
 
     const recordType = searchDescriptor.get('recordType');
@@ -671,6 +713,7 @@ export default class SearchResultPage extends Component {
           config={config}
           isOpen={isSearchToRelateModalOpen}
           defaultRecordTypeValue="collectionobject"
+          error={selectionValidationError}
           onCancelButtonClick={this.handleModalCancelButtonClick}
           onCloseButtonClick={this.handleModalCloseButtonClick}
           onRelationsCreated={this.handleRelationsCreated}
@@ -687,22 +730,39 @@ export default class SearchResultPage extends Component {
           updateDocumentTitle
         />
 
-        <div className={pageBodyStyles.common}>
-          <SearchResultTableContainer
+        <div
+          className={
+            advancedSearchCondition
+              ? sidebarToggleBarStyles.advanced
+              : sidebarToggleBarStyles.normal
+          }
+        >
+          <SearchResultSidebarToggleButtonContainer />
+        </div>
+
+        <div className={isSidebarOpen ? pageBodyStyles.common : pageBodyStyles.full}>
+          <WatchedSearchResultTableContainer
             config={config}
             history={history}
             listType={listType}
             searchName={SEARCH_RESULT_PAGE_SEARCH_NAME}
             searchDescriptor={searchDescriptor}
             recordType={recordType}
-            showCheckboxColumn={isResultRelatable}
+            showCheckboxColumn
             renderCheckbox={this.renderCheckbox}
             renderHeader={this.renderHeader}
             renderFooter={this.renderFooter}
             onSortChange={this.handleSortChange}
+            search={this.search}
           />
 
-          <div className={searchResultSidebarStyles.common} />
+          <SearchResultSidebar
+            config={config}
+            history={history}
+            isOpen={isSidebarOpen}
+            recordType={recordType}
+            selectedItems={selectedItems}
+          />
         </div>
 
         {searchToRelateModal}
@@ -712,4 +772,5 @@ export default class SearchResultPage extends Component {
 }
 
 SearchResultPage.propTypes = propTypes;
+SearchResultPage.defaultProps = defaultProps;
 SearchResultPage.contextTypes = contextTypes;
