@@ -1,32 +1,19 @@
 import { defineMessages } from 'react-intl';
-import { computeCSID } from './utils';
 
  export default (configContext) => {
   const {
     CompoundInput,
     AutocompleteInput,
-    TextInput,
   } = configContext.inputComponents;
 
   const {
     configKey: config,
   } = configContext.configHelpers;
 
-  const {
-    refNameToCsid,
-  } = configContext.formatHelpers;
-
-  const {
-    Immutable,
-  } = configContext.lib;
-
-compute: args => computeCSID(args, refNameToCsid, Immutable);
-
    return {
 
     params: {
       [config]: {
-        // compute: computeCSID,
         view: {
           type: CompoundInput,
         },
@@ -39,13 +26,13 @@ compute: args => computeCSID(args, refNameToCsid, Immutable);
               defaultMessage: 'Target record',
             },
           }),
-          // formatValue: refNameToCsid,
           required: true,
           view: {
             type: AutocompleteInput,
             props: {
-              source: 'person/all,organization/all',
-            }
+              source: 'citation/local,citation/worldcat,concept/activity,concept/associated,concept/material,organization/local,organization/ulan,person/local,person/ulan,place/local,place/tgn,location/local,location/offsite,work/local',
+              showQuickAdd: false,
+            },
           },
         },
       },
