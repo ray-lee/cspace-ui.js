@@ -1,6 +1,6 @@
 import { defineMessages } from 'react-intl';
 
- export default (configContext) => {
+export default (configContext) => {
   const {
     CompoundInput,
     AutocompleteInput,
@@ -10,8 +10,7 @@ import { defineMessages } from 'react-intl';
     configKey: config,
   } = configContext.configHelpers;
 
-   return {
-
+  return {
     params: {
       [config]: {
         view: {
