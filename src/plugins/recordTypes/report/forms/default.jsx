@@ -19,29 +19,30 @@ const template = (configContext) => {
     <Field name="document">
       <Row>
         <Field name="name" />
-        <Field name="filename" />
       </Row>
 
       <Field name="notes" />
 
-      <Panel name="mode">
+      <Panel name="mode" collapsible collapsed>
+        <Field name="filename" />
+
         <Row>
           <Field name="supportsNoContext" />
           <Field name="supportsDocList" />
           <Field name="supportsGroup" />
           <Field name="supportsSingleDoc" />
         </Row>
+
+        <Row>
+          <Col>
+            <Field name="forDocTypes">
+              <Field name="forDocType" />
+            </Field>
+          </Col>
+
+          <Field name="outputMIME" />
+        </Row>
       </Panel>
-
-      <Row>
-        <Col>
-          <Field name="forDocTypes">
-            <Field name="forDocType" />
-          </Field>
-        </Col>
-
-        <Field name="outputMIME" />
-      </Row>
     </Field>
   );
 };
