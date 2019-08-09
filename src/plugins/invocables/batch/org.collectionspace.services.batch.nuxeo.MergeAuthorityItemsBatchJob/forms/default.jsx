@@ -1,25 +1,25 @@
 import { defineMessages } from 'react-intl';
 
- const template = (configContext) => {
+const template = (configContext) => {
   const {
     React,
   } = configContext.lib;
 
-   const {
+  const {
     Field,
   } = configContext.recordComponents;
 
-   return (
+  return (
     <Field name="params">
       <Field name="targetCSID" />
     </Field>
   );
 };
 
- export default configContext => ({
+export default configContext => ({
   messages: defineMessages({
     name: {
-      id: 'form.report.Update Object And Crate Location.default.name',
+      id: 'form.report.Merge Authority Items.default.name',
       defaultMessage: 'Standard Template',
     },
   }),
