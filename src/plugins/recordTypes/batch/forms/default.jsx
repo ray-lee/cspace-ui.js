@@ -19,10 +19,12 @@ const template = (configContext) => {
     <Field name="document">
       <Row>
         <Field name="name" />
-        {/* <Field name="className" /> */}
       </Row>
 
       <Field name="notes" />
+
+      {/*
+      TEMPORARILY HIDING THESE FIELDS:
 
       <Panel name="mode" collapsible collapsed>
         <Field name="className" />
@@ -43,7 +45,7 @@ const template = (configContext) => {
 
           <Field name="createsNewFocus" />
         </Row>
-      </Panel>
+      </Panel> */}
     </Field>
   );
 };
