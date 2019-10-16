@@ -46,6 +46,9 @@ export default (configContext) => {
             }),
             view: {
               type: TextInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -77,6 +80,7 @@ export default (configContext) => {
               type: TextInput,
               props: {
                 multiline: true,
+                readOnly: true,
               },
             },
           },
@@ -92,6 +96,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              }
             },
           },
         },
@@ -106,6 +113,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              }
             },
           },
         },
@@ -120,6 +130,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -134,6 +147,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -141,6 +157,9 @@ export default (configContext) => {
           [config]: {
             view: {
               type: CompoundInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
           forDocType: {
@@ -151,7 +170,6 @@ export default (configContext) => {
                   defaultMessage: 'For record type',
                 },
               }),
-              repeating: true,
               view: {
                 type: ObjectNameInput,
               },
@@ -170,6 +188,7 @@ export default (configContext) => {
               type: OptionPickerInput,
               props: {
                 source: 'reportMimeTypes',
+                readOnly: true,
               },
             },
           },

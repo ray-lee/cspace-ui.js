@@ -6,8 +6,8 @@ const template = (configContext) => {
   } = configContext.lib;
 
   const {
-    // Col,
-    // Panel,
+    Col,
+    Panel,
     Row,
   } = configContext.layoutComponents;
 
@@ -23,7 +23,7 @@ const template = (configContext) => {
 
       <Field name="notes" />
 
-      {/* <Panel name="mode" collapsible collapsed>
+      <Panel name="mode" collapsible collapsed>
         <Field name="filename" />
 
         <Row>
@@ -42,7 +42,7 @@ const template = (configContext) => {
 
           <Field name="outputMIME" />
         </Row>
-      </Panel> */}
+      </Panel>
     </Field>
   );
 };
