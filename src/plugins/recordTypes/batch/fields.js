@@ -45,6 +45,9 @@ export default (configContext) => {
             }),
             view: {
               type: TextInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -76,6 +79,7 @@ export default (configContext) => {
               type: TextInput,
               props: {
                 multiline: true,
+                readOnly: true,
               },
             },
           },
@@ -91,6 +95,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -105,6 +112,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -119,6 +129,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -133,6 +146,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -153,6 +169,9 @@ export default (configContext) => {
               repeating: true,
               view: {
                 type: ObjectNameInput,
+                props: {
+                  readOnly: true,
+                },
               },
             },
           },
@@ -168,6 +187,9 @@ export default (configContext) => {
             }),
             view: {
               type: CheckboxInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
