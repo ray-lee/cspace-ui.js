@@ -6,8 +6,8 @@ const template = (configContext) => {
   } = configContext.lib;
 
   const {
-    // Col,
-    // Panel,
+    Col,
+    Panel,
     Row,
   } = configContext.layoutComponents;
 
@@ -22,9 +22,6 @@ const template = (configContext) => {
       </Row>
 
       <Field name="notes" />
-
-      {/*
-      TEMPORARILY HIDING THESE FIELDS:
 
       <Panel name="mode" collapsible collapsed>
         <Field name="className" />
@@ -45,7 +42,7 @@ const template = (configContext) => {
 
           <Field name="createsNewFocus" />
         </Row>
-      </Panel> */}
+      </Panel>
     </Field>
   );
 };
