@@ -94,7 +94,7 @@ export default (configContext) => {
               type: CheckboxInput,
               props: {
                 readOnly: true,
-              }
+              },
             },
           },
         },
@@ -111,7 +111,7 @@ export default (configContext) => {
               type: CheckboxInput,
               props: {
                 readOnly: true,
-              }
+              },
             },
           },
         },
