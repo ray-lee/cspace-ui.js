@@ -4,6 +4,7 @@ import { readRecord } from '../../actions/record';
 import { searchCsid } from '../../actions/search';
 import { getRecordData } from '../../reducers';
 import InvocationModal from '../../components/invocable/InvocationModal';
+import { getMimeTypes } from '../../actions/report';
 
 const mapStateToProps = (state, ownProps) => {
   const {
@@ -29,6 +30,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
       dispatch(readRecord(config, recordTypeConfig, undefined, csid)),
     searchCsid: (...args) =>
       dispatch(searchCsid(...args)),
+    getMimeTypes: () => 
+      dispatch(getMimeTypes(csid)),
   };
 };
 
