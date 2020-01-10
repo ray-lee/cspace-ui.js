@@ -11,7 +11,7 @@ import { normalizeInvocationDescriptor } from '../../helpers/invocationHelpers';
 import CancelButton from '../navigation/CancelButton';
 import styles from '../../../styles/cspace-ui/InvocationModal.css';
 import formatPickerStyles from '../../../styles/cspace-ui/InvocationFormatPicker.css';
-import { OptionPickerInput } from '../../helpers/configContextInputs';
+import OptionPickerInputContainer from '../../containers/record/OptionPickerInputContainer';
 
 
 const { Label } = inputComponents;
@@ -245,12 +245,12 @@ export default class InvocationModal extends Component {
       mimeList = getMimeTypes(csid).getIn(['document', 'ns2:reports_common', 'supportsOutputMIMEList', 'outputMIME']);
     }
 
-    const prefilter = option => mimeList.contains(option.value);
+    const prefilter = option => mimeList.includes(option.value);
 
     if (recordType === 'report') {
       return (
         <div className={formatPickerStyles.common}>
-          <OptionPickerInput
+          <OptionPickerInputContainer
             blankable={false}
             label={<Label><FormattedMessage {...messages.format} /></Label>}
             source={'reportMimeTypes'}
