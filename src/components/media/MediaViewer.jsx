@@ -42,12 +42,13 @@ const renderThumbInner = item => (
       alt={item.thumbnailAlt}
       title={item.thumbnailTitle}
     />
-    <div
-      className="image-gallery-thumbnail-label"
-      hidden={item.thumbnailLabel === undefined}
-    >
-      {item.thumbnailLabel}
-    </div>
+    {
+      item.thumbnailLabel && (
+        <div className="image-gallery-thumbnail-label">
+          {item.thumbnailLabel}
+        </div>
+      )
+    }
   </div>
 );
 
