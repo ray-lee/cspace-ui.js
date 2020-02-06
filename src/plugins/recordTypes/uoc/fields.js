@@ -821,6 +821,22 @@ export default (configContext) => {
             },
           },
         },
+        subcollection: {
+          [config]: {
+            messages: defineMessages({
+              name: {
+                id: 'field.uoc_common.subcollection.name',
+                defaultMessage: 'Subcollections',
+              },
+            }),
+            view: {
+              type: TermPickerInput,
+              props: {
+                source: 'uocSubcollections',
+              },
+            },
+          },
+        },
       },
     },
   };
