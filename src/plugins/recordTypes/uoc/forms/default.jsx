@@ -40,7 +40,7 @@ const template = (configContext) => {
             </Col>
 
             <Col>
-              <Field name="collectionRegion" />
+              <Field name="subcollection" />
             </Col>
 
             <Col>
