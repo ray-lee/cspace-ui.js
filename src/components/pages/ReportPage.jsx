@@ -258,7 +258,7 @@ export default class ReportPage extends Component {
 
     let recordEditor;
     if (typeof normalizedCsid !== 'undefined' && normalizedCsid !== null) {
-      const isRunnable = canCreate(invocationType, perms) || canDelete(invocationType, perms);
+      const isRunnable = canCreate(invocationType, perms);
 
       // Temporarily disallow deleting or creating records.
 
