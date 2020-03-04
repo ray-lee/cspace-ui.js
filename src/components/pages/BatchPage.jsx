@@ -20,7 +20,6 @@ import {
   disallowCreate,
   disallowDelete,
   disallowSoftDelete,
-  canDelete,
 } from '../../helpers/permissionHelpers';
 
 const propTypes = {
