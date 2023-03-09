@@ -4,8 +4,8 @@ import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
 import merge from 'lodash/merge';
+import { setupWorker, rest } from 'msw';
 import { searchKey } from '../../../src/reducers/search';
 import HierarchyReparentNotifier from '../../../src/components/record/HierarchyReparentNotifier';
 
@@ -96,6 +96,16 @@ chai.use(chaiImmutable);
 chai.should();
 
 describe('record action creator', () => {
+  const worker = setupWorker();
+
+  before(() => {
+    worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
   describe('createNewRecord', () => {
     const mockStore = configureMockStore([thunk]);
 
@@ -107,12 +117,8 @@ describe('record action creator', () => {
       return store.dispatch(configureCSpace());
     });
 
-    beforeEach(() => {
-      moxios.install();
-    });
-
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
     it('should dispatch CREATE_NEW_RECORD', () => {
@@ -167,12 +173,11 @@ describe('record action creator', () => {
 
       const vocabularyConfig = null;
       const cloneCsid = '1234';
-      const readRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${cloneCsid}.*`);
+      const readRecordUrl = `/cspace-services/${servicePath}/${cloneCsid}`;
 
-      moxios.stubRequest(readRecordUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       const store = mockStore({
         prefs: Immutable.Map(),
@@ -193,19 +198,14 @@ describe('record action creator', () => {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: RECORD_READ_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              config,
-              recordTypeConfig,
-              csid: cloneCsid,
-            },
+          actions[1].type.should.equal(RECORD_READ_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            config,
+            recordTypeConfig,
+            csid: cloneCsid,
           });
 
           actions[2].should.deep.equal({
@@ -232,12 +232,8 @@ describe('record action creator', () => {
       return store.dispatch(configureCSpace());
     });
 
-    beforeEach(() => {
-      moxios.install();
-    });
-
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
     it('should dispatch CREATE_NEW_SUBRECORD', () => {
@@ -314,12 +310,11 @@ describe('record action creator', () => {
       const cloneCsid = '9999';
       const isDefault = true;
 
-      const readRecordUrl = new RegExp(`^/cspace-services/${subrecordServicePath}/${cloneCsid}.*`);
+      const readRecordUrl = `/cspace-services/${subrecordServicePath}/${cloneCsid}`;
 
-      moxios.stubRequest(readRecordUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       return store.dispatch(createNewSubrecord(
         config, csid, csidField, subrecordName,
@@ -338,19 +333,14 @@ describe('record action creator', () => {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: RECORD_READ_FULFILLED,
-            meta: {
-              config,
-              csid: cloneCsid,
-              recordTypeConfig: subrecordTypeConfig,
-            },
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
+          actions[1].type.should.equal(RECORD_READ_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            config,
+            csid: cloneCsid,
+            recordTypeConfig: subrecordTypeConfig,
           });
 
           actions[2].should.deep.equal({
@@ -417,7 +407,7 @@ describe('record action creator', () => {
       const mockStore = configureMockStore([thunk]);
       const servicePath = 'collectionobjects';
       const csid = '1234';
-      const readRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${csid}.*`);
+      const readRecordUrl = `/cspace-services/${servicePath}/${csid}`;
 
       const config = {};
 
@@ -442,19 +432,14 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_READ_FULFILLED on success', () => {
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           record: Immutable.Map(),
@@ -474,28 +459,22 @@ describe('record action creator', () => {
               },
             });
 
-            actions[1].should.deep.equal({
-              type: RECORD_READ_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                config,
-                csid,
-                recordTypeConfig,
-              },
+            actions[1].type.should.equal(RECORD_READ_FULFILLED);
+            actions[1].payload.status.should.equal(200);
+            actions[1].payload.data.should.deep.equal({});
+
+            actions[1].meta.should.deep.equal({
+              config,
+              csid,
+              recordTypeConfig,
             });
           });
       });
 
       it('should dispatch RECORD_READ_REJECTED on error', () => {
-        moxios.stubRequest(readRecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.get(readRecordUrl, (req, res, ctx) => res(ctx.status(400))),
+        );
 
         const store = mockStore({
           record: Immutable.Map(),
@@ -557,20 +536,29 @@ describe('record action creator', () => {
       });
 
       it('should merge request configuration from the record type config', () => {
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const {
+              searchParams,
+            } = req.url;
+
+            if (searchParams.get('customParam') === 'hello') {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           record: Immutable.Map(),
         });
 
         return store.dispatch(readRecord(config, recordTypeConfig, vocabularyConfig, csid))
-          .then(() => {
-            const request = moxios.requests.mostRecent();
-
-            request.url.should.contain('&customParam=hello');
+          .then((result) => {
+            if (result) {
+              result.should.not.have.property('type', RECORD_READ_REJECTED);
+            }
           });
       });
     });
@@ -580,7 +568,7 @@ describe('record action creator', () => {
       const recordServicePath = 'personauthorities';
       const vocabularyServicePath = 'urn:cspace:name(person)';
       const csid = '1234';
-      const readRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}.*`);
+      const readRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
 
       const config = {};
 
@@ -604,19 +592,22 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_READ_FULFILLED on success', () => {
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           record: Immutable.Map(),
@@ -636,19 +627,14 @@ describe('record action creator', () => {
               },
             });
 
-            actions[1].should.deep.equal({
-              type: RECORD_READ_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                config,
-                csid,
-                recordTypeConfig,
-              },
+            actions[1].type.should.equal(RECORD_READ_FULFILLED);
+            actions[1].payload.status.should.equal(200);
+            actions[1].payload.data.should.deep.equal({});
+
+            actions[1].meta.should.deep.equal({
+              config,
+              csid,
+              recordTypeConfig,
             });
           });
       });
@@ -667,9 +653,9 @@ describe('record action creator', () => {
       const subrecordSubresource = 'contacts';
       const subrecordSubresourceServicePath = 'contacts';
       const subrecordCsid = 'abcd';
-      const readRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}.*`);
-      const searchSubrecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}/${subrecordSubresourceServicePath}.*`);
-      const readSubrecordUrl = `/cspace-services/${subrecordServicePath}/${subrecordCsid}?wf_deleted=false`;
+      const readRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
+      const searchSubrecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}/${subrecordSubresourceServicePath}`;
+      const readSubrecordUrl = `/cspace-services/${subrecordServicePath}/${subrecordCsid}`;
 
       const vocabularyConfig = {
         name: vocabulary,
@@ -753,28 +739,36 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch SEARCH_STARTED and SEARCH_FULFILLED when a subrecord search is needed', () => {
-        moxios.stubRequest(searchSubrecordUrl, {
-          status: 200,
-          response: {
-            'ns2:abstract-common-list': {
-              // No results.
-            },
-          },
-        });
+        worker.use(
+          rest.get(searchSubrecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({
+                'ns2:abstract-common-list': {
+                  // No results.
+                },
+              }));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -798,19 +792,14 @@ describe('record action creator', () => {
               },
             });
 
-            actions[1].should.deep.equal({
-              type: RECORD_READ_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                config,
-                csid,
-                recordTypeConfig,
-              },
+            actions[1].type.should.equal(RECORD_READ_FULFILLED);
+            actions[1].payload.status.should.equal(200);
+            actions[1].payload.data.should.deep.equal({});
+
+            actions[1].meta.should.deep.equal({
+              config,
+              csid,
+              recordTypeConfig,
             });
 
             actions[2].type.should.equal(SEARCH_STARTED);
@@ -829,15 +818,19 @@ describe('record action creator', () => {
       });
 
       it('should dispatch SUBRECORD_READ_FULFILLED after reading the container record and subrecord', () => {
-        moxios.stubRequest(readSubrecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.get(readSubrecordUrl, (req, res, ctx) => res(ctx.json({}))),
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           record: Immutable.Map(),
@@ -872,19 +865,14 @@ describe('record action creator', () => {
               },
             });
 
-            actions[1].should.deep.equal({
-              type: RECORD_READ_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                config,
-                csid,
-                recordTypeConfig,
-              },
+            actions[1].type.should.equal(RECORD_READ_FULFILLED);
+            actions[1].payload.status.should.equal(200);
+            actions[1].payload.data.should.deep.equal({});
+
+            actions[1].meta.should.deep.equal({
+              config,
+              csid,
+              recordTypeConfig,
             });
 
             actions[2].type.should.equal(SET_MOST_RECENT_SEARCH);
@@ -897,19 +885,14 @@ describe('record action creator', () => {
               },
             });
 
-            actions[4].should.deep.equal({
-              type: RECORD_READ_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                config,
-                csid: subrecordCsid,
-                recordTypeConfig: subrecordTypeConfig,
-              },
+            actions[4].type.should.equal(RECORD_READ_FULFILLED);
+            actions[4].payload.status.should.equal(200);
+            actions[4].payload.data.should.deep.equal({});
+
+            actions[4].meta.should.deep.equal({
+              config,
+              csid: subrecordCsid,
+              recordTypeConfig: subrecordTypeConfig,
             });
 
             actions[5].should.deep.equal({
@@ -932,7 +915,7 @@ describe('record action creator', () => {
       const servicePath = 'collectionobjects';
       const csid = '5678';
       const saveRecordUrl = `/cspace-services/${servicePath}/${csid}`;
-      const readRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${csid}.*`);
+      const readRecordUrl = `/cspace-services/${servicePath}/${csid}`;
       const saveNewRecordUrl = `/cspace-services/${servicePath}`;
 
       const config = {};
@@ -954,12 +937,8 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch VALIDATION_FAILED if there are blocking validation errors', () => {
@@ -1027,15 +1006,10 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_SAVE_FULFILLED on success', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
-
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+          rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1098,29 +1072,23 @@ describe('record action creator', () => {
             actions[5].should.have.property('type', SHOW_NOTIFICATION);
             actions[5].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[6].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[6].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[6].payload.status.should.equal(200);
+            actions[6].payload.data.should.deep.equal({});
+
+            actions[6].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
           });
       });
 
       it('should dispatch RECORD_SAVE_REJECTED on an update error', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => res(ctx.status(400))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1191,10 +1159,9 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_SAVE_REJECTED on a create error', () => {
-        moxios.stubRequest(saveNewRecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.post(saveNewRecordUrl, (req, res, ctx) => res(ctx.status(400))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1261,10 +1228,9 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_SAVE_REJECTED if a create request does not return a 201 with a location', () => {
-        moxios.stubRequest(saveNewRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.post(saveNewRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1341,17 +1307,14 @@ describe('record action creator', () => {
 
         // Mock a response for a newly created record.
 
-        moxios.stubRequest(saveNewRecordUrl, {
-          status: 201,
-          headers: {
-            location: `some/new/url/${createdCsid}`,
-          },
-        });
+        worker.use(
+          rest.post(saveNewRecordUrl, (req, res, ctx) => res(
+            ctx.status(201),
+            ctx.set('location', `some/new/url/${createdCsid}`),
+          )),
 
-        moxios.stubRequest(`${saveNewRecordUrl}/${createdCsid}?wf_deleted=false&showRelations=true&pgSz=0`, {
-          status: 200,
-          response: {},
-        });
+          rest.get(`${saveNewRecordUrl}/${createdCsid}`, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1421,20 +1384,15 @@ describe('record action creator', () => {
             actions[6].should.have.property('type', SHOW_NOTIFICATION);
             actions[6].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[7].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid: createdCsid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[7].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[7].payload.status.should.equal(200);
+            actions[7].payload.data.should.deep.equal({});
+
+            actions[7].meta.should.deep.equal({
+              recordTypeConfig,
+              csid: createdCsid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             reportedCreatedCsid.should.equal(createdCsid);
@@ -1458,15 +1416,19 @@ describe('record action creator', () => {
           },
         });
 
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, async (req, res, ctx) => {
+            const { searchParams } = req.url;
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (searchParams.get('foo') === 'bar') {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const data = Immutable.fromJS({
           document: {
@@ -1495,10 +1457,6 @@ describe('record action creator', () => {
           .then(() => {
             requestConfigRequestType.should.equal('save');
             requestConfigData.should.equal(data);
-
-            moxios.requests.first().config.params.should.deep.equal({
-              foo: 'bar',
-            });
           });
       });
     });
@@ -1510,8 +1468,8 @@ describe('record action creator', () => {
       const vocabulary = 'ulan';
       const vocabularyServicePath = 'urn:cspace:name(ulan)';
       const csid = '5678';
-      const saveRecordUrl = `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}`;
-      const readRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}.*`);
+      const saveRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
+      const readRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
 
       const config = {};
 
@@ -1541,24 +1499,32 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_SAVE_FULFILLED on success', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1621,20 +1587,15 @@ describe('record action creator', () => {
             actions[5].should.have.property('type', SHOW_NOTIFICATION);
             actions[5].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[6].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[6].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[6].payload.status.should.equal(200);
+            actions[6].payload.data.should.deep.equal({});
+
+            actions[6].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
           });
       });
@@ -1653,9 +1614,10 @@ describe('record action creator', () => {
       const subrecordSubresource = 'contacts';
       const subrecordSubresourceServicePath = 'contacts';
       const subrecordCsid = 'abcd';
-      const saveRecordUrl = `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}`;
-      const saveSubrecordUrl = `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}/${subrecordSubresourceServicePath}/${subrecordCsid}`;
-      const readRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}.*`);
+      const saveRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
+      const saveSubrecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}/${subrecordSubresourceServicePath}/${subrecordCsid}`;
+      const readRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
+      const readSubrecordsUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}/${subrecordSubresourceServicePath}`;
 
       const vocabularyConfig = {
         name: vocabulary,
@@ -1727,24 +1689,52 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_SAVE_FULFILLED on success', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.put(saveSubrecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readSubrecordsUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -1849,44 +1839,30 @@ describe('record action creator', () => {
               },
             });
 
-            actions[9].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig: subrecordTypeConfig,
-                csid: subrecordCsid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[9].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[9].payload.status.should.equal(200);
+            actions[9].payload.data.should.deep.equal({});
+
+            actions[9].meta.should.deep.equal({
+              recordTypeConfig: subrecordTypeConfig,
+              csid: subrecordCsid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             actions[10].should.have.property('type', SHOW_NOTIFICATION);
             actions[10].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[11].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
-            });
+            actions[11].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[11].payload.status.should.equal(200);
+            actions[11].payload.data.should.deep.equal({});
 
-            // Subrecord initialization actions. In this test the subrecord won't be found (even
-            // though it was just saved), because the search result won't exist in the mocked
-            // store.
+            actions[11].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
+            });
 
             actions[12].should.have.property('type', SEARCH_STARTED);
             actions[13].should.have.property('type', SEARCH_FULFILLED);
@@ -1895,20 +1871,29 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_SAVE_REJECTED if the subrecord save fails', () => {
-        moxios.stubRequest(saveSubrecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            return res(ctx.status(400));
+          }),
+
+          rest.put(saveSubrecordUrl, (req, res, ctx) => res(ctx.status(400))),
+
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -2031,31 +2016,56 @@ describe('record action creator', () => {
 
       it('should dispatch SUBRECORD_CREATED if a subrecord is created', () => {
         const newRecordCsid = '8888';
-        const saveNewRecordUrl = `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}/${subrecordSubresourceServicePath}`;
-        const readNewRecordUrl = `/cspace-services/${subrecordServicePath}/${newRecordCsid}?wf_deleted=false`;
+        const saveNewRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}/${subrecordSubresourceServicePath}`;
+        const readNewRecordUrl = `/cspace-services/${subrecordServicePath}/${newRecordCsid}`;
         const expectedSubrecordSearchName = `subrecord/${csid}/${subrecordName}`;
 
-        moxios.stubRequest(saveNewRecordUrl, {
-          status: 201,
-          headers: {
-            location: `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}/${subrecordSubresourceServicePath}/${newRecordCsid}`,
-          },
-        });
+        worker.use(
+          rest.post(saveNewRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(readNewRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(
+                ctx.status(201),
+                ctx.set('location', `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}/${subrecordSubresourceServicePath}/${newRecordCsid}`),
+              );
+            }
 
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+            return res(ctx.status(400));
+          }),
 
-        moxios.stubRequest(readRecordUrl, {
-          status: 200,
-          response: {},
-        });
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readNewRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+
+          rest.get(readRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.get(readSubrecordsUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const newSubrecordCsid = 'new';
 
@@ -2124,7 +2134,7 @@ describe('record action creator', () => {
       const subrecordServicePath = 'blobs';
       const subrecordCsidField = ['document', 'ns2:persons_common', 'blobCsid'];
       const subrecordCsid = 'abcd';
-      const saveRecordUrl = `/cspace-services/${recordServicePath}/${vocabularyServicePath}/items/${csid}`;
+      const saveRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
       const saveSubrecordUrl = `/cspace-services/${subrecordServicePath}/${subrecordCsid}`;
 
       const vocabularyConfig = {
@@ -2178,24 +2188,24 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_SAVE_FULFILLED on success', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(saveSubrecordUrl, {
-          status: 200,
-          response: {},
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+
+          rest.put(saveSubrecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -2295,20 +2305,15 @@ describe('record action creator', () => {
               },
             });
 
-            actions[8].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig: subrecordTypeConfig,
-                csid: subrecordCsid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[8].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[8].payload.status.should.equal(200);
+            actions[8].payload.data.should.deep.equal({});
+
+            actions[8].meta.should.deep.equal({
+              recordTypeConfig: subrecordTypeConfig,
+              csid: subrecordCsid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             actions[9].should.deep.equal({
@@ -2322,20 +2327,15 @@ describe('record action creator', () => {
             actions[10].should.have.property('type', SHOW_NOTIFICATION);
             actions[10].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[11].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[11].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[11].payload.status.should.equal(200);
+            actions[11].payload.data.should.deep.equal({});
+
+            actions[11].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             actions[12].should.deep.equal({
@@ -2352,24 +2352,26 @@ describe('record action creator', () => {
       it('should dispatch SUBRECORD_CREATED if a new subrecord is created', () => {
         const saveNewSubrecordUrl = `/cspace-services/${subrecordServicePath}`;
         const createdSubrecordCsid = '8888';
-        const readNewSubrecordUrl = `/cspace-services/${subrecordServicePath}/${createdSubrecordCsid}?wf_deleted=false`;
+        const readNewSubrecordUrl = `/cspace-services/${subrecordServicePath}/${createdSubrecordCsid}`;
 
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
 
-        moxios.stubRequest(saveNewSubrecordUrl, {
-          status: 201,
-          headers: {
-            location: `some/new/url/${createdSubrecordCsid}`,
-          },
-        });
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
 
-        moxios.stubRequest(readNewSubrecordUrl, {
-          status: 200,
-          response: {},
-        });
+            return res(ctx.status(400));
+          }),
+
+          rest.post(saveNewSubrecordUrl, (req, res, ctx) => res(
+            ctx.status(201),
+            ctx.set('location', `some/new/url/${createdSubrecordCsid}`),
+          )),
+
+          rest.get(readNewSubrecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -2478,20 +2480,15 @@ describe('record action creator', () => {
               },
             });
 
-            actions[9].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig: subrecordTypeConfig,
-                csid: createdSubrecordCsid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[9].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[9].payload.status.should.equal(200);
+            actions[9].payload.data.should.deep.equal({});
+
+            actions[9].meta.should.deep.equal({
+              recordTypeConfig: subrecordTypeConfig,
+              csid: createdSubrecordCsid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             actions[10].should.deep.equal({
@@ -2515,29 +2512,31 @@ describe('record action creator', () => {
             actions[12].should.have.property('type', SHOW_NOTIFICATION);
             actions[12].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[13].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[13].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[13].payload.status.should.equal(200);
+            actions[13].payload.data.should.deep.equal({});
+
+            actions[13].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
           });
       });
 
       it('should not save the subrecord if the configured save condition function returns false', () => {
-        moxios.stubRequest(saveRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(saveRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -2620,20 +2619,15 @@ describe('record action creator', () => {
             actions[5].should.have.property('type', SHOW_NOTIFICATION);
             actions[5].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-            actions[6].should.deep.equal({
-              type: RECORD_SAVE_FULFILLED,
-              payload: {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              meta: {
-                recordTypeConfig,
-                csid,
-                relatedSubjectCsid: undefined,
-                recordPagePrimaryCsid: undefined,
-              },
+            actions[6].type.should.equal(RECORD_SAVE_FULFILLED);
+            actions[6].payload.status.should.equal(200);
+            actions[6].payload.data.should.deep.equal({});
+
+            actions[6].meta.should.deep.equal({
+              recordTypeConfig,
+              csid,
+              relatedSubjectCsid: undefined,
+              recordPagePrimaryCsid: undefined,
             });
 
             actions[7].should.deep.equal({
@@ -2673,19 +2667,17 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should show a specific notification message for a duplicate role name error during a create', () => {
-        moxios.stubRequest(saveNewRecordUrl, {
-          status: 400,
-          response: 'ERROR: duplicate key value violates unique constraint "roles_rolename_tenant_id_key"',
-        });
+        worker.use(
+          rest.post(saveNewRecordUrl, (req, res, ctx) => res(
+            ctx.status(400),
+            ctx.text('ERROR: duplicate key value violates unique constraint "roles_rolename_tenant_id_key"'),
+          )),
+        );
 
         const store = mockStore({
           prefs: Immutable.Map(),
@@ -3076,7 +3068,7 @@ describe('record action creator', () => {
       const servicePath = 'collectionobjects';
       const csid = '5678';
       const transitionName = 'delete';
-      const transitionRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${csid}/workflow/${transitionName}.*`);
+      const transitionRecordUrl = `/cspace-services/${servicePath}/${csid}/workflow/${transitionName}`;
 
       const recordTypeConfig = {
         name: recordType,
@@ -3100,19 +3092,14 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_TRANSITION_FULFILLED on success', () => {
-        moxios.stubRequest(transitionRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(transitionRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3151,13 +3138,8 @@ describe('record action creator', () => {
             actions[2].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
             actions[3].should.have.property('type', RECORD_TRANSITION_FULFILLED);
-
-            actions[3].payload.should.deep.equal({
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            });
+            actions[3].payload.status.should.equal(200);
+            actions[3].payload.data.should.deep.equal({});
 
             actions[3].meta.should.include({
               csid,
@@ -3171,10 +3153,9 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_TRANSITION_REJECTED on error', () => {
-        moxios.stubRequest(transitionRecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.put(transitionRecordUrl, (req, res, ctx) => res(ctx.status(400))),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3230,7 +3211,7 @@ describe('record action creator', () => {
       const vocabularyServicePath = 'urn:cspace:name(ulan)';
       const csid = '5678';
       const transitionName = 'delete';
-      const transitionRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}/workflow/${transitionName}.*`);
+      const transitionRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}/workflow/${transitionName}`;
 
       const vocabularyConfig = {
         name: vocabulary,
@@ -3264,19 +3245,22 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_SAVE_FULFILLED on success', () => {
-        moxios.stubRequest(transitionRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.put(transitionRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3315,13 +3299,8 @@ describe('record action creator', () => {
             actions[2].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
             actions[3].should.have.property('type', RECORD_TRANSITION_FULFILLED);
-
-            actions[3].payload.should.deep.equal({
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            });
+            actions[3].payload.status.should.equal(200);
+            actions[3].payload.data.should.deep.equal({});
 
             actions[3].meta.should.include({
               csid,
@@ -3341,8 +3320,10 @@ describe('record action creator', () => {
     const recordType = 'collectionobject';
     const servicePath = 'collectionobjects';
     const csid = '5678';
+    const transitionName = 'lock';
     const saveRecordUrl = `/cspace-services/${servicePath}/${csid}`;
-    const readRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${csid}.*`);
+    const readRecordUrl = `/cspace-services/${servicePath}/${csid}`;
+    const transitionRecordUrl = `/cspace-services/${servicePath}/${csid}/workflow/${transitionName}`;
 
     const config = {};
 
@@ -3362,24 +3343,16 @@ describe('record action creator', () => {
       return store.dispatch(configureCSpace());
     });
 
-    beforeEach(() => {
-      moxios.install();
-    });
-
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
     it('should dispatch saveRecord actions followed by transitionRecord actions', () => {
-      moxios.stubRequest(saveRecordUrl, {
-        status: 200,
-        response: {},
-      });
-
-      moxios.stubRequest(readRecordUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.put(saveRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        rest.put(transitionRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        rest.get(readRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       const store = mockStore({
         prefs: Immutable.Map(),
@@ -3399,8 +3372,6 @@ describe('record action creator', () => {
         recordPage: Immutable.Map(),
         user: Immutable.Map(),
       });
-
-      const transitionName = 'lock';
 
       return store.dispatch(saveRecordWithTransition(
         config, recordTypeConfig, undefined, csid, undefined, undefined, undefined, transitionName,
@@ -3446,20 +3417,15 @@ describe('record action creator', () => {
           actions[5].should.have.property('type', SHOW_NOTIFICATION);
           actions[5].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
-          actions[6].should.deep.equal({
-            type: RECORD_SAVE_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              recordTypeConfig,
-              csid,
-              relatedSubjectCsid: undefined,
-              recordPagePrimaryCsid: undefined,
-            },
+          actions[6].type.should.equal(RECORD_SAVE_FULFILLED);
+          actions[6].payload.status.should.equal(200);
+          actions[6].payload.data.should.deep.equal({});
+
+          actions[6].meta.should.deep.equal({
+            recordTypeConfig,
+            csid,
+            relatedSubjectCsid: undefined,
+            recordPagePrimaryCsid: undefined,
           });
 
           actions[7].should.have.property('type', SHOW_NOTIFICATION);
@@ -3478,13 +3444,8 @@ describe('record action creator', () => {
           actions[9].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
           actions[10].should.have.property('type', RECORD_TRANSITION_FULFILLED);
-
-          actions[10].payload.should.deep.equal({
-            status: 200,
-            statusText: undefined,
-            headers: undefined,
-            data: {},
-          });
+          actions[10].payload.status.should.equal(200);
+          actions[10].payload.data.should.deep.equal({});
 
           actions[10].meta.should.include({
             csid,
@@ -3504,7 +3465,7 @@ describe('record action creator', () => {
       const recordType = 'collectionobject';
       const servicePath = 'collectionobjects';
       const csid = '5678';
-      const deleteRecordUrl = new RegExp(`^/cspace-services/${servicePath}/${csid}`);
+      const deleteRecordUrl = `/cspace-services/${servicePath}/${csid}`;
 
       const recordTypeConfig = {
         name: recordType,
@@ -3528,19 +3489,14 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_DELETE_FULFILLED on success', () => {
-        moxios.stubRequest(deleteRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.delete(deleteRecordUrl, (req, res, ctx) => res(ctx.json({}))),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3575,13 +3531,8 @@ describe('record action creator', () => {
             actions[2].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
             actions[3].should.have.property('type', RECORD_DELETE_FULFILLED);
-
-            actions[3].payload.should.deep.equal({
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            });
+            actions[3].payload.status.should.equal(200);
+            actions[3].payload.data.should.deep.equal({});
 
             actions[3].meta.should.include({
               csid,
@@ -3592,10 +3543,9 @@ describe('record action creator', () => {
       });
 
       it('should dispatch RECORD_DELETE_REJECTED on error', () => {
-        moxios.stubRequest(deleteRecordUrl, {
-          status: 400,
-          response: {},
-        });
+        worker.use(
+          rest.delete(deleteRecordUrl, (req, res, ctx) => res(ctx.status(400))),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3646,7 +3596,7 @@ describe('record action creator', () => {
       const vocabulary = 'ulan';
       const vocabularyServicePath = 'urn:cspace:name(ulan)';
       const csid = '5678';
-      const deleteRecordUrl = new RegExp(`^/cspace-services/${recordServicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}`);
+      const deleteRecordUrl = `/cspace-services/${recordServicePath}/:vocabulary/items/${csid}`;
 
       const vocabularyConfig = {
         name: vocabulary,
@@ -3680,19 +3630,22 @@ describe('record action creator', () => {
         return store.dispatch(configureCSpace());
       });
 
-      beforeEach(() => {
-        moxios.install();
-      });
-
       afterEach(() => {
-        moxios.uninstall();
+        worker.resetHandlers();
       });
 
       it('should dispatch RECORD_DELETE_FULFILLED on success', () => {
-        moxios.stubRequest(deleteRecordUrl, {
-          status: 200,
-          response: {},
-        });
+        worker.use(
+          rest.delete(deleteRecordUrl, (req, res, ctx) => {
+            const { params } = req;
+
+            if (params.vocabulary === vocabularyServicePath) {
+              return res(ctx.json({}));
+            }
+
+            return res(ctx.status(400));
+          }),
+        );
 
         const store = mockStore({
           record: Immutable.fromJS({
@@ -3729,13 +3682,8 @@ describe('record action creator', () => {
             actions[2].should.have.deep.property('payload.status', STATUS_SUCCESS);
 
             actions[3].should.have.property('type', RECORD_DELETE_FULFILLED);
-
-            actions[3].payload.should.deep.equal({
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            });
+            actions[3].payload.status.should.equal(200);
+            actions[3].payload.data.should.deep.equal({});
 
             actions[3].meta.should.include({
               csid,

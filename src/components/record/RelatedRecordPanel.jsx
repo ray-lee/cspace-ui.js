@@ -139,18 +139,6 @@ export default class RelatedRecordPanel extends Component {
     }
   }
 
-  shouldShowCheckbox(item) {
-    const {
-      config,
-      perms,
-    } = this.props;
-
-    return (
-      item.get('workflowState') !== 'locked'
-      && canUnrelate(getRecordTypeNameByUri(config, item.get('uri')), perms, config)
-    );
-  }
-
   handleCheckboxCommit(path, value) {
     const index = parseInt(path[0], 10);
     const checked = value;
@@ -251,6 +239,18 @@ export default class RelatedRecordPanel extends Component {
     }
   }
 
+  shouldShowCheckbox(item) {
+    const {
+      config,
+      perms,
+    } = this.props;
+
+    return (
+      item.get('workflowState') !== 'locked'
+      && canUnrelate(getRecordTypeNameByUri(config, item.get('uri')), perms, config)
+    );
+  }
+
   renderCheckbox({ rowData, rowIndex }) {
     const {
       selectedItems,
@@ -266,7 +266,6 @@ export default class RelatedRecordPanel extends Component {
           name={`${rowIndex}`}
           value={selected}
           onCommit={this.handleCheckboxCommit}
-
           // Prevent clicking on the checkbox from selecting the record.
           onClick={stopPropagation}
         />

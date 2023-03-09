@@ -9,7 +9,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Provider as StoreProvider } from 'react-redux';
 import Immutable from 'immutable';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 import createTestContainer from '../../../helpers/createTestContainer';
 import mockHistory from '../../../helpers/mockHistory';
 import { configureCSpace } from '../../../../src/actions/cspace';
@@ -129,17 +129,25 @@ const config = {
 };
 
 describe('RelatedRecordBrowser', () => {
-  before(() => store.dispatch(configureCSpace())
-    .then(() => store.clearActions()));
+  const worker = setupWorker();
+
+  before(() => {
+    worker.start({ quiet: true });
+
+    return store.dispatch(configureCSpace())
+      .then(() => store.clearActions());
+  });
 
   beforeEach(function before() {
     this.container = createTestContainer(this);
-
-    moxios.install();
   });
 
   afterEach(() => {
-    moxios.uninstall();
+    worker.resetHandlers();
+  });
+
+  after(() => {
+    worker.stop();
   });
 
   it('should render as a div', function test() {
@@ -357,26 +365,20 @@ describe('RelatedRecordBrowser', () => {
 
     const newCsid = '9999';
 
-    moxios.stubRequest('/cspace-services/groups', {
-      status: 201,
-      headers: {
-        location: `groups/${newCsid}`,
-      },
-    });
-
-    moxios.stubRequest(`/cspace-services/groups/${newCsid}?wf_deleted=false`, {
-      status: 200,
-      headers: {
-        data: {},
-      },
-    });
-
-    moxios.stubRequest('/cspace-services/relations', {
-      status: 201,
-      headers: {
-        location: 'relations/somecsid',
-      },
-    });
+    worker.use(
+      rest.post('/cspace-services/groups', (req, res, ctx) => res(
+        ctx.status(201),
+        ctx.set('location', `groups/${newCsid}`),
+      )),
+      rest.get(
+        `/cspace-services/groups/${newCsid}`,
+        (req, res, ctx) => res(ctx.json({})),
+      ),
+      rest.post('/cspace-services/relations', (req, res, ctx) => res(
+        ctx.status(201),
+        ctx.set('location', 'relations/somecsid'),
+      )),
+    );
 
     render(
       <IntlProvider locale="en">
@@ -408,7 +410,7 @@ describe('RelatedRecordBrowser', () => {
         });
 
         resolve();
-      }, 10);
+      }, 100);
     });
   });
 
