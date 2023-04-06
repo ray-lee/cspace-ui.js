@@ -6,6 +6,7 @@
 
 The CollectionSpace user interface for web browsers.
 
+
 Release 5.0 or later of the CollectionSpace server is required. This application is not compatible with releases 4.5 and earlier.
 
 Release 5.1 or later of the CollectionSpace server is recommended. See the [release notes](https://github.com/collectionspace/cspace-ui.js/tree/master/RELEASE_NOTES.md) to use this application with earlier releases.
