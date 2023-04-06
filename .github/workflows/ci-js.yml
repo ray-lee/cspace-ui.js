@@ -9,4 +9,4 @@ on:
 jobs:
   check:
     name: Check code
-    uses: collectionspace/.github/workflows/check-js.yml@main
+    uses: collectionspace/.github/.github/workflows/check-js.yml@main
