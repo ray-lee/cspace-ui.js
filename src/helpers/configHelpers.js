@@ -498,13 +498,15 @@ export const isFieldCloneable = (fieldDescriptor, computeContext) => {
   const config = fieldDescriptor[configKey];
 
   if (config && 'cloneable' in config) {
-    let cloneable = config.cloneable;
+    let { cloneable } = config;
 
-    if (typeof(cloneable) === 'function') {
+    if (typeof cloneable === 'function') {
       cloneable = cloneable(computeContext);
     }
+
     return !!cloneable;
   }
+
   return true;
 };
 
