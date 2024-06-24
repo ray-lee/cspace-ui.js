@@ -3,6 +3,7 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import Immutable from 'immutable';
+import { ERROR_KEY } from '../../../src/helpers/recordDataHelpers';
 
 import {
   SHOW_NOTIFICATION,
@@ -28,8 +29,8 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('notification action creator', function suite() {
-  describe('showNotification', function actionSuite() {
+describe('notification action creator', () => {
+  describe('showNotification', () => {
     const notificationDescriptor = {
       message: {
         id: 'messageId',
@@ -45,7 +46,7 @@ describe('notification action creator', function suite() {
 
     const notificationID = '1';
 
-    it('should create a SHOW_NOTIFICATION action', function test() {
+    it('should create a SHOW_NOTIFICATION action', () => {
       showNotification(notificationDescriptor, notificationID).should.deep.equal({
         type: SHOW_NOTIFICATION,
         payload: notificationDescriptor,
@@ -56,8 +57,8 @@ describe('notification action creator', function suite() {
     });
   });
 
-  describe('removeNotification', function actionSuite() {
-    it('should create a REMOVE_NOTIFICATION action', function test() {
+  describe('removeNotification', () => {
+    it('should create a REMOVE_NOTIFICATION action', () => {
       const notificationID = '1';
 
       removeNotification(notificationID).should.deep.equal({
@@ -69,12 +70,29 @@ describe('notification action creator', function suite() {
     });
   });
 
-  describe('showValidationNotification', function actionSuite() {
+  describe('showValidationNotification', () => {
     const recordType = 'collectionspace';
     const csid = '1234';
 
-    it('should create a SHOW_NOTIFICATION action', function test() {
-      const action = showValidationNotification(recordType, csid);
+    it('should create a SHOW_NOTIFICATION action', () => {
+      const store = mockStore({
+        notification: Immutable.Map(),
+        record: Immutable.fromJS({
+          [csid]: {
+            validation: {
+              [ERROR_KEY]: {},
+            },
+          },
+        }),
+      });
+
+      store.dispatch(showValidationNotification(recordType, csid));
+
+      const actions = store.getActions();
+
+      actions.should.have.lengthOf(1);
+
+      const action = actions[0];
 
       action.type.should.equal(SHOW_NOTIFICATION);
 
@@ -85,20 +103,20 @@ describe('notification action creator', function suite() {
         status: STATUS_ERROR,
       });
 
-      action.payload.date.getTime().should.be.closeTo((new Date()).getTime(), 20);
+      action.payload.date.getTime().should.be.closeTo((new Date()).getTime(), 500);
     });
   });
 
-  describe('removeValidationNotification', function actionSuite() {
-    it('should create a REMOVE_NOTIFICATION action', function test() {
+  describe('removeValidationNotification', () => {
+    it('should create a REMOVE_NOTIFICATION action', () => {
       removeValidationNotification().should.include({
         type: REMOVE_NOTIFICATION,
       });
     });
   });
 
-  describe('openModal', function actionSuite() {
-    it('should dispatch an OPEN_MODAL action', function test() {
+  describe('openModal', () => {
+    it('should dispatch an OPEN_MODAL action', () => {
       const store = mockStore({
         notification: Immutable.Map(),
       });
@@ -120,8 +138,8 @@ describe('notification action creator', function suite() {
     });
   });
 
-  describe('closeModal', function actionSuite() {
-    it('should dispatch an CLOSE_MODAL action', function test() {
+  describe('closeModal', () => {
+    it('should dispatch an CLOSE_MODAL action', () => {
       const store = mockStore({
         notification: Immutable.Map({
           modal: 'modalName',
@@ -139,7 +157,7 @@ describe('notification action creator', function suite() {
       });
     });
 
-    it('should call the callback specified in the last OPEN_MODAL call', function test() {
+    it('should call the callback specified in the last OPEN_MODAL call', () => {
       let store = mockStore({
         notification: Immutable.Map(),
       });
@@ -172,7 +190,7 @@ describe('notification action creator', function suite() {
     });
   });
 
-  it('should open a new modal if a previous one has not been closed', function test() {
+  it('should open a new modal if a previous one has not been closed', () => {
     let store = mockStore({
       notification: Immutable.Map(),
     });
@@ -210,7 +228,7 @@ describe('notification action creator', function suite() {
     });
   });
 
-  it('should still call the close callback of a modal that is replaced without closing', function test() {
+  it('should still call the close callback of a modal that is replaced without closing', () => {
     let store = mockStore({
       notification: Immutable.Map(),
     });
@@ -248,7 +266,7 @@ describe('notification action creator', function suite() {
     });
   });
 
-  it('should chain the onClose callback of a previously opened modal that has not been closed', function test() {
+  it('should chain the onClose callback of a previously opened modal that has not been closed', () => {
     let store = mockStore({
       notification: Immutable.Map(),
     });

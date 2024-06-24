@@ -12,7 +12,7 @@ import {
   refNameToCsid,
   getRecordType,
   getVocabulary,
-} from '../../../src/helpers/refNameHelpers';
+} from '../../helpers/refNameHelpers';
 
 import styles from '../../../styles/cspace-ui/MiniViewPopupAutocompleteInput.css';
 
@@ -24,6 +24,7 @@ const {
 } = inputEnhancers;
 
 const propTypes = {
+  // eslint-disable-next-line react/forbid-foreign-prop-types
   ...AutocompleteInput.propTypes,
   openDelay: PropTypes.number,
   perms: PropTypes.instanceOf(Immutable.Map),
@@ -35,7 +36,9 @@ const defaultProps = {
 };
 
 const contextTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
 };
 
 export class BaseMiniViewPopupAutocompleteInput extends Component {
@@ -57,10 +60,94 @@ export class BaseMiniViewPopupAutocompleteInput extends Component {
     };
   }
 
-  componentWillUpdate(newProps) {
-    if (newProps.value !== this.props.value) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillUpdate(nextProps) {
+    const {
+      value,
+    } = this.props;
+
+    const {
+      value: nextValue,
+    } = nextProps;
+
+    if (nextValue !== value) {
       this.close();
     }
+  }
+
+  handleDropdownClose() {
+    this.close();
+
+    this.setState({
+      isFiltering: false,
+    });
+  }
+
+  handleDropdownOpen() {
+    this.close();
+
+    this.setState({
+      isFiltering: true,
+    });
+  }
+
+  handleItemMouseEnter(value, element) {
+    this.cancelClose();
+
+    const {
+      openDelay,
+    } = this.props;
+
+    this.openTimer = setTimeout(() => {
+      this.open(value, element);
+    }, openDelay);
+  }
+
+  handleItemMouseLeave() {
+    this.cancelOpen();
+
+    const {
+      openDelay,
+    } = this.props;
+
+    this.closeTimer = window.setTimeout(() => {
+      this.close();
+    }, openDelay);
+  }
+
+  handleMiniViewMouseEnter() {
+    this.cancelClose();
+    this.cancelOpen();
+  }
+
+  handleMiniViewPopupDomRef(ref) {
+    this.miniViewPopupDomNode = ref;
+  }
+
+  handleMouseEnter() {
+    const {
+      isFiltering,
+      isOpen,
+    } = this.state;
+
+    if (!isFiltering && !isOpen) {
+      const {
+        openDelay,
+        value,
+      } = this.props;
+
+      this.openTimer = setTimeout(() => {
+        this.open(value);
+      }, openDelay);
+    }
+  }
+
+  handleMouseLeave() {
+    this.close();
+  }
+
+  handleRef(ref) {
+    this.domNode = ref;
   }
 
   cancelClose() {
@@ -83,7 +170,11 @@ export class BaseMiniViewPopupAutocompleteInput extends Component {
     this.cancelOpen();
     this.cancelClose();
 
-    if (this.domNode && this.state.isOpen) {
+    const {
+      isOpen,
+    } = this.state;
+
+    if (this.domNode && isOpen) {
       this.setState({
         isOpen: false,
         value: null,
@@ -101,68 +192,6 @@ export class BaseMiniViewPopupAutocompleteInput extends Component {
       value,
       element,
     });
-  }
-
-  handleDropdownClose() {
-    this.close();
-
-    this.state = {
-      isFiltering: false,
-    };
-  }
-
-  handleDropdownOpen() {
-    this.close();
-
-    this.setState({
-      isFiltering: true,
-    });
-  }
-
-  handleItemMouseEnter(value, element) {
-    this.cancelClose();
-
-    this.openTimer = setTimeout(() => {
-      this.open(value, element);
-    }, this.props.openDelay);
-  }
-
-  handleItemMouseLeave() {
-    this.cancelOpen();
-
-    this.closeTimer = window.setTimeout(() => {
-      this.close();
-    }, this.props.openDelay);
-  }
-
-  handleMiniViewMouseEnter() {
-    this.cancelClose();
-    this.cancelOpen();
-  }
-
-  handleMiniViewPopupDomRef(ref) {
-    this.miniViewPopupDomNode = ref;
-  }
-
-  handleMouseEnter() {
-    const {
-      isFiltering,
-      isOpen,
-    } = this.state;
-
-    if (!isFiltering && !isOpen) {
-      this.openTimer = setTimeout(() => {
-        this.open(this.props.value);
-      }, this.props.openDelay);
-    }
-  }
-
-  handleMouseLeave() {
-    this.close();
-  }
-
-  handleRef(ref) {
-    this.domNode = ref;
   }
 
   renderMiniViewPopup() {
@@ -223,15 +252,18 @@ export class BaseMiniViewPopupAutocompleteInput extends Component {
 
   render() {
     const {
-      /* eslint-disable no-unused-vars */
       openDelay,
       perms,
       clearRecord,
-      /* eslint-enable no-unused-vars */
       ...remainingProps
     } = this.props;
 
-    if (this.props.asText) {
+    const {
+      asText,
+      embedded,
+    } = remainingProps;
+
+    if (asText) {
       return (
         <AutocompleteInputContainer
           {...remainingProps}
@@ -243,7 +275,7 @@ export class BaseMiniViewPopupAutocompleteInput extends Component {
       isFiltering,
     } = this.state;
 
-    const className = this.props.embedded ? styles.embedded : styles.normal;
+    const className = embedded ? styles.embedded : styles.normal;
 
     let popup;
     let filteringPopup;

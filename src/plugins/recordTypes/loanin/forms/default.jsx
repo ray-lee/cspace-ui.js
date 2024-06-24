@@ -25,11 +25,15 @@ const template = (configContext) => {
 
         <Field name="loanStatusGroupList">
           <Field name="loanStatusGroup">
-            <Field name="loanGroup" />
-            <Field name="loanIndividual" />
-            <Field name="loanStatus" />
-            <Field name="loanStatusDate" />
-            <Field name="loanStatusNote" />
+            <Panel>
+              <Row>
+                <Field name="loanGroup" />
+                <Field name="loanIndividual" />
+                <Field name="loanStatus" />
+                <Field name="loanStatusDate" />
+              </Row>
+              <Field name="loanStatusNote" />
+            </Panel>
           </Field>
         </Field>
 
@@ -58,12 +62,14 @@ const template = (configContext) => {
           <Field name="loanReturnDate" />
           <Field name="loanRenewalApplicationDate" />
         </Row>
+
+        <Field name="creditLine" />
       </Panel>
     </Field>
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.loanin.default.name',

@@ -34,10 +34,6 @@ export default class Dock extends Component {
     window.removeEventListener('scroll', this.handleScroll, false);
   }
 
-  setDomNode(ref) {
-    this.domNode = ref;
-  }
-
   handleScroll() {
     const node = this.domNode;
 
@@ -47,7 +43,11 @@ export default class Dock extends Component {
       dockTop,
     } = this.props;
 
-    if (this.state.docked) {
+    const {
+      docked,
+    } = this.state;
+
+    if (docked) {
       if ((window.scrollY + dockTop) < node.offsetTop) {
         this.setState({
           docked: false,
@@ -58,6 +58,10 @@ export default class Dock extends Component {
         docked: true,
       });
     }
+  }
+
+  setDomNode(ref) {
+    this.domNode = ref;
   }
 
   render() {
@@ -73,7 +77,7 @@ export default class Dock extends Component {
 
     const className = classNames(
       isSidebarOpen ? styles.normal : styles.full,
-      { [styles.docked]: docked }
+      { [styles.docked]: docked },
     );
 
     const inlineStyle = docked

@@ -12,18 +12,20 @@ const messages = defineMessages({
   },
 });
 
-const getSearchDescriptor = (relatedCsid, updatedTimestamp) => Immutable.fromJS({
+const getSearchDescriptor = (config, relatedCsid, updatedTimestamp) => Immutable.fromJS({
   recordType: 'media',
   searchQuery: {
     rel: relatedCsid,
     p: 0,
-    size: 5,
+    size: config.defaultSearchPanelSize || 5,
   },
   seqID: updatedTimestamp,
 });
 
 const propTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
   recordData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
@@ -36,16 +38,18 @@ export default class RelatedMediaPanel extends Component {
     this.handleSearchDescriptorChange = this.handleSearchDescriptorChange.bind(this);
 
     const {
+      config,
       csid,
       recordData,
     } = this.props;
 
     this.state = {
-      searchDescriptor: getSearchDescriptor(csid, getUpdatedTimestamp(recordData)),
+      searchDescriptor: getSearchDescriptor(config, csid, getUpdatedTimestamp(recordData)),
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       csid,
       recordData,
@@ -54,6 +58,7 @@ export default class RelatedMediaPanel extends Component {
     const updatedTimestamp = getUpdatedTimestamp(recordData);
 
     const {
+      config,
       csid: nextCsid,
       recordData: nextRecordData,
     } = nextProps;
@@ -62,7 +67,7 @@ export default class RelatedMediaPanel extends Component {
 
     if (nextCsid !== csid || nextUpdatedTimestamp !== updatedTimestamp) {
       this.setState({
-        searchDescriptor: getSearchDescriptor(nextCsid, nextUpdatedTimestamp),
+        searchDescriptor: getSearchDescriptor(config, nextCsid, nextUpdatedTimestamp),
       });
     }
   }

@@ -35,8 +35,9 @@ const propTypes = {
   collapsible: PropTypes.bool,
   color: PropTypes.string,
   columnSetName: PropTypes.string,
-  config: PropTypes.object,
-  history: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }),
   isFiltered: PropTypes.bool,
   linkItems: PropTypes.bool,
   name: PropTypes.string,
@@ -45,6 +46,7 @@ const propTypes = {
   recordData: PropTypes.instanceOf(Immutable.Map),
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
   searchError: PropTypes.instanceOf(Immutable.Map),
+  searchIsPending: PropTypes.bool,
   searchResult: PropTypes.instanceOf(Immutable.Map),
   listType: PropTypes.string,
   title: PropTypes.node,
@@ -70,7 +72,6 @@ const defaultProps = {
 
 const contextTypes = {
   intl: intlShape,
-  router: PropTypes.object,
 };
 
 export default class SearchPanel extends Component {
@@ -114,15 +115,21 @@ export default class SearchPanel extends Component {
     const {
       searchDescriptor,
       searchError,
+      searchIsPending,
       searchResult,
       onSearchDescriptorChange,
     } = this.props;
 
     if (
-      !Immutable.is(prevSearchDescriptor, searchDescriptor) ||
+      !Immutable.is(prevSearchDescriptor, searchDescriptor)
       // If the search result was cleared from the store (not due to the search failing), redo the
       // search.
-      (typeof searchResult === 'undefined' && prevSearchResult && !searchError)
+      || (
+        typeof searchResult === 'undefined'
+        && prevSearchResult
+        && !searchError
+        && !searchIsPending
+      )
     ) {
       this.search();
 
@@ -130,28 +137,6 @@ export default class SearchPanel extends Component {
         onSearchDescriptorChange(searchDescriptor);
       }
     }
-  }
-
-  getSearchLocation() {
-    const {
-      searchDescriptor,
-    } = this.props;
-
-    const searchQuery = searchDescriptor.get('searchQuery');
-
-    // Always go to the first page, since the page size may differ on the search result page.
-    // Remove the size, so that the default/preferred setting for the search result page will
-    // take effect.
-
-    return searchDescriptorToLocation(
-      searchDescriptor.set('searchQuery', searchQuery.set('p', 0).delete('size'))
-    );
-  }
-
-  closeModal() {
-    this.setState({
-      isSearchToRelateModalOpen: false,
-    });
   }
 
   handleAddButtonClick() {
@@ -178,7 +163,7 @@ export default class SearchPanel extends Component {
       const searchQuery = searchDescriptor.get('searchQuery');
 
       onSearchDescriptorChange(
-        searchDescriptor.set('searchQuery', searchQuery.set('p', pageNum))
+        searchDescriptor.set('searchQuery', searchQuery.set('p', pageNum)),
       );
     }
   }
@@ -200,7 +185,7 @@ export default class SearchPanel extends Component {
       const searchQuery = searchDescriptor.get('searchQuery');
 
       onSearchDescriptorChange(
-        searchDescriptor.set('searchQuery', searchQuery.set('p', 0).set('size', pageSize))
+        searchDescriptor.set('searchQuery', searchQuery.set('p', 0).set('size', pageSize)),
       );
     }
   }
@@ -219,9 +204,31 @@ export default class SearchPanel extends Component {
       const searchQuery = searchDescriptor.get('searchQuery');
 
       onSearchDescriptorChange(
-        searchDescriptor.set('searchQuery', searchQuery.set('sort', sort))
+        searchDescriptor.set('searchQuery', searchQuery.set('sort', sort)),
       );
     }
+  }
+
+  getSearchLocation() {
+    const {
+      searchDescriptor,
+    } = this.props;
+
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    // Always go to the first page, since the page size may differ on the search result page.
+    // Remove the size, so that the default/preferred setting for the search result page will
+    // take effect.
+
+    return searchDescriptorToLocation(
+      searchDescriptor.set('searchQuery', searchQuery.set('p', 0).delete('size')),
+    );
+  }
+
+  closeModal() {
+    this.setState({
+      isSearchToRelateModalOpen: false,
+    });
   }
 
   search() {
@@ -254,7 +261,7 @@ export default class SearchPanel extends Component {
           key="search"
         >
           <FormattedMessage {...messages.search} />
-        </Link>
+        </Link>,
       );
     }
 
@@ -267,7 +274,7 @@ export default class SearchPanel extends Component {
           onClick={this.handleAddButtonClick}
         >
           Add…
-        </MiniButton>
+        </MiniButton>,
       );
     }
 
@@ -326,7 +333,11 @@ export default class SearchPanel extends Component {
       const totalItems = parseInt(list.get('totalItems'), 10);
       const pageSize = parseInt(list.get('pageSize'), 10);
       const pageNum = parseInt(list.get('pageNum'), 10);
-      const lastPage = Math.max(0, isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1);
+
+      const lastPage = Math.max(
+        0,
+        Number.isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1,
+      );
 
       return (
         <footer>
@@ -353,7 +364,6 @@ export default class SearchPanel extends Component {
       color,
       columnSetName,
       config,
-      history,
       linkItems,
       listType,
       name,
@@ -381,8 +391,7 @@ export default class SearchPanel extends Component {
     if (showAddButton) {
       const defaultRecordTypeValue = searchDescriptor.get('recordType');
 
-      const defaultServiceType =
-        get(config, ['recordTypes', defaultRecordTypeValue, 'serviceConfig', 'serviceType']);
+      const defaultServiceType = get(config, ['recordTypes', defaultRecordTypeValue, 'serviceConfig', 'serviceType']);
 
       let allowedServiceTypes;
 
@@ -429,7 +438,6 @@ export default class SearchPanel extends Component {
           <SearchResultTableContainer
             columnSetName={columnSetName}
             config={config}
-            history={history}
             linkItems={linkItems}
             listType={listType}
             recordType={recordType}

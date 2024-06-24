@@ -1,8 +1,13 @@
 import { connect } from 'react-redux';
 import SearchResultPage from '../../components/pages/SearchResultPage';
 import { setSearchPageAdvanced, setSearchPageKeyword } from '../../actions/searchPage';
-import { setSearchResultPagePageSize } from '../../actions/prefs';
 import { SEARCH_RESULT_PAGE_SEARCH_NAME } from '../../constants/searchNames';
+
+import {
+  setSearchPageRecordType,
+  setSearchPageVocabulary,
+  setSearchResultPagePageSize,
+} from '../../actions/prefs';
 
 import {
   search,
@@ -17,7 +22,7 @@ import {
   isSearchResultSidebarOpen,
 } from '../../reducers';
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   isSidebarOpen: isSearchResultSidebarOpen(state),
   perms: getUserPerms(state),
   preferredPageSize: getSearchResultPagePageSize(state),
@@ -28,6 +33,8 @@ const mapDispatchToProps = {
   search,
   setSearchPageAdvanced,
   setSearchPageKeyword,
+  setSearchPageRecordType,
+  setSearchPageVocabulary,
   setPreferredPageSize: setSearchResultPagePageSize,
   setAllItemsSelected: setAllResultItemsSelected,
   onItemSelectChange: setResultItemSelected,
@@ -35,5 +42,5 @@ const mapDispatchToProps = {
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  mapDispatchToProps,
 )(SearchResultPage);

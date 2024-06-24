@@ -20,12 +20,10 @@ const messages = defineMessages({
   },
 });
 
-const propTypes = {
-  history: PropTypes.object,
-};
-
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }).isRequired,
 };
 
 const recordType = 'all';
@@ -48,13 +46,17 @@ const getSearchDescriptor = () => {
 };
 
 export default class DashboardPage extends Component {
-  constructor() {
-    super();
+  constructor(props, context) {
+    super(props, context);
 
     this.handleSearchDescriptorChange = this.handleSearchDescriptorChange.bind(this);
 
+    const {
+      config,
+    } = context;
+
     this.state = {
-      searchDescriptor: getSearchDescriptor(),
+      searchDescriptor: getSearchDescriptor(config),
     };
   }
 
@@ -70,10 +72,6 @@ export default class DashboardPage extends Component {
     } = this.context;
 
     const {
-      history,
-    } = this.props;
-
-    const {
       searchDescriptor,
     } = this.state;
 
@@ -86,7 +84,6 @@ export default class DashboardPage extends Component {
 
         <SearchPanelContainer
           config={config}
-          history={history}
           name="dashboardRecentPanel"
           searchDescriptor={searchDescriptor}
           title={recentPanelTitle}
@@ -99,5 +96,4 @@ export default class DashboardPage extends Component {
   }
 }
 
-DashboardPage.propTypes = propTypes;
 DashboardPage.contextTypes = contextTypes;

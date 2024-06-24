@@ -23,7 +23,11 @@ export default function UserMenu(props) {
 
   return (
     <div className={styles.common}>
-      {screenName} | <Link to="/logout"><FormattedMessage {...messages.logout} /></Link>
+      {screenName}
+      {' '}
+      |
+      {' '}
+      <Link to="/logout"><FormattedMessage {...messages.logout} /></Link>
     </div>
   );
 }

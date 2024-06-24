@@ -168,6 +168,9 @@ export default (configContext) => {
               }),
               view: {
                 type: ObjectNameInput,
+                props: {
+                  readOnly: true,
+                },
               },
             },
           },

@@ -62,7 +62,7 @@ const rowRenderer = (params, location) => {
     a11yProps.tabIndex = 0;
 
     if (onRowClick) {
-      a11yProps.onClick = event => onRowClick({ event, index, rowData });
+      a11yProps.onClick = (event) => onRowClick({ event, index, rowData });
     }
 
     // if (onRowDoubleClick) {
@@ -115,11 +115,17 @@ const rowRenderer = (params, location) => {
 
 const propTypes = {
   columnSetName: PropTypes.string,
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+    recordTypes: PropTypes.object,
+    subresources: PropTypes.object,
+  }).isRequired,
   formatCellData: PropTypes.func,
   formatColumnLabel: PropTypes.func,
   isSearchPending: PropTypes.bool,
   linkItems: PropTypes.bool,
+  // eslint-disable-next-line react/forbid-prop-types
+  linkState: PropTypes.object,
   listType: PropTypes.string,
   perms: PropTypes.instanceOf(Immutable.Map),
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
@@ -138,7 +144,7 @@ const propTypes = {
 const defaultProps = {
   columnSetName: 'default',
   formatCellData: (column, data) => data,
-  formatColumnLabel: column => get(column, ['messages', 'label', 'defaultMessage']),
+  formatColumnLabel: (column) => get(column, ['messages', 'label', 'defaultMessage']),
   linkItems: true,
   listType: 'common',
   renderHeader: () => null,
@@ -156,42 +162,6 @@ export default class SearchResultTable extends Component {
     this.renderNoItems = this.renderNoItems.bind(this);
     this.renderRow = this.renderRow.bind(this);
     this.sort = this.sort.bind(this);
-  }
-
-  getItemLocation(item) {
-    const {
-      config,
-      listType,
-      perms,
-      searchDescriptor,
-    } = this.props;
-
-    const getItemLocationPath = get(config, ['listTypes', listType, 'getItemLocationPath']);
-
-    if (!getItemLocationPath) {
-      return undefined;
-    }
-
-    const itemContext = { config, perms, searchDescriptor };
-    const itemLocationPath = getItemLocationPath(item, itemContext);
-
-    if (!itemLocationPath) {
-      return undefined;
-    }
-
-    // Create a location with the item location path, along with enough state to reproduce this
-    // search. The search descriptor is converted to an object in order to reliably store it in
-    // location state.
-
-    return {
-      pathname: itemLocationPath,
-      state: {
-        searchDescriptor: searchDescriptor.toJS(),
-        // The search traverser on records will always link to the search result page, so use
-        // its search name.
-        searchName: 'searchResultPage',
-      },
-    };
   }
 
   handleKeyDown(event) {
@@ -221,6 +191,46 @@ export default class SearchResultTable extends Component {
 
       onItemClick(item, index);
     }
+  }
+
+  getItemLocation(item) {
+    const {
+      config,
+      linkState,
+      listType,
+      perms,
+      searchDescriptor,
+    } = this.props;
+
+    const getItemLocationPath = get(config, ['listTypes', listType, 'getItemLocationPath']);
+
+    if (!getItemLocationPath) {
+      return undefined;
+    }
+
+    const itemContext = { config, perms, searchDescriptor };
+    const itemLocationPath = getItemLocationPath(item, itemContext);
+
+    if (!itemLocationPath) {
+      return undefined;
+    }
+
+    // Create a location with the item location path, along with enough state to reproduce this
+    // search. The search descriptor is converted to an object in order to reliably store it in
+    // location state. Also merge in any object that was passed in via the linkState prop.
+
+    const state = {
+      searchDescriptor: searchDescriptor.toJS(),
+      // The search traverser on records will always link to the search result page, so use
+      // its search name.
+      searchName: 'searchResultPage',
+      ...linkState,
+    };
+
+    return {
+      state,
+      pathname: itemLocationPath,
+    };
   }
 
   sort({ sortBy, sortDirection }) {
@@ -327,7 +337,7 @@ export default class SearchResultTable extends Component {
       }
 
       const columns = Object.keys(columnConfig)
-        .filter(name => !columnConfig[name].disabled)
+        .filter((name) => !columnConfig[name].disabled)
         .sort((nameA, nameB) => {
           const orderA = columnConfig[nameA].order;
           const orderB = columnConfig[nameB].order;
@@ -367,7 +377,7 @@ export default class SearchResultTable extends Component {
 
       let heightBasis;
 
-      if (isNaN(totalItems)) {
+      if (Number.isNaN(totalItems)) {
         // We don't yet know how many items are found by the search. Set the height to one item, so
         // an ellipsis (or other calculating indicator) can be shown.
 
@@ -378,7 +388,9 @@ export default class SearchResultTable extends Component {
         // that many results on this page. This keeps the pager from jumping up on the last page
         // and while page/sorting changes are in progress.
 
-        heightBasis = (totalItems <= pageSize && !isNaN(itemsInPage)) ? itemsInPage : pageSize;
+        heightBasis = (totalItems <= pageSize && !Number.isNaN(itemsInPage))
+          ? itemsInPage
+          : pageSize;
 
         if (heightBasis === 0) {
           // If there are no items, set the height to one, because it looks weird when the footer

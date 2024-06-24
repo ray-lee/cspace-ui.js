@@ -68,28 +68,6 @@ export default {
       servicePath: 'urn:cspace:name(activity)',
     },
   },
-  occasion: {
-    messages: defineMessages({
-      name: {
-        id: 'vocab.concept.occasion.name',
-        description: 'The name of the vocabulary.',
-        defaultMessage: 'Occasion',
-      },
-      collectionName: {
-        id: 'vocab.concept.occasion.collectionName',
-        description: 'The name of a collection of records from the vocabulary.',
-        defaultMessage: 'Occasion Concepts',
-      },
-      itemName: {
-        id: 'vocab.concept.occasion.itemName',
-        description: 'The name of a record from the vocabulary.',
-        defaultMessage: 'Occasion Concept',
-      },
-    }),
-    serviceConfig: {
-      servicePath: 'urn:cspace:name(occasion)',
-    },
-  },
   ethculture: {
     messages: defineMessages({
       name: {
@@ -154,6 +132,28 @@ export default {
     }),
     serviceConfig: {
       servicePath: 'urn:cspace:name(nomenclature)',
+    },
+  },
+  occasion: {
+    messages: defineMessages({
+      name: {
+        id: 'vocab.concept.occasion.name',
+        description: 'The name of the vocabulary.',
+        defaultMessage: 'Occasion',
+      },
+      collectionName: {
+        id: 'vocab.concept.occasion.collectionName',
+        description: 'The name of a collection of records from the vocabulary.',
+        defaultMessage: 'Occasion Concepts',
+      },
+      itemName: {
+        id: 'vocab.concept.occasion.itemName',
+        description: 'The name of a record from the vocabulary.',
+        defaultMessage: 'Occasion Concept',
+      },
+    }),
+    serviceConfig: {
+      servicePath: 'urn:cspace:name(occasion)',
     },
   },
 };

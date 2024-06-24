@@ -13,8 +13,8 @@
   padding: 0 10px;
 }
 
-.common, .common > ul > li > a {
-  color: rgb(160, 160, 160);
+.common, .common a {
+  color: rgb(115, 115, 115);
 }
 
 .common > ul:last-of-type {

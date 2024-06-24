@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
+import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
 import SearchPanel from '../../../../src/components/search/SearchPanel';
@@ -13,7 +14,7 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('SearchPanelContainer', function suite() {
+describe('SearchPanelContainer', () => {
   const panelName = 'testSearch';
   const searchName = panelName;
   const searchResult = {};
@@ -32,7 +33,7 @@ describe('SearchPanelContainer', function suite() {
   const recordType = 'object';
   const preferredPageSize = 23;
 
-  it('should set props on SearchPanel', function test() {
+  it('should set props on SearchPanel', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({}),
       search: Immutable.fromJS({
@@ -48,30 +49,27 @@ describe('SearchPanelContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <SearchPanelContainer
+        store={store}
         name={panelName}
         recordType={recordType}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, SearchPanel);
 
-    result.type.should.equal(SearchPanel);
-
-    result.props.searchResult.should.equal(Immutable.fromJS(searchResult));
-    result.props.searchDescriptor.should.be.an('object');
-    result.props.search.should.be.a('function');
-    result.props.setPreferredPageSize.should.be.a('function');
+    panel.props.searchResult.should.equal(Immutable.fromJS(searchResult));
+    panel.props.searchDescriptor.should.be.an('object');
+    panel.props.search.should.be.a('function');
+    panel.props.setPreferredPageSize.should.be.a('function');
   });
 
-  it('should override the page size in the provided search descriptor with the preferred page size', function test() {
+  it('should override the page size in the provided search descriptor with the preferred page size', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {
@@ -95,22 +93,21 @@ describe('SearchPanelContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <SearchPanelContainer
+        store={store}
         name={panelName}
         recordType={recordType}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, SearchPanel);
 
-    result.props.searchDescriptor.should
+    panel.props.searchDescriptor.should
       .equal(searchDescriptor.setIn(['searchQuery', 'size'], preferredPageSize));
   });
 });

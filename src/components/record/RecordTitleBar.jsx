@@ -23,11 +23,15 @@ const propTypes = {
   vocabulary: PropTypes.string,
   searchName: PropTypes.string,
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
+  // eslint-disable-next-line react/forbid-prop-types
+  originSearchPageState: PropTypes.object,
   onDocked: PropTypes.func,
 };
 
 const contextTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   intl: intlShape,
 };
 
@@ -39,6 +43,7 @@ export default function RecordTitleBar(props, context) {
     vocabulary,
     searchName,
     searchDescriptor,
+    originSearchPageState,
     onDocked,
     ...remainingProps
   } = props;
@@ -71,13 +76,15 @@ export default function RecordTitleBar(props, context) {
 
   let nav;
 
-  if (searchDescriptor) {
+  const isAudit = recordType === 'audit';
+  if (searchDescriptor && !isAudit) {
     nav = (
       <SearchResultTraverserContainer
         config={config}
         csid={csid}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
+        originSearchPageState={originSearchPageState}
       />
     );
   }

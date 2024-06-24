@@ -1,25 +1,26 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import SaveButton from '../../../../src/components/record/SaveButton';
+import { ERROR_KEY } from '../../../../src/helpers/recordDataHelpers';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
-describe('SaveButton', function suite() {
+describe('SaveButton', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
-
 
   it('should render nothing when readOnly is true', function test() {
     render(
       <IntlProvider locale="en">
         <SaveButton readOnly />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     expect(this.container.firstElementChild).to.equal(null);
   });
@@ -29,7 +30,8 @@ describe('SaveButton', function suite() {
       render(
         <IntlProvider locale="en">
           <SaveButton />
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       this.container.firstElementChild.nodeName.should.equal('BUTTON');
     });
@@ -38,7 +40,8 @@ describe('SaveButton', function suite() {
       render(
         <IntlProvider locale="en">
           <SaveButton isSavePending />
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       this.container.firstElementChild.className.should.contain('cspace-ui-SaveButton--pending');
     });
@@ -47,7 +50,8 @@ describe('SaveButton', function suite() {
       render(
         <IntlProvider locale="en">
           <SaveButton isSavePending />
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       this.container.firstElementChild.className.should.contain('cspace-ui-SaveButton--pending');
     });
@@ -56,7 +60,8 @@ describe('SaveButton', function suite() {
       render(
         <IntlProvider locale="en">
           <SaveButton isModified />
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       this.container.firstElementChild.className.should.contain('cspace-ui-SaveButton--normal');
     });
@@ -65,7 +70,8 @@ describe('SaveButton', function suite() {
       render(
         <IntlProvider locale="en">
           <SaveButton />
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       this.container.firstElementChild.className.should.contain('cspace-ui-SaveButton--done');
     });
@@ -75,8 +81,15 @@ describe('SaveButton', function suite() {
     it('should render a div with a save button and an error badge', function test() {
       render(
         <IntlProvider locale="en">
-          <SaveButton validationErrors={Immutable.Map()} />
-        </IntlProvider>, this.container);
+          <SaveButton
+            validationErrors={
+              Immutable.fromJS({
+                [ERROR_KEY]: {},
+              })
+            }
+          />
+        </IntlProvider>, this.container,
+      );
 
       const div = this.container.firstElementChild;
 
@@ -89,10 +102,35 @@ describe('SaveButton', function suite() {
     it('should render a disabled save button', function test() {
       render(
         <IntlProvider locale="en">
-          <SaveButton validationErrors={Immutable.Map()} />
-        </IntlProvider>, this.container);
+          <SaveButton
+            validationErrors={
+              Immutable.fromJS({
+                [ERROR_KEY]: {},
+              })
+            }
+          />
+        </IntlProvider>, this.container,
+      );
 
       this.container.querySelector('button[name="save"]').disabled.should.equal(true);
+    });
+
+    it('should render an enabled button with no error badge if there are only nonblocking errors', function test() {
+      render(
+        <IntlProvider locale="en">
+          <SaveButton
+            validationErrors={
+              Immutable.fromJS({
+                [ERROR_KEY]: {
+                  nonblocking: true,
+                },
+              })
+            }
+          />
+        </IntlProvider>, this.container,
+      );
+
+      this.container.firstElementChild.nodeName.should.equal('BUTTON');
     });
   });
 });

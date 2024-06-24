@@ -1,5 +1,3 @@
-/* global window */
-
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
@@ -22,27 +20,69 @@ const messages = defineMessages({
 const getSearchDescriptor = (config, recordType) => {
   const objectName = get(config, ['recordTypes', recordType, 'serviceConfig', 'objectName']);
 
+  let searchParams;
+
+  if (recordType === 'group') {
+    searchParams = {
+      as: {
+        op: 'or',
+        value: [
+          {
+            op: 'eq',
+            path: 'ns2:batch_common/supportsGroup',
+            value: true,
+          },
+          {
+            op: 'and',
+            value: [
+              {
+                op: 'eq',
+                path: 'ns2:batch_common/forDocTypes/forDocType',
+                value: objectName,
+              },
+              {
+                op: 'eq',
+                path: 'ns2:batch_common/supportsSingleDoc',
+                value: true,
+              },
+            ],
+          },
+        ],
+      },
+    };
+  } else {
+    searchParams = {
+      doctype: objectName,
+      mode: 'single',
+    };
+  }
+
   return Immutable.fromJS({
     recordType: 'batch',
     searchQuery: {
       p: 0,
-      size: 5,
-      doctype: objectName,
-      mode: (recordType === 'group' ? ['single', 'group'] : 'single'),
+      size: config.defaultSearchPanelSize || 5,
+      ...searchParams,
     },
   });
 };
 
 const propTypes = {
   color: PropTypes.string,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
-  history: PropTypes.object,
+  history: PropTypes.shape({
+    push: PropTypes.func,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   recordData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   invoke: PropTypes.func,
 };
+
+const invocationType = 'batchinvocation';
 
 export default class RecordBatchPanel extends Component {
   constructor(props) {
@@ -64,7 +104,8 @@ export default class RecordBatchPanel extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       recordType,
     } = this.props;
@@ -108,8 +149,7 @@ export default class RecordBatchPanel extends Component {
     } = this.props;
 
     if (invoke) {
-      const createsNewFocus =
-        (batchMetadata.getIn(['document', 'ns2:batch_common', 'createsNewFocus']) === 'true');
+      const createsNewFocus = (batchMetadata.getIn(['document', 'ns2:batch_common', 'createsNewFocus']) === 'true');
 
       const handleValidationSuccess = () => {
         if (createsNewFocus) {
@@ -180,11 +220,29 @@ export default class RecordBatchPanel extends Component {
       return null;
     }
 
-    if (!canList('batch', perms)) {
+    if (!canList(invocationType, perms)) {
       return null;
     }
 
-    const canRun = canCreate('batch', perms);
+    const canRun = canCreate(invocationType, perms);
+
+    let getAllowedModes;
+
+    if (recordType === 'group') {
+      // If we're on a group record, limit the modes that can be used to run the report:
+      // - group mode is allowed
+      // - single mode is only allowed if the report is registered to run on group records
+
+      getAllowedModes = (supportedRecordTypes) => {
+        const allowedModes = ['group'];
+
+        if (supportedRecordTypes && supportedRecordTypes.includes(recordType)) {
+          allowedModes.push('single');
+        }
+
+        return allowedModes;
+      };
+    }
 
     return (
       <div>
@@ -202,7 +260,7 @@ export default class RecordBatchPanel extends Component {
           onSearchDescriptorChange={this.handleSearchDescriptorChange}
         />
         <InvocationModalContainer
-          allowedModes={recordType === 'group' ? ['group', 'single'] : undefined}
+          allowedModes={getAllowedModes}
           config={config}
           csid={selectedItem && selectedItem.get('csid')}
           initialInvocationDescriptor={Immutable.Map({

@@ -26,6 +26,10 @@ export default (configContext) => {
     extensions,
   } = configContext.config;
 
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
+
   return {
     document: {
       [config]: {
@@ -47,6 +51,10 @@ export default (configContext) => {
           [config]: {
             cloneable: false,
             messages: defineMessages({
+              inUse: {
+                id: 'field.uoc_common.referenceNumber.inUse',
+                defaultMessage: 'The reference number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.uoc_common.referenceNumber.name',
                 defaultMessage: 'Reference number',
@@ -56,6 +64,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'uoc_common:referenceNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -85,7 +98,7 @@ export default (configContext) => {
             messages: defineMessages({
               name: {
                 id: 'field.uoc_common.projectDescription.name',
-                defaultMessage: 'Project Description',
+                defaultMessage: 'Project description',
               },
             }),
             view: {
@@ -151,9 +164,6 @@ export default (configContext) => {
               repeating: true,
               view: {
                 type: CompoundInput,
-                props: {
-                  tabular: true,
-                },
               },
             },
             authorizedBy: {
@@ -176,8 +186,8 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_DATE,
                 messages: defineMessages({
-                  fulName: {
-                    id: 'field.uoc_common.authorizationDate.fulName',
+                  fullName: {
+                    id: 'field.uoc_common.authorizationDate.fullName',
                     defaultMessage: 'Authorization date',
                   },
                   name: {
@@ -204,12 +214,20 @@ export default (configContext) => {
                 }),
                 view: {
                   type: TextInput,
+                  props: {
+                    height: 23,
+                    multiline: true,
+                  },
                 },
               },
             },
             authorizationStatus: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.authorizationStatus.fullName',
+                    defaultMessage: 'Authorization status',
+                  },
                   name: {
                     id: 'field.uoc_common.authorizationStatus.name',
                     defaultMessage: 'Status',
@@ -236,7 +254,7 @@ export default (configContext) => {
               messages: defineMessages({
                 name: {
                   id: 'field.uoc_common.useDateGroup.name',
-                  defaultMessage: 'Start/single date', // FIX ME
+                  defaultMessage: 'Start/ongoing date',
                 },
               }),
               repeating: true,
@@ -251,6 +269,10 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_DATE,
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.useDate.fullName',
+                    defaultMessage: 'Start/ongoing date',
+                  },
                   name: {
                     id: 'field.uoc_common.useDate.name',
                     defaultMessage: 'Date',
@@ -264,13 +286,13 @@ export default (configContext) => {
             useDateTimeNote: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.useDateTimeNote.fullName',
+                    defaultMessage: 'Start/ongoing date time note',
+                  },
                   name: {
                     id: 'field.uoc_common.useDateTimeNote.name',
                     defaultMessage: 'Time note',
-                  },
-                  fullName: {
-                    id: 'field.uoc_common.useDateTimeNote.fullName',
-                    defaultMessage: 'Use date time note',
                   },
                 }),
                 view: {
@@ -281,6 +303,10 @@ export default (configContext) => {
             useDateNumberOfVisitors: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.useDateNumberOfVisitors.fullName',
+                    defaultMessage: 'Start/ongoing date no. of visitors',
+                  },
                   name: {
                     id: 'field.uoc_common.useDateNumberOfVisitors.name',
                     defaultMessage: 'No. of visitors',
@@ -295,6 +321,10 @@ export default (configContext) => {
             useDateHoursSpent: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.hoursSpent.fullName',
+                    defaultMessage: 'Start/ongoing date hours spent',
+                  },
                   name: {
                     id: 'field.uoc_common.hoursSpent.name',
                     defaultMessage: 'Hours spent',
@@ -311,11 +341,11 @@ export default (configContext) => {
                 messages: defineMessages({
                   fullName: {
                     id: 'field.uoc_common.useDateVisitorNote.fullName',
-                    defaultMessage: 'Visitor note',
+                    defaultMessage: 'Start/ongoing date visitor note',
                   },
                   name: {
                     id: 'field.uoc_common.useDateVisitorNote.name',
-                    defaultMessage: 'Note',
+                    defaultMessage: 'Visitor note',
                   },
                 }),
                 view: {
@@ -406,11 +436,11 @@ export default (configContext) => {
                 messages: defineMessages({
                   fullName: {
                     id: 'field.uoc_common.userUocRole.fullName',
-                    defaultMessage: 'User Use of Collections role',
+                    defaultMessage: 'User role',
                   },
                   name: {
                     id: 'field.uoc_common.userUocRole.name',
-                    defaultMessage: 'Use of Collections role',
+                    defaultMessage: 'Role',
                   },
                 }),
                 view: {
@@ -664,9 +694,13 @@ export default (configContext) => {
             staffNote: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.uoc_common.staffNote.fullName',
+                    defaultMessage: 'Staff note',
+                  },
                   name: {
                     id: 'field.uoc_common.staffNote.name',
-                    defaultMessage: 'Staff note',
+                    defaultMessage: 'Note',
                   },
                 }),
                 view: {
@@ -771,7 +805,7 @@ export default (configContext) => {
                 messages: defineMessages({
                   fullName: {
                     id: 'field.uoc_common.feeValue.fullName',
-                    defaultMessage: 'Fee Value',
+                    defaultMessage: 'Fee value',
                   },
                   name: {
                     id: 'field.uoc_common.feeValue.name',
@@ -789,7 +823,7 @@ export default (configContext) => {
                 messages: defineMessages({
                   fullName: {
                     id: 'field.uoc_common.feeNote.fullName',
-                    defaultMessage: 'Fee Note',
+                    defaultMessage: 'Fee note',
                   },
                   name: {
                     id: 'field.uoc_common.feeNote.name',
@@ -806,7 +840,7 @@ export default (configContext) => {
                 messages: defineMessages({
                   fullName: {
                     id: 'field.uoc_common.feePaid.fullName',
-                    defaultMessage: 'Fee Paid',
+                    defaultMessage: 'Fee paid',
                   },
                   name: {
                     id: 'field.uoc_common.feePaid.name',
@@ -826,7 +860,7 @@ export default (configContext) => {
             messages: defineMessages({
               name: {
                 id: 'field.uoc_common.subcollection.name',
-                defaultMessage: 'Subcollections',
+                defaultMessage: 'Subcollection',
               },
             }),
             view: {

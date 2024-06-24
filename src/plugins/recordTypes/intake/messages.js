@@ -36,13 +36,7 @@ export default {
     },
     condition: {
       id: 'panel.intake.condition',
-      defaultMessage: 'Condition Information',
-    },
-  }),
-  inputTable: defineMessages({
-    depositor: {
-      id: 'inputTable.intake.depositor',
-      defaultMessage: 'Depositor',
+      defaultMessage: 'Condition Check Information',
     },
   }),
 };

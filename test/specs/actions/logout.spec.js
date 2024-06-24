@@ -2,7 +2,7 @@
 
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 import Immutable from 'immutable';
 
 import {
@@ -25,18 +25,33 @@ import {
 
 chai.should();
 
-describe('logout action creator', function suite() {
-  describe('logout', function actionSuite() {
+describe('logout action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('logout', () => {
     const mockStore = configureMockStore([thunk]);
+    const accountId = '1234';
     const tokenUrl = '/cspace-services/oauth/token';
     const accountPermsUrl = '/cspace-services/accounts/0/accountperms';
-    const accountRolesUrl = '/cspace-services/accounts/0/accountroles';
+    const accountRolesUrl = `/cspace-services/accounts/${accountId}/accountroles`;
     const config = {};
     const username = 'user@collectionspace.org';
     const password = 'pw';
 
     const store = mockStore({
-      user: Immutable.Map(),
+      user: Immutable.fromJS({
+        account: {
+          accountId,
+        },
+      }),
     });
 
     const tokenGrantPayload = {
@@ -47,38 +62,23 @@ describe('logout action creator', function suite() {
       jti: '1234',
     };
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
 
       // Delete stored username/token from the test.
       localStorage.removeItem('cspace-client');
     });
 
-    it('should dispatch LOGOUT_FULFILLED on success', function test() {
-      moxios.stubRequest(tokenUrl, {
-        status: 200,
-        response: tokenGrantPayload,
-      });
-
-      moxios.stubRequest(accountPermsUrl, {
-        status: 200,
-        response: {},
-      });
-
-      moxios.stubRequest(accountRolesUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch LOGOUT_FULFILLED on success', () => {
+      worker.use(
+        rest.post(tokenUrl, (req, res, ctx) => res(ctx.json(tokenGrantPayload))),
+        rest.get(accountPermsUrl, (req, res, ctx) => res(ctx.json({}))),
+        rest.get(accountRolesUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       return store.dispatch(login(config, username, password))
         .then(() => {

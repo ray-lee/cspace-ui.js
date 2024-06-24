@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import VocabularyUsedByPanel from '../../../../src/components/admin/VocabularyUsedByPanel';
 import VocabularyUsedByPanelContainer from '../../../../src/containers/admin/VocabularyUsedByPanelContainer';
 
@@ -9,7 +10,7 @@ chai.should();
 
 const mockStore = configureMockStore();
 
-describe('VocabularyUsedByPanelContainer', function suite() {
+describe('VocabularyUsedByPanelContainer', () => {
   const csid = '1234';
 
   const data = Immutable.fromJS({
@@ -27,19 +28,19 @@ describe('VocabularyUsedByPanelContainer', function suite() {
     }),
   });
 
-  const context = {
-    store,
-  };
-
-  it('should set props on VocabularyUsedByPanel', function test() {
+  it('should set props on VocabularyUsedByPanel', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <VocabularyUsedByPanelContainer csid={csid} />, context);
+      <VocabularyUsedByPanelContainer
+        store={store}
+        csid={csid}
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, VocabularyUsedByPanel);
 
-    result.type.should.equal(VocabularyUsedByPanel);
-    result.props.data.should.equal(data);
+    panel.props.data.should.equal(data);
   });
 });

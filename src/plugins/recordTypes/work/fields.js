@@ -4,7 +4,6 @@ export default (configContext) => {
   const {
     AutocompleteInput,
     CompoundInput,
-    DateInput,
     HierarchyInput,
     OptionPickerInput,
     TextInput,
@@ -73,26 +72,7 @@ export default (configContext) => {
             ns: 'http://collectionspace.org/services/work',
           },
         },
-        csid: {
-          [config]: {
-            cloneable: false,
-          },
-        },
-        inAuthority: {
-          [config]: {
-            cloneable: false,
-          },
-        },
-        refName: {
-          [config]: {
-            cloneable: false,
-          },
-        },
-        shortIdentifier: {
-          [config]: {
-            cloneable: false,
-          },
-        },
+        ...extensions.authItem.fields,
         workTermGroupList: {
           [config]: {
             messages: defineMessages({
@@ -122,6 +102,10 @@ export default (configContext) => {
             termDisplayName: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termDisplayName.fullName',
+                    defaultMessage: 'Term display name',
+                  },
                   name: {
                     id: 'field.works_common.termDisplayName.name',
                     defaultMessage: 'Display name',
@@ -136,6 +120,10 @@ export default (configContext) => {
             termName: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termName.fullName',
+                    defaultMessage: 'Term name',
+                  },
                   name: {
                     id: 'field.works_common.termName.name',
                     defaultMessage: 'Name',
@@ -153,6 +141,10 @@ export default (configContext) => {
             termType: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termType.fullName',
+                    defaultMessage: 'Term type',
+                  },
                   name: {
                     id: 'field.works_common.termType.name',
                     defaultMessage: 'Type',
@@ -186,6 +178,10 @@ export default (configContext) => {
             termStatus: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termStatus.fullName',
+                    defaultMessage: 'Term status',
+                  },
                   name: {
                     id: 'field.works_common.termStatus.name',
                     defaultMessage: 'Status',
@@ -202,6 +198,10 @@ export default (configContext) => {
             termQualifier: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termQualifier.fullName',
+                    defaultMessage: 'Term qualifier',
+                  },
                   name: {
                     id: 'field.works_common.termQualifier.name',
                     defaultMessage: 'Qualifier',
@@ -236,6 +236,10 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_BOOL,
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termPrefForLang.fullName',
+                    defaultMessage: 'Term preferred for lang',
+                  },
                   name: {
                     id: 'field.works_common.termPrefForLang.name',
                     defaultMessage: 'Preferred for lang',
@@ -249,13 +253,17 @@ export default (configContext) => {
             termSource: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termSource.fullName',
+                    defaultMessage: 'Term source name',
+                  },
+                  groupName: {
+                    id: 'field.works_common.termSource.groupName',
+                    defaultMessage: 'Source name',
+                  },
                   name: {
                     id: 'field.works_common.termSource.name',
                     defaultMessage: 'Name',
-                  },
-                  fullName: {
-                    id: 'field.works_common.termSource.fullName',
-                    defaultMessage: 'Source name',
                   },
                 }),
                 view: {
@@ -269,6 +277,14 @@ export default (configContext) => {
             termSourceDetail: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termSourceDetail.fullName',
+                    defaultMessage: 'Term source detail',
+                  },
+                  groupName: {
+                    id: 'field.works_common.termSourceDetail.groupName',
+                    defaultMessage: 'Source detail',
+                  },
                   name: {
                     id: 'field.works_common.termSourceDetail.name',
                     defaultMessage: 'Detail',
@@ -282,6 +298,14 @@ export default (configContext) => {
             termSourceID: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termSourceID.fullName',
+                    defaultMessage: 'Term source ID',
+                  },
+                  groupName: {
+                    id: 'field.works_common.termSourceID.groupName',
+                    defaultMessage: 'Source ID',
+                  },
                   name: {
                     id: 'field.works_common.termSourceID.name',
                     defaultMessage: 'ID',
@@ -295,6 +319,14 @@ export default (configContext) => {
             termSourceNote: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.works_common.termSourceNote.fullName',
+                    defaultMessage: 'Term source note',
+                  },
+                  groupName: {
+                    id: 'field.works_common.termSourceNote.groupName',
+                    defaultMessage: 'Source note',
+                  },
                   name: {
                     id: 'field.works_common.termSourceNote.name',
                     defaultMessage: 'Note',
@@ -339,9 +371,6 @@ export default (configContext) => {
                 },
               }),
               repeating: true,
-              searchView: {
-                type: DateInput,
-              },
               view: {
                 type: StructuredDateInput,
               },
@@ -390,13 +419,13 @@ export default (configContext) => {
             creator: {
               [config]: {
                 messages: defineMessages({
-                  name: {
-                    id: 'field.works_common.creator.name',
-                    defaultMessage: 'Name',
-                  },
                   fullName: {
                     id: 'field.works_common.creator.fullName',
                     defaultMessage: 'Creator name',
+                  },
+                  name: {
+                    id: 'field.works_common.creator.name',
+                    defaultMessage: 'Name',
                   },
                 }),
                 view: {
@@ -454,13 +483,13 @@ export default (configContext) => {
             publisher: {
               [config]: {
                 messages: defineMessages({
-                  name: {
-                    id: 'field.works_common.publisher.name',
-                    defaultMessage: 'Name',
-                  },
                   fullName: {
                     id: 'field.works_common.publisher.fullName',
                     defaultMessage: 'Publisher name',
+                  },
+                  name: {
+                    id: 'field.works_common.publisher.name',
+                    defaultMessage: 'Name',
                   },
                 }),
                 view: {

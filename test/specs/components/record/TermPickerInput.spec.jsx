@@ -1,10 +1,10 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { findRenderedComponentWithType } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
 import { baseComponents as inputComponents } from 'cspace-input';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import TermPickerInput from '../../../../src/components/record/TermPickerInput';
 
@@ -12,7 +12,7 @@ chai.should();
 
 const { TermPickerInput: BaseTermPickerInput } = inputComponents;
 
-describe('TermPickerInput', function suite() {
+describe('TermPickerInput', () => {
   const config = {};
 
   beforeEach(function before() {
@@ -25,7 +25,8 @@ describe('TermPickerInput', function suite() {
         <ConfigProvider config={config}>
           <TermPickerInput source="vocabName" />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     findRenderedComponentWithType(resultTree, BaseTermPickerInput).should.not.equal(null);
   });
@@ -44,7 +45,8 @@ describe('TermPickerInput', function suite() {
         <ConfigProvider config={config}>
           <TermPickerInput source={vocabName} readTerms={readTerms} />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     readTermsSource.should.equal(vocabName);
   });
@@ -72,7 +74,8 @@ describe('TermPickerInput', function suite() {
             source={vocabName}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const newPerms = perms.setIn(['vocabulary', 'data'], 'CRUL');
 
@@ -85,7 +88,8 @@ describe('TermPickerInput', function suite() {
             readTerms={readTerms}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     readTermsSource.should.equal(vocabName);
   });
@@ -100,7 +104,8 @@ describe('TermPickerInput', function suite() {
         <ConfigProvider config={config}>
           <TermPickerInput source="vocabName" />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const termPickerInput = findRenderedComponentWithType(resultTree, BaseTermPickerInput);
 

@@ -11,13 +11,13 @@ export default (configContext) => {
   } = configContext.configHelpers;
 
   return {
-    params: {
+    document: {
       [config]: {
         view: {
           type: CompoundInput,
         },
       },
-      targetCSID: {
+      target: {
         [config]: {
           messages: defineMessages({
             name: {
@@ -29,6 +29,7 @@ export default (configContext) => {
           view: {
             type: AutocompleteInput,
             props: {
+              disableAltTerms: true,
               source: 'citation/local,citation/worldcat,concept/activity,concept/associated,concept/material,organization/local,organization/ulan,person/local,person/ulan,place/local,place/tgn,location/local,location/offsite,work/local',
               showQuickAdd: false,
             },

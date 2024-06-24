@@ -7,12 +7,13 @@ import CheckboxInput from 'cspace-input/lib/components/CheckboxInput';
 import { getRecordTypeNameByUri } from '../../helpers/configHelpers';
 import { canList, canUnrelate } from '../../helpers/permissionHelpers';
 import { getUpdatedTimestamp } from '../../helpers/recordDataHelpers';
+import { MODAL_CONFIRM_RECORD_UNRELATE } from '../../constants/modalNames';
 import SearchPanelContainer from '../../containers/search/SearchPanelContainer';
 import ConfirmRecordUnrelateModal from './ConfirmRecordUnrelateModal';
 import SelectBar from '../search/SelectBar';
 import UnrelateButton from './UnrelateButton';
 
-export const confirmUnrelateModalName = `RelatedRecordPanel-${ConfirmRecordUnrelateModal.modalName}`;
+export const confirmUnrelateModalName = `RelatedRecordPanel-${MODAL_CONFIRM_RECORD_UNRELATE}`;
 
 const messages = defineMessages({
   title: {
@@ -21,10 +22,9 @@ const messages = defineMessages({
   },
 });
 
-const listType = 'common';
-
 const getSearchDescriptor = (props) => {
   const {
+    config,
     csid,
     initialSort,
     recordRelationUpdatedTimestamp,
@@ -37,7 +37,7 @@ const getSearchDescriptor = (props) => {
       rel: csid,
       relType: 'affects',
       p: 0,
-      size: 5,
+      size: config.defaultSearchPanelSize || 5,
       sort: initialSort,
     },
     seqID: recordRelationUpdatedTimestamp,
@@ -52,9 +52,11 @@ const propTypes = {
   collapsed: PropTypes.bool,
   color: PropTypes.string,
   columnSetName: PropTypes.string,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
-  history: PropTypes.object,
+  listType: PropTypes.string,
   linkItems: PropTypes.bool,
   name: PropTypes.string,
   perms: PropTypes.instanceOf(Immutable.Map),
@@ -68,6 +70,7 @@ const propTypes = {
   relatedRecordType: PropTypes.string,
   selectedItems: PropTypes.instanceOf(Immutable.Map),
   showCheckboxColumn: PropTypes.bool,
+  showSearchButton: PropTypes.bool,
   showAddButton: PropTypes.bool,
   openModalName: PropTypes.string,
   closeModal: PropTypes.func,
@@ -83,6 +86,7 @@ const propTypes = {
 
 const defaultProps = {
   collapsed: true,
+  listType: 'common',
 };
 
 export default class RelatedRecordPanel extends Component {
@@ -104,20 +108,25 @@ export default class RelatedRecordPanel extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const searchDescriptor = getSearchDescriptor(this.props);
 
     let nextSearchDescriptor = getSearchDescriptor(nextProps);
 
     if (!Immutable.is(searchDescriptor, nextSearchDescriptor)) {
       if (
-        searchDescriptor.get('recordType') === nextSearchDescriptor.get('recordType') &&
-        searchDescriptor.getIn(['searchQuery', 'rel']) === nextSearchDescriptor.getIn(['searchQuery', 'rel'])
+        searchDescriptor.get('recordType') === nextSearchDescriptor.get('recordType')
+        && searchDescriptor.getIn(['searchQuery', 'rel']) === nextSearchDescriptor.getIn(['searchQuery', 'rel'])
       ) {
         // The record type and related csid didn't change, so carry over the page number, size, and
         // sort from the current search descriptor.
 
-        const searchQuery = this.state.searchDescriptor.get('searchQuery');
+        const {
+          searchDescriptor: currentSearchDescriptor,
+        } = this.state;
+
+        const searchQuery = currentSearchDescriptor.get('searchQuery');
 
         const nextSearchQuery = nextSearchDescriptor.get('searchQuery')
           .set('p', searchQuery.get('p'))
@@ -133,18 +142,6 @@ export default class RelatedRecordPanel extends Component {
     }
   }
 
-  shouldShowCheckbox(item) {
-    const {
-      config,
-      perms,
-    } = this.props;
-
-    return (
-      item.get('workflowState') !== 'locked' &&
-      canUnrelate(getRecordTypeNameByUri(config, item.get('uri')), perms, config)
-    );
-  }
-
   handleCheckboxCommit(path, value) {
     const index = parseInt(path[0], 10);
     const checked = value;
@@ -152,6 +149,7 @@ export default class RelatedRecordPanel extends Component {
     const {
       config,
       name,
+      listType,
       onItemSelectChange,
     } = this.props;
 
@@ -188,7 +186,7 @@ export default class RelatedRecordPanel extends Component {
         recordType,
       };
 
-      const objects = selectedItems.valueSeq().map(item => ({
+      const objects = selectedItems.valueSeq().map((item) => ({
         csid: item.get('csid'),
         recordType: relatedRecordType, // TODO: Check the item's docType first
       })).toJS();
@@ -245,6 +243,18 @@ export default class RelatedRecordPanel extends Component {
     }
   }
 
+  shouldShowCheckbox(item) {
+    const {
+      config,
+      perms,
+    } = this.props;
+
+    return (
+      item.get('workflowState') !== 'locked'
+      && canUnrelate(getRecordTypeNameByUri(config, item.get('uri')), perms, config)
+    );
+  }
+
   renderCheckbox({ rowData, rowIndex }) {
     const {
       selectedItems,
@@ -260,7 +270,6 @@ export default class RelatedRecordPanel extends Component {
           name={`${rowIndex}`}
           value={selected}
           onCommit={this.handleCheckboxCommit}
-
           // Prevent clicking on the checkbox from selecting the record.
           onClick={stopPropagation}
         />
@@ -304,6 +313,7 @@ export default class RelatedRecordPanel extends Component {
       config,
       name,
       perms,
+      listType,
       relatedRecordType,
       selectedItems,
       showCheckboxColumn,
@@ -353,8 +363,7 @@ export default class RelatedRecordPanel extends Component {
       relatedRecordType,
     } = this.props;
 
-    const collectionNameMessage =
-      get(config, ['recordTypes', relatedRecordType, 'messages', 'record', 'collectionName']);
+    const collectionNameMessage = get(config, ['recordTypes', relatedRecordType, 'messages', 'record', 'collectionName']);
 
     const collectionName = <FormattedMessage {...collectionNameMessage} />;
 
@@ -368,7 +377,7 @@ export default class RelatedRecordPanel extends Component {
       columnSetName,
       config,
       csid,
-      history,
+      listType,
       linkItems,
       name,
       perms,
@@ -376,6 +385,7 @@ export default class RelatedRecordPanel extends Component {
       recordType,
       relatedRecordType,
       showCheckboxColumn,
+      showSearchButton,
       showAddButton,
       getItemLocation,
       onItemClick,
@@ -386,13 +396,13 @@ export default class RelatedRecordPanel extends Component {
     } = this.state;
 
     const relatedServiceType = get(
-      config, ['recordTypes', relatedRecordType, 'serviceConfig', 'serviceType']
+      config, ['recordTypes', relatedRecordType, 'serviceConfig', 'serviceType'],
     );
 
     if (
-      relatedServiceType === 'object' ||
-      relatedServiceType === 'procedure' ||
-      relatedServiceType === 'authority'
+      relatedServiceType === 'object'
+      || relatedServiceType === 'procedure'
+      || relatedServiceType === 'authority'
     ) {
       // Don't render if list permissions are not present for the related record type.
 
@@ -416,7 +426,7 @@ export default class RelatedRecordPanel extends Component {
         columnSetName={columnSetName}
         config={config}
         csid={csid}
-        history={history}
+        listType={listType}
         linkItems={linkItems}
         name={name}
         searchDescriptor={searchDescriptor}
@@ -424,6 +434,7 @@ export default class RelatedRecordPanel extends Component {
         recordData={recordData}
         title={this.renderTitle()}
         showAddButton={showAddButton}
+        showSearchButton={showSearchButton}
         showCheckboxColumn={showCheckboxColumn}
         renderCheckbox={renderCheckbox}
         renderTableHeader={this.renderTableHeader}

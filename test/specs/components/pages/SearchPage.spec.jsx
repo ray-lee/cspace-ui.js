@@ -1,6 +1,5 @@
 import React from 'react';
 import { Simulate } from 'react-dom/test-utils';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
@@ -8,6 +7,7 @@ import Immutable from 'immutable';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import mockHistory from '../../../helpers/mockHistory';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import SearchPage from '../../../../src/components/pages/SearchPage';
 
 chai.should();
@@ -15,6 +15,7 @@ chai.should();
 const mockStore = configureMockStore();
 
 const store = mockStore({
+  optionList: Immutable.Map(),
   prefs: Immutable.fromJS({
     panels: {},
   }),
@@ -96,7 +97,7 @@ const perms = Immutable.fromJS({
 
 const getAuthorityVocabCsid = () => '1234';
 
-describe('SearchPage', function suite() {
+describe('SearchPage', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -115,7 +116,8 @@ describe('SearchPage', function suite() {
             <SearchPage match={match} />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -134,7 +136,8 @@ describe('SearchPage', function suite() {
             <SearchPage match={match} />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-ErrorPage--common').should.not.equal(null);
   });
@@ -170,7 +173,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     replacementLocation.should.deep.equal({
       pathname: '/search/group',
@@ -210,7 +214,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const newMatch = {
       params: {},
@@ -228,7 +233,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     replacementLocation.should.deep.equal({
       pathname: '/search/group',
@@ -267,7 +273,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     replacementLocation.should.deep.equal({
       pathname: '/search/person/ulan',
@@ -308,7 +315,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-input-DropdownMenuInput--common > input');
 
@@ -357,7 +365,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-input-DropdownMenuInput--common > input');
 
@@ -399,9 +408,10 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    const newLocation = Object.assign({}, location, { pathname: '/search/group' });
+    const newLocation = { ...location, pathname: '/search/group' };
 
     const newMatch = {
       params: {
@@ -422,7 +432,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     committedRecordType.should.equal('group');
   });
@@ -462,7 +473,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-ui-SearchFormVocab--common input');
 
@@ -512,7 +524,8 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-ui-SearchFormVocab--common input');
 
@@ -556,9 +569,10 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    const newLocation = Object.assign({}, location, { pathname: '/search/person/ulan' });
+    const newLocation = { ...location, pathname: '/search/person/ulan' };
 
     const newMatch = {
       params: {
@@ -580,8 +594,92 @@ describe('SearchPage', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     committedVocabulary.should.equal('ulan');
+  });
+
+  it('should call initiateSearch when a search is initiated', function test() {
+    const history = mockHistory({
+      push: () => {},
+    });
+
+    const location = {
+      pathname: '/search/collectionobject',
+      action: '',
+      search: '',
+    };
+
+    const match = {
+      params: {
+        recordType: 'collectionobject',
+      },
+    };
+
+    let initiatedConfig = null;
+    let initiatedPush = null;
+
+    const initiateSearch = (configArg, pushArg) => {
+      initiatedConfig = configArg;
+      initiatedPush = pushArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <ConfigProvider config={config}>
+            <SearchPage
+              config={config}
+              history={history}
+              location={location}
+              match={match}
+              initiateSearch={initiateSearch}
+            />
+          </ConfigProvider>
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const form = this.container.querySelector('form');
+
+    Simulate.submit(form);
+
+    initiatedConfig.should.equal(config);
+    initiatedPush.should.equal(history.push);
+  });
+
+  it('should call clearSearchPage when unmounted', function test() {
+    const match = {
+      params: {
+        recordType: 'collectionobject',
+      },
+    };
+
+    let clearSearchPageCalled = false;
+
+    const clearSearchPage = () => {
+      clearSearchPageCalled = true;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <ConfigProvider config={config}>
+            <SearchPage
+              config={config}
+              match={match}
+              clearSearchPage={clearSearchPage}
+            />
+          </ConfigProvider>
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    render(
+      <div />, this.container,
+    );
+
+    clearSearchPageCalled.should.equal(true);
   });
 });

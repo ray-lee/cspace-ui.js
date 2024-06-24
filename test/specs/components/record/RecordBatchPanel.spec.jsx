@@ -11,7 +11,7 @@ import InvocationModalContainer
 import SearchPanelContainer from '../../../../src/containers/search/SearchPanelContainer';
 import RecordBatchPanel from '../../../../src/components/record/RecordBatchPanel';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.use(chaiImmutable);
 chai.should();
@@ -69,14 +69,17 @@ const perms = Immutable.fromJS({
   batch: {
     data: 'CRUDL',
   },
+  batchinvocation: {
+    data: 'CRUDL',
+  },
 });
 
-describe('RecordBatchPanel', function suite() {
+describe('RecordBatchPanel', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
 
-  it('should render a div containing a search panel and an invocation modal', function test() {
+  it('should render a div containing a search panel and an invocation modal', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -89,7 +92,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
 
@@ -103,8 +107,31 @@ describe('RecordBatchPanel', function suite() {
     searchPanel.props.searchDescriptor.should.equal(Immutable.fromJS({
       recordType: 'batch',
       searchQuery: {
-        doctype: 'Group',
-        mode: ['single', 'group'],
+        as: {
+          op: 'or',
+          value: [
+            {
+              op: 'eq',
+              path: 'ns2:batch_common/supportsGroup',
+              value: true,
+            },
+            {
+              op: 'and',
+              value: [
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/forDocTypes/forDocType',
+                  value: 'Group',
+                },
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/supportsSingleDoc',
+                  value: true,
+                },
+              ],
+            },
+          ],
+        },
         p: 0,
         size: 5,
       },
@@ -115,7 +142,7 @@ describe('RecordBatchPanel', function suite() {
     modal.should.not.equal(null);
   });
 
-  it('should render a nothing if list permission on batch does not exist', function test() {
+  it('should render a nothing if list permission on batch does not exist', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -127,14 +154,15 @@ describe('RecordBatchPanel', function suite() {
         csid={csid}
         recordData={recordData}
         recordType={recordType}
-      />);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
 
     expect(result).to.equal(null);
   });
 
-  it('should render a nothing if the record has not been saved', function test() {
+  it('should render a nothing if the record has not been saved', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -155,14 +183,15 @@ describe('RecordBatchPanel', function suite() {
         recordData={unsavedRecordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
 
     expect(result).to.equal(null);
   });
 
-  it('should update the search panel\'s search descriptor when the record type changes', function test() {
+  it('should update the search panel\'s search descriptor when the record type changes', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -175,7 +204,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     let result;
     let searchPanel;
@@ -186,8 +216,31 @@ describe('RecordBatchPanel', function suite() {
     searchPanel.props.searchDescriptor.should.equal(Immutable.fromJS({
       recordType: 'batch',
       searchQuery: {
-        doctype: 'Group',
-        mode: ['single', 'group'],
+        as: {
+          op: 'or',
+          value: [
+            {
+              op: 'eq',
+              path: 'ns2:batch_common/supportsGroup',
+              value: true,
+            },
+            {
+              op: 'and',
+              value: [
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/forDocTypes/forDocType',
+                  value: 'Group',
+                },
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/supportsSingleDoc',
+                  value: true,
+                },
+              ],
+            },
+          ],
+        },
         p: 0,
         size: 5,
       },
@@ -202,7 +255,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={newRecordType}
         perms={perms}
-      />);
+      />,
+    );
 
     result = shallowRenderer.getRenderOutput();
     searchPanel = findWithType(result, SearchPanelContainer);
@@ -218,7 +272,7 @@ describe('RecordBatchPanel', function suite() {
     }));
   });
 
-  it('should close the invocation modal when the cancel button is clicked', function test() {
+  it('should close the invocation modal when the cancel button is clicked', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -231,7 +285,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     let result;
     let modal;
@@ -258,7 +313,7 @@ describe('RecordBatchPanel', function suite() {
     modal.props.isOpen.should.equal(false);
   });
 
-  it('should close the invocation modal when the close button is clicked', function test() {
+  it('should close the invocation modal when the close button is clicked', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -271,7 +326,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     let result;
     let modal;
@@ -298,7 +354,7 @@ describe('RecordBatchPanel', function suite() {
     modal.props.isOpen.should.equal(false);
   });
 
-  it('should call invoke and close the modal when the invoke button is clicked in the invocation modal and the selected batch job does not create new focus', function test() {
+  it('should call invoke and close the modal when the invoke button is clicked in the invocation modal and the selected batch job does not create new focus', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -326,7 +382,8 @@ describe('RecordBatchPanel', function suite() {
         recordType={recordType}
         perms={perms}
         invoke={invoke}
-      />);
+      />,
+    );
 
     let result;
     let modal;
@@ -369,7 +426,7 @@ describe('RecordBatchPanel', function suite() {
     });
   });
 
-  it('should call invoke and set isRunning to true when the invoke button is clicked in the invocation modal and the selected batch job creates new focus', function test() {
+  it('should call invoke and set isRunning to true when the invoke button is clicked in the invocation modal and the selected batch job creates new focus', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -403,7 +460,8 @@ describe('RecordBatchPanel', function suite() {
         recordType={recordType}
         perms={perms}
         invoke={invoke}
-      />);
+      />,
+    );
 
     let result;
     let modal;
@@ -450,7 +508,7 @@ describe('RecordBatchPanel', function suite() {
     });
   });
 
-  it('should close the modal, set isRunning to false, and navigate to the new focus when a batch job that creates new focus completes', function test() {
+  it('should close the modal, set isRunning to false, and navigate to the new focus when a batch job that creates new focus completes', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -481,7 +539,8 @@ describe('RecordBatchPanel', function suite() {
         recordType={recordType}
         perms={perms}
         invoke={invoke}
-      />);
+      />,
+    );
 
     let result;
     let modal;
@@ -528,7 +587,7 @@ describe('RecordBatchPanel', function suite() {
     });
   });
 
-  it('should update the search panel when it changes the search descriptor', function test() {
+  it('should update the search panel when it changes the search descriptor', () => {
     const csid = '1234';
     const recordType = 'group';
 
@@ -541,7 +600,8 @@ describe('RecordBatchPanel', function suite() {
         recordData={recordData}
         recordType={recordType}
         perms={perms}
-      />);
+      />,
+    );
 
     let result;
     let searchPanel;
@@ -549,13 +609,36 @@ describe('RecordBatchPanel', function suite() {
     result = shallowRenderer.getRenderOutput();
     searchPanel = findWithType(result, SearchPanelContainer);
 
-    const searchDescriptor = searchPanel.props.searchDescriptor;
+    const { searchDescriptor } = searchPanel.props;
 
     searchDescriptor.should.equal(Immutable.fromJS({
       recordType: 'batch',
       searchQuery: {
-        doctype: 'Group',
-        mode: ['single', 'group'],
+        as: {
+          op: 'or',
+          value: [
+            {
+              op: 'eq',
+              path: 'ns2:batch_common/supportsGroup',
+              value: true,
+            },
+            {
+              op: 'and',
+              value: [
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/forDocTypes/forDocType',
+                  value: 'Group',
+                },
+                {
+                  op: 'eq',
+                  path: 'ns2:batch_common/supportsSingleDoc',
+                  value: true,
+                },
+              ],
+            },
+          ],
+        },
         p: 0,
         size: 5,
       },
@@ -569,5 +652,53 @@ describe('RecordBatchPanel', function suite() {
     searchPanel = findWithType(result, SearchPanelContainer);
 
     searchPanel.props.searchDescriptor.should.equal(newSearchDescriptor);
+  });
+
+  it('should allow group mode invocation when the record type is group', () => {
+    const csid = '1234';
+    const recordType = 'group';
+
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(
+      <RecordBatchPanel
+        config={config}
+        csid={csid}
+        recordData={recordData}
+        recordType={recordType}
+        perms={perms}
+      />,
+    );
+
+    const result = shallowRenderer.getRenderOutput();
+    const invocationModal = findWithType(result, InvocationModalContainer);
+    const getAllowedModes = invocationModal.props.allowedModes;
+    const modes = getAllowedModes();
+
+    modes.should.deep.equal(['group']);
+  });
+
+  it('should allow group and single mode invocation when the record type is group and the batch job is registered for doctype group', () => {
+    const csid = '1234';
+    const recordType = 'group';
+
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(
+      <RecordBatchPanel
+        config={config}
+        csid={csid}
+        recordData={recordData}
+        recordType={recordType}
+        perms={perms}
+      />,
+    );
+
+    const result = shallowRenderer.getRenderOutput();
+    const invocationModal = findWithType(result, InvocationModalContainer);
+    const getAllowedModes = invocationModal.props.allowedModes;
+    const modes = getAllowedModes(['group']);
+
+    modes.should.deep.equal(['group', 'single']);
   });
 });

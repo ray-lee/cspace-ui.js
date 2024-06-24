@@ -4,6 +4,11 @@ import SearchPage from '../../components/pages/SearchPage';
 import withConfig from '../../enhancers/withConfig';
 
 import {
+  buildRecordFieldOptionLists,
+  deleteOptionList,
+} from '../../actions/optionList';
+
+import {
   clearSearchPage,
   setSearchPageAdvanced,
   setSearchPageKeyword,
@@ -35,33 +40,25 @@ const mapStateToProps = (state, ownProps) => {
     advancedSearchCondition: getSearchPageAdvanced(state),
     perms: getUserPerms(state),
     preferredAdvancedSearchBooleanOp:
-      getAdvancedSearchBooleanOp(state) ||
-      get(ownProps, ['config', 'defaultAdvancedSearchBooleanOp']),
-    getAuthorityVocabCsid: (recordType, vocabulary) =>
-      getAuthorityVocabCsid(state, recordType, vocabulary),
+      getAdvancedSearchBooleanOp(state)
+      || get(ownProps, ['config', 'defaultAdvancedSearchBooleanOp']),
+    getAuthorityVocabCsid: (recordType, vocabulary) => getAuthorityVocabCsid(
+      state, recordType, vocabulary,
+    ),
   };
 };
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-  onAdvancedSearchConditionCommit: (value) => {
-    dispatch(setSearchPageAdvanced(value));
-  },
-  onClearButtonClick: () => {
-    dispatch(clearSearchPage());
-  },
-  onKeywordCommit: (value) => {
-    dispatch(setSearchPageKeyword(value));
-  },
-  onRecordTypeCommit: (value) => {
-    dispatch(setSearchPageRecordType(value));
-  },
-  onVocabularyCommit: (value) => {
-    dispatch(setSearchPageVocabulary(value));
-  },
-  onSearch: () => {
-    dispatch(initiateSearch(ownProps.config, ownProps.history.push));
-  },
-});
+const mapDispatchToProps = {
+  buildRecordFieldOptionLists,
+  clearSearchPage,
+  deleteOptionList,
+  initiateSearch,
+  onAdvancedSearchConditionCommit: setSearchPageAdvanced,
+  onClearButtonClick: clearSearchPage,
+  onKeywordCommit: setSearchPageKeyword,
+  onRecordTypeCommit: setSearchPageRecordType,
+  onVocabularyCommit: setSearchPageVocabulary,
+};
 
 export const ConnectedSearchPage = connect(
   mapStateToProps,

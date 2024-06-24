@@ -12,7 +12,10 @@ const {
 const propTypes = {
   csid: PropTypes.string,
   intl: intlShape,
-  messages: PropTypes.object,
+  messages: PropTypes.shape({
+    parent: PropTypes.object,
+    children: PropTypes.object,
+  }),
   recordType: PropTypes.string,
   vocabulary: PropTypes.string,
   value: PropTypes.instanceOf(Immutable.Map),
@@ -39,10 +42,6 @@ export class BaseUntypedHierarchyEditor extends Component {
     this.handleRemoveChild = this.handleRemoveChild.bind(this);
     this.handleChildCommit = this.handleChildCommit.bind(this);
     this.handleParentCommit = this.handleParentCommit.bind(this);
-  }
-
-  filterMatch(item) {
-    return (item.csid !== this.props.csid);
   }
 
   handleAddChild() {
@@ -90,6 +89,14 @@ export class BaseUntypedHierarchyEditor extends Component {
         refName: value,
       }));
     }
+  }
+
+  filterMatch(item) {
+    const {
+      csid,
+    } = this.props;
+
+    return (item.csid !== csid);
   }
 
   renderParent() {
@@ -143,8 +150,7 @@ export class BaseUntypedHierarchyEditor extends Component {
 
     const source = [recordType, vocabulary].join('/');
 
-    const childRefNames =
-      value.get('children').map(child => child.get('refName'));
+    const childRefNames = value.get('children').map((child) => child.get('refName'));
 
     return (
       <CompoundInput

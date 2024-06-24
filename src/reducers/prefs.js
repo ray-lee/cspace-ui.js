@@ -1,5 +1,6 @@
 import Immutable from 'immutable';
 import { OP_AND, OP_OR } from '../constants/searchOperators';
+import { clearAdvancedSearchConditionValues } from '../helpers/searchHelpers';
 
 import {
   PREFS_LOADED,
@@ -24,10 +25,27 @@ import {
 } from '../constants/actionCodes';
 
 const handleAdvancedSearchConditionChange = (state, action) => {
+  const { recordType } = action.meta;
+
+  if (!recordType) {
+    return state;
+  }
+
   const condition = action.payload;
   const op = condition ? condition.get('op') : null;
 
-  return ((op === OP_AND || op === OP_OR) ? state.set('advancedSearchBooleanOp', op) : state);
+  let nextState = state;
+
+  if (op === OP_AND || op === OP_OR) {
+    nextState = nextState.set('advancedSearchBooleanOp', op);
+  }
+
+  nextState = nextState.setIn(
+    ['searchCond', recordType],
+    clearAdvancedSearchConditionValues(condition),
+  );
+
+  return nextState;
 };
 
 const handleToggleRecordSidebar = (state) => {
@@ -63,7 +81,7 @@ export default (state = Immutable.Map(), action) => {
       return (action.payload || Immutable.Map());
     case COLLAPSE_PANEL:
       return state.setIn(
-        ['panels', action.meta.recordType, action.meta.name, 'collapsed'], action.payload
+        ['panels', action.meta.recordType, action.meta.name, 'collapsed'], action.payload,
       );
     case SET_ADMIN_TAB:
       return state.set('adminTab', action.payload);
@@ -71,25 +89,25 @@ export default (state = Immutable.Map(), action) => {
       return state.set('toolTab', action.payload);
     case SET_RECORD_BROWSER_NAV_BAR_ITEMS:
       return state.setIn(
-        ['recordBrowserNavBarItems', action.meta.recordType], action.payload
+        ['recordBrowserNavBarItems', action.meta.recordType], action.payload,
       );
     case SET_SEARCH_PAGE_RECORD_TYPE:
       return state.setIn(['searchPage', 'recordType'], action.payload);
     case SET_SEARCH_PAGE_VOCABULARY:
       return state.setIn(
         ['searchPage', 'vocabulary', state.getIn(['searchPage', 'recordType'])],
-        action.payload
+        action.payload,
       );
     case SET_QUICK_SEARCH_RECORD_TYPE:
       return state.setIn(['quickSearch', 'recordType'], action.payload);
     case SET_QUICK_SEARCH_VOCABULARY:
       return state.setIn(
         ['quickSearch', 'vocabulary', state.getIn(['quickSearch', 'recordType'])],
-        action.payload
+        action.payload,
       );
     case SET_SEARCH_PANEL_PAGE_SIZE:
       return state.setIn(
-        ['panels', action.meta.recordType, action.meta.name, 'pageSize'], action.payload
+        ['panels', action.meta.recordType, action.meta.name, 'pageSize'], action.payload,
       );
     case SET_SEARCH_RESULT_PAGE_PAGE_SIZE:
       return state.set('searchResultPagePageSize', action.payload);
@@ -113,51 +131,39 @@ export default (state = Immutable.Map(), action) => {
   }
 };
 
-export const getAdvancedSearchBooleanOp = state =>
-  state.get('advancedSearchBooleanOp');
+export const getAdvancedSearchBooleanOp = (state) => state.get('advancedSearchBooleanOp');
 
-export const getSearchPageRecordType = state =>
-  state.getIn(['searchPage', 'recordType']);
+export const getSearchCondition = (state, recordType) => state.getIn(['searchCond', recordType]);
 
-export const getSearchPageVocabulary = (state, recordType) =>
-  state.getIn(['searchPage', 'vocabulary', recordType]);
+export const getSearchPageRecordType = (state) => state.getIn(['searchPage', 'recordType']);
 
-export const getQuickSearchRecordType = state =>
-  state.getIn(['quickSearch', 'recordType']);
+export const getSearchPageVocabulary = (state, recordType) => state.getIn(['searchPage', 'vocabulary', recordType]);
 
-export const getQuickSearchVocabulary = (state, recordType) =>
-  state.getIn(['quickSearch', 'vocabulary', recordType]);
+export const getQuickSearchRecordType = (state) => state.getIn(['quickSearch', 'recordType']);
 
-export const getSearchPanelPageSize = (state, recordType, name) =>
-  state.getIn(['panels', recordType, name, 'pageSize']);
+export const getQuickSearchVocabulary = (state, recordType) => state.getIn(['quickSearch', 'vocabulary', recordType]);
 
-export const getSearchResultPagePageSize = state =>
-  state.get('searchResultPagePageSize');
+export const getSearchPanelPageSize = (state, recordType, name) => state.getIn(['panels', recordType, name, 'pageSize']);
 
-export const getSearchToSelectPageSize = state =>
-  state.get('searchToSelectPageSize');
+export const getSearchResultPagePageSize = (state) => state.get('searchResultPagePageSize');
 
-export const isPanelCollapsed = (state, recordType, name) =>
-  state.getIn(['panels', recordType, name, 'collapsed']);
+export const getSearchToSelectPageSize = (state) => state.get('searchToSelectPageSize');
 
-export const getRecordBrowserNavBarItems = (state, recordType) =>
-  state.getIn(['recordBrowserNavBarItems', recordType]);
+export const isPanelCollapsed = (state, recordType, name) => state.getIn(['panels', recordType, name, 'collapsed']);
 
-export const getForm = (state, recordType) =>
-  state.getIn(['form', recordType]);
+export const getRecordBrowserNavBarItems = (state, recordType) => state.getIn(['recordBrowserNavBarItems', recordType]);
 
-export const getUploadType = state =>
-  state.get('uploadType');
+export const getForm = (state, recordType) => state.getIn(['form', recordType]);
 
-export const getAdminTab = state =>
-  state.get('adminTab');
+export const getUploadType = (state) => state.get('uploadType');
 
-export const getToolTab = state =>
-  state.get('toolTab');
+export const getAdminTab = (state) => state.get('adminTab');
 
-export const isRecordSidebarOpen = state => state.get('recordSidebarOpen');
+export const getToolTab = (state) => state.get('toolTab');
 
-export const isSearchResultSidebarOpen = state => state.get('searchResultSidebarOpen');
+export const isRecordSidebarOpen = (state) => state.get('recordSidebarOpen');
+
+export const isSearchResultSidebarOpen = (state) => state.get('searchResultSidebarOpen');
 
 export const getStickyFields = (state, recordType) => {
   if (typeof recordType === 'undefined') {

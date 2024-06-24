@@ -66,6 +66,22 @@ export default {
       id: 'panel.collectionobject.hierarchy',
       defaultMessage: 'Hierarchy',
     },
+    software: {
+      id: 'panel.collectionobject.software',
+      defaultMessage: 'Technical Specifications: Software/Web',
+    },
+    avTechSpecs: {
+      id: 'panel.collectionobject.avTechSpecs',
+      defaultMessage: 'Technical Specifications: Audio/Video/Still',
+    },
+    rights: {
+      id: 'panel.collectionobject.rights',
+      defaultMessage: 'Rights Management Information',
+    },
+    rightsin: {
+      id: 'panel.collectionobject.rightsin',
+      defaultMessage: 'Rights In Management Information',
+    },
   }),
   inputTable: defineMessages({
     age: {

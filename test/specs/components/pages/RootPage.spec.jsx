@@ -1,11 +1,11 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import { IntlProvider } from 'react-intl';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import RootPage from '../../../../src/components/pages/RootPage';
 
 chai.should();
@@ -18,7 +18,7 @@ const store = mockStore({
   }),
 });
 
-describe('RootPage', function suite() {
+describe('RootPage', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -31,7 +31,8 @@ describe('RootPage', function suite() {
             <RootPage />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });

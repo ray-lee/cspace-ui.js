@@ -14,7 +14,6 @@ const template = (configContext) => {
 
   const {
     Field,
-    InputTable,
   } = configContext.recordComponents;
 
   return (
@@ -33,22 +32,31 @@ const template = (configContext) => {
 
           <Col>
             <Field name="returnDate" />
-            <Field name="currentOwner" />
 
-            <InputTable name="depositor">
-              <Field name="depositor" />
-              <Field name="depositorsRequirements" />
-            </InputTable>
+            <Field name="currentOwners">
+              <Field name="currentOwner" />
+            </Field>
+
+            <Field name="depositorGroupList">
+              <Field name="depositorGroup">
+                <Field name="depositor" />
+                <Field name="depositorsRequirements" />
+              </Field>
+            </Field>
           </Col>
         </Cols>
 
         <Field name="approvalGroupList">
           <Field name="approvalGroup">
-            <Field name="approvalGroup" />
-            <Field name="approvalIndividual" />
-            <Field name="approvalStatus" />
-            <Field name="approvalDate" />
-            <Field name="approvalNote" />
+            <Panel>
+              <Row>
+                <Field name="approvalGroup" />
+                <Field name="approvalIndividual" />
+                <Field name="approvalStatus" />
+                <Field name="approvalDate" />
+              </Row>
+              <Field name="approvalNote" />
+            </Panel>
           </Field>
         </Field>
 
@@ -155,7 +163,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.intake.default.name',

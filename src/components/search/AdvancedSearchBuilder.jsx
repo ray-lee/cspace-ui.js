@@ -3,16 +3,33 @@ import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage } from 'react-intl';
 import Immutable from 'immutable';
 import get from 'lodash/get';
-import SearchConditionInput from './input/SearchConditionInput';
 import { ConnectedPanel } from '../../containers/layout/PanelContainer';
+import { OP_AND, OP_OR, OP_GROUP } from '../../constants/searchOperators';
+import GroupConditionInputContainer from '../../containers/search/input/GroupConditionInputContainer';
+import BooleanConditionInput from './input/BooleanConditionInput';
+import FieldConditionInput from './input/FieldConditionInput';
 
-import {
-  OP_AND,
-  OP_OR,
-  OP_RANGE,
-  OP_GTE,
-  OP_LTE,
-} from '../../constants/searchOperators';
+const propTypes = {
+  condition: PropTypes.instanceOf(Immutable.Map),
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
+  hasChildGroups: PropTypes.bool,
+  inline: PropTypes.bool,
+  preferredBooleanOp: PropTypes.string,
+  preferredCondition: PropTypes.instanceOf(Immutable.Map),
+  readOnly: PropTypes.bool,
+  recordType: PropTypes.string,
+  onConditionCommit: PropTypes.func,
+};
+
+const defaultProps = {
+  preferredBooleanOp: 'or',
+};
+
+const childContextTypes = {
+  recordType: PropTypes.string,
+};
 
 const messages = defineMessages({
   title: {
@@ -21,43 +38,41 @@ const messages = defineMessages({
   },
 });
 
-const findAdvancedSearchClause = (searchClauses, clause) => {
-  let index;
+const ensureRootBooleanOp = (condition, preferredBooleanOp) => {
+  const op = condition && condition.get('op');
 
-  index = searchClauses.findKey(candidateClause =>
-    candidateClause.get('path') === clause.get('path') &&
-    candidateClause.get('op') === clause.get('op')
-  );
-
-  if (typeof index === 'undefined') {
-    if (clause.get('op') === OP_GTE || clause.get('op') === OP_LTE) {
-      // A one-sided range search might have been converted to a gte/lte search.
-
-      index = searchClauses.findKey(candidateClause =>
-        candidateClause.get('path') === clause.get('path') &&
-        candidateClause.get('op') === OP_RANGE
-      );
-    }
+  if (op === OP_AND || op === OP_OR) {
+    return condition;
   }
 
-  return index;
+  return (
+    Immutable.Map()
+      .set('op', preferredBooleanOp)
+      .set('value', condition ? Immutable.List.of(condition) : Immutable.List())
+  );
 };
 
-const propTypes = {
-  condition: PropTypes.instanceOf(Immutable.Map),
-  config: PropTypes.object,
-  inline: PropTypes.bool,
-  preferredBooleanOp: PropTypes.string,
-  readOnly: PropTypes.bool,
-  recordType: PropTypes.string,
-  onConditionCommit: PropTypes.func,
-};
+export const getSearchConditionInputComponent = (condition) => {
+  const operator = condition.get('op');
 
-const childContextTypes = {
-  recordType: PropTypes.string,
+  if (operator === OP_AND || operator === OP_OR) {
+    return BooleanConditionInput;
+  }
+
+  if (operator === OP_GROUP) {
+    return GroupConditionInputContainer;
+  }
+
+  return FieldConditionInput;
 };
 
 export default class AdvancedSearchBuilder extends Component {
+  constructor() {
+    super();
+
+    this.handleConditionCommit = this.handleConditionCommit.bind(this);
+  }
+
   getChildContext() {
     const {
       recordType,
@@ -76,88 +91,49 @@ export default class AdvancedSearchBuilder extends Component {
     this.normalizeCondition();
   }
 
+  handleConditionCommit(name, condition) {
+    const {
+      onConditionCommit,
+    } = this.props;
+
+    if (onConditionCommit) {
+      onConditionCommit(condition);
+    }
+  }
+
   normalizeCondition() {
     const {
       condition,
       config,
       preferredBooleanOp,
+      preferredCondition,
       recordType,
       onConditionCommit,
     } = this.props;
 
-    // FIXME: Uncomment this once conditions may be added by the end user.
+    if (recordType && onConditionCommit) {
+      let normalizedCondition;
 
-    // if (!condition && onConditionCommit) {
-    //   const defaultCondition = get(config, ['recordTypes', recordType, 'advancedSearch']);
-    //
-    //   if (defaultCondition) {
-    //     onConditionCommit(Immutable.fromJS(defaultCondition));
-    //   }
-    // }
+      if (condition) {
+        normalizedCondition = ensureRootBooleanOp(condition, preferredBooleanOp);
+      } else {
+        let initialCondition = preferredCondition;
 
-    // FIXME: There will be no need for this once conditions may be added by the end user.
-    // For now do a quick and dirty merge of the (possibly normalized) condition into the
-    // default, so that fields aren't unrecoverable after normalization.
-
-    if (onConditionCommit) {
-      const defaultCondition = Immutable.fromJS(
-        get(config, ['recordTypes', recordType, 'advancedSearch']));
-
-      const op = condition && condition.get('op');
-
-      if (preferredBooleanOp && (op === OP_AND || op === OP_OR) && (op !== preferredBooleanOp)) {
-        onConditionCommit(condition.set('op', preferredBooleanOp));
-      } else if (defaultCondition && condition) {
-        if (
-          op !== defaultCondition.get('op') ||
-          !Immutable.List.isList(condition.get('value')) ||
-          condition.get('value').size !== defaultCondition.get('value').size
-        ) {
-          let mergedCondition = defaultCondition;
-          let clauses;
-
-          if (op === OP_AND || op === OP_OR) {
-            mergedCondition = mergedCondition.set('op', op);
-
-            clauses = condition.get('value');
-          } else {
-            if (preferredBooleanOp) {
-              mergedCondition = mergedCondition.set('op', preferredBooleanOp);
-            }
-
-            clauses = Immutable.List([condition]);
-          }
-
-          const targetClauses = mergedCondition.get('value');
-
-          clauses.forEach((clause) => {
-            const index = findAdvancedSearchClause(targetClauses, clause);
-
-            if (typeof index !== 'undefined') {
-              const targetClause = targetClauses.get(index);
-
-              let value = clause.get('value');
-
-              if (targetClause.get('op') === OP_RANGE && !Immutable.List.isList(value)) {
-                value = (clause.get('op') === OP_GTE)
-                  ? Immutable.List([value])
-                  : Immutable.List([undefined, value]);
-              }
-
-              mergedCondition = mergedCondition.setIn(['value', index, 'value'], value);
-            }
-          });
-
-          if (!mergedCondition.equals(condition)) {
-            onConditionCommit(mergedCondition);
-          }
+        if (!initialCondition) {
+          initialCondition = Immutable.fromJS(
+            get(config, ['recordTypes', recordType, 'advancedSearch']),
+          );
         }
-      } else if (defaultCondition) {
-        onConditionCommit(
-          preferredBooleanOp
-            ? defaultCondition.set('op', preferredBooleanOp)
-            : defaultCondition
-        );
+
+        normalizedCondition = ensureRootBooleanOp(initialCondition, preferredBooleanOp);
+
+        if (normalizedCondition.get('op') !== preferredBooleanOp) {
+          normalizedCondition = normalizedCondition.set('op', preferredBooleanOp);
+        }
+      }
+
+      if (normalizedCondition !== condition) {
+        onConditionCommit(normalizedCondition);
       }
     }
   }
@@ -166,25 +142,31 @@ export default class AdvancedSearchBuilder extends Component {
     const {
       condition,
       config,
+      hasChildGroups,
       inline,
       readOnly,
       recordType,
-      onConditionCommit,
     } = this.props;
 
     if (!condition) {
       return null;
     }
 
-    const fieldDescriptor = get(config, ['recordTypes', recordType, 'fields']);
+    const SearchConditionInputComponent = getSearchConditionInputComponent(condition);
 
     const searchConditionInput = (
-      <SearchConditionInput
+      <SearchConditionInputComponent
         condition={condition}
-        fields={fieldDescriptor}
+        config={config}
+        hasChildGroups={hasChildGroups}
         inline={inline}
+        name="advancedSearch"
         readOnly={readOnly}
-        onCommit={onConditionCommit}
+        recordType={recordType}
+        showInlineParens={false}
+        showRemoveButton={false}
+        getSearchConditionInputComponent={getSearchConditionInputComponent}
+        onCommit={this.handleConditionCommit}
       />
     );
 
@@ -210,4 +192,5 @@ export default class AdvancedSearchBuilder extends Component {
 }
 
 AdvancedSearchBuilder.propTypes = propTypes;
+AdvancedSearchBuilder.defaultProps = defaultProps;
 AdvancedSearchBuilder.childContextTypes = childContextTypes;

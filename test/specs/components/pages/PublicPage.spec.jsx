@@ -1,11 +1,11 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import { IntlProvider } from 'react-intl';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import PublicPage from '../../../../src/components/pages/PublicPage';
 
@@ -19,7 +19,7 @@ const store = mockStore({
 
 const config = {};
 
-describe('PublicPage', function suite() {
+describe('PublicPage', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -34,7 +34,8 @@ describe('PublicPage', function suite() {
             </Router>
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -51,7 +52,8 @@ describe('PublicPage', function suite() {
             </Router>
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('div > div#content').textContent.should
       .equal('This is some content');

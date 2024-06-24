@@ -30,8 +30,8 @@ const propTypes = {
 };
 
 export default class RolesInput extends Component {
-  constructor(props, context) {
-    super(props, context);
+  constructor(props) {
+    super(props);
 
     this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
   }
@@ -45,28 +45,6 @@ export default class RolesInput extends Component {
     if (!roles && readRoles) {
       readRoles();
     }
-  }
-
-  getRolesMap() {
-    let rolesList = this.props.value;
-
-    if (!rolesList) {
-      return undefined;
-    }
-
-    if (!Immutable.List.isList(rolesList)) {
-      rolesList = Immutable.List.of(rolesList);
-    }
-
-    const roles = {};
-
-    rolesList.forEach((role) => {
-      const roleId = role.get('roleId');
-
-      roles[roleId] = true;
-    });
-
-    return roles;
   }
 
   handleCheckboxChange(event) {
@@ -88,12 +66,38 @@ export default class RolesInput extends Component {
         delete membership[id];
       }
 
-      const newValue = Immutable.List(Object.keys(membership).map(roleId => Immutable.Map({
+      const newValue = Immutable.List(Object.keys(membership).map((roleId) => Immutable.Map({
         roleId,
       })));
 
       onCommit(getPath(this.props), newValue);
     }
+  }
+
+  getRolesMap() {
+    const {
+      value,
+    } = this.props;
+
+    let rolesList = value;
+
+    if (!rolesList) {
+      return undefined;
+    }
+
+    if (!Immutable.List.isList(rolesList)) {
+      rolesList = Immutable.List.of(rolesList);
+    }
+
+    const roles = {};
+
+    rolesList.forEach((role) => {
+      const roleId = role.get('roleId');
+
+      roles[roleId] = true;
+    });
+
+    return roles;
   }
 
   renderRoleRows() {
@@ -127,7 +131,7 @@ export default class RolesInput extends Component {
           </li>
         );
       })
-      .filter(row => !!row);
+      .filter((row) => !!row);
 
     return rows.toJS();
   }

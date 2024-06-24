@@ -26,6 +26,10 @@ export default (configContext) => {
     extensions,
   } = configContext.config;
 
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
+
   return {
     document: {
       [config]: {
@@ -47,6 +51,10 @@ export default (configContext) => {
           [config]: {
             cloneable: false,
             messages: defineMessages({
+              inUse: {
+                id: 'field.acquisitions_common.acquisitionReferenceNumber.inUse',
+                defaultMessage: 'The reference number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.acquisitions_common.acquisitionReferenceNumber.name',
                 defaultMessage: 'Reference number',
@@ -56,6 +64,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'acquisitions_common:acquisitionReferenceNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -73,9 +86,6 @@ export default (configContext) => {
                 defaultMessage: 'Accession date',
               },
             }),
-            searchView: {
-              type: DateInput,
-            },
             view: {
               type: StructuredDateInput,
             },
@@ -132,9 +142,6 @@ export default (configContext) => {
                 },
               }),
               repeating: true,
-              searchView: {
-                type: DateInput,
-              },
               view: {
                 type: StructuredDateInput,
               },
@@ -236,20 +243,17 @@ export default (configContext) => {
               repeating: true,
               view: {
                 type: CompoundInput,
-                props: {
-                  tabular: true,
-                },
               },
             },
             approvalGroup: {
               [config]: {
                 messages: defineMessages({
                   fullName: {
-                    id: 'field.acquisitions_common.approvalGroup.fullName',
+                    id: 'field.acquisitions_common.approvalGroup.approvalGroup.fullName',
                     defaultMessage: 'Approval group',
                   },
                   name: {
-                    id: 'field.approvalGroupField.approvalGroup.name',
+                    id: 'field.acquisitions_common.approvalGroup.approvalGroup.name',
                     defaultMessage: 'Group',
                   },
                 }),
@@ -305,13 +309,13 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_DATE,
                 messages: defineMessages({
-                  name: {
-                    id: 'field.acquisitions_common.approvalDate.name',
-                    defaultMessage: 'Date',
-                  },
                   fullName: {
                     id: 'field.acquisitions_common.approvalDate.fullName',
                     defaultMessage: 'Approval status date',
+                  },
+                  name: {
+                    id: 'field.acquisitions_common.approvalDate.name',
+                    defaultMessage: 'Date',
                   },
                 }),
                 view: {
@@ -333,6 +337,10 @@ export default (configContext) => {
                 }),
                 view: {
                   type: TextInput,
+                  props: {
+                    height: 23,
+                    multiline: true,
+                  },
                 },
               },
             },
@@ -652,9 +660,13 @@ export default (configContext) => {
             acquisitionFundingSource: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.acquisitions_common.acquisitionFundingSource.fullName',
+                    defaultMessage: 'Funding source',
+                  },
                   name: {
                     id: 'field.acquisitions_common.acquisitionFundingSource.name',
-                    defaultMessage: 'Funding source',
+                    defaultMessage: 'Source',
                   },
                 }),
                 view: {
@@ -668,8 +680,12 @@ export default (configContext) => {
             acquisitionFundingSourceProvisos: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.acquisitions_common.acquisitionFundingSourceProvisos.fullName',
+                    defaultMessage: 'Funding source provisos',
+                  },
                   name: {
-                    id: 'field.acquistions_common.acquisitionFundingSourceProvisos.name',
+                    id: 'field.acquisitions_common.acquisitionFundingSourceProvisos.name',
                     defaultMessage: 'Source provisos',
                   },
                 }),

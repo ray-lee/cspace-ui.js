@@ -1,20 +1,21 @@
 import React from 'react';
 import { Simulate } from 'react-dom/test-utils';
-import { render } from 'react-dom';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 import { IntlProvider } from 'react-intl';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import SearchForm from '../../../../src/components/search/SearchForm';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
 const mockStore = configureMockStore();
 
 const store = mockStore({
+  optionList: Immutable.Map(),
   prefs: Immutable.Map(),
 });
 
@@ -110,7 +111,7 @@ const intl = {
 
 const getAuthorityVocabCsid = () => '1234';
 
-describe('SearchForm', function suite() {
+describe('SearchForm', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -128,7 +129,8 @@ describe('SearchForm', function suite() {
             getAuthorityVocabCsid={getAuthorityVocabCsid}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('FORM');
   });
@@ -146,7 +148,8 @@ describe('SearchForm', function suite() {
             getAuthorityVocabCsid={getAuthorityVocabCsid}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const dropdownMenuInput = this.container.querySelector('.cspace-input-DropdownMenuInput--common');
 
@@ -176,7 +179,8 @@ describe('SearchForm', function suite() {
             getAuthorityVocabCsid={getAuthorityVocabCsid}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     expect(this.container.querySelector('.cspace-ui-SearchFormVocab--common')).to.equal(null);
   });
@@ -200,7 +204,8 @@ describe('SearchForm', function suite() {
             onKeywordCommit={handleKeywordCommit}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('section > div > input');
 
@@ -231,7 +236,8 @@ describe('SearchForm', function suite() {
             onRecordTypeCommit={handleRecordTypeCommit}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-ui-SearchFormRecordType--common input');
 
@@ -263,7 +269,8 @@ describe('SearchForm', function suite() {
             onVocabularyCommit={handleVocabularyCommit}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('.cspace-ui-SearchFormVocab--common input');
 
@@ -294,12 +301,121 @@ describe('SearchForm', function suite() {
             onSearch={handleSearch}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const form = this.container.querySelector('form');
 
     Simulate.submit(form);
 
     handlerCalled.should.equal(true);
+  });
+
+  it('should call buildRecordFieldOptionLists when mounted', function test() {
+    let handlerCalled = false;
+
+    const buildRecordFieldOptionLists = () => {
+      handlerCalled = true;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <SearchForm
+            config={config}
+            intl={intl}
+            recordTypeValue="group"
+            perms={perms}
+            getAuthorityVocabCsid={getAuthorityVocabCsid}
+            buildRecordFieldOptionLists={buildRecordFieldOptionLists}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    handlerCalled.should.equal(true);
+  });
+
+  it('should call buildRecordFieldOptionLists when recordTypeValue changes', function test() {
+    let handlerCalled = false;
+
+    const buildRecordFieldOptionLists = () => {
+      handlerCalled = true;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <SearchForm
+            config={config}
+            intl={intl}
+            recordTypeValue="group"
+            perms={perms}
+            getAuthorityVocabCsid={getAuthorityVocabCsid}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <SearchForm
+            config={config}
+            intl={intl}
+            recordTypeValue="person"
+            vocabularyValue="local"
+            perms={perms}
+            getAuthorityVocabCsid={getAuthorityVocabCsid}
+            buildRecordFieldOptionLists={buildRecordFieldOptionLists}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    handlerCalled.should.equal(true);
+  });
+
+  it('should call deleteOptionList when recordTypeValue changes', function test() {
+    const deletedNames = [];
+
+    const deleteOptionList = (name) => {
+      deletedNames.push(name);
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <SearchForm
+            config={config}
+            intl={intl}
+            recordTypeValue="group"
+            perms={perms}
+            getAuthorityVocabCsid={getAuthorityVocabCsid}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <SearchForm
+            config={config}
+            intl={intl}
+            recordTypeValue="person"
+            vocabularyValue="local"
+            perms={perms}
+            getAuthorityVocabCsid={getAuthorityVocabCsid}
+            deleteOptionList={deleteOptionList}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    deletedNames.should.deep.equal([
+      '_field_group',
+      '_fieldgroup_group',
+    ]);
   });
 });

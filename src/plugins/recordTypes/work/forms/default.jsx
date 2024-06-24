@@ -56,9 +56,7 @@ const template = (configContext) => {
             <Field name="workType" />
 
             <Field name="workDateGroupList">
-              <Field name="workDateGroup">
-                <Field name="workDate" />
-              </Field>
+              <Field name="workDateGroup" />
             </Field>
 
             <Field name="workHistoryNote" />
@@ -91,7 +89,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.work.default.name',

@@ -23,7 +23,9 @@ const messages = defineMessages({
 });
 
 const propTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   searchDescriptor: PropTypes.instanceOf(Immutable.Map),
   searchName: PropTypes.string,
 };
@@ -93,6 +95,7 @@ export default function SearchResultTitleBar(props) {
   }
 
   let advancedTitle;
+  let serviceType = 'searchresult';
 
   if (advancedSearchCondition) {
     advancedTitle = (
@@ -104,11 +107,14 @@ export default function SearchResultTitleBar(props) {
         recordType={recordType}
       />
     );
+    serviceType = 'advancedsearchresult';
   }
 
   const title = (
     <div>
-      {collectionName} {queryTitle}
+      {collectionName}
+      {' '}
+      {queryTitle}
     </div>
   );
 
@@ -121,6 +127,7 @@ export default function SearchResultTitleBar(props) {
       title={title}
       aside={aside}
       subtitle={advancedTitle}
+      serviceType={serviceType}
       {...remainingProps}
     />
   );

@@ -8,7 +8,7 @@ The following software must be installed on your development system. Development
 
 - [Git](https://git-scm.com/). The cspace-ui source code is version-controlled using Git. A Git client must be [installed](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
-- [Node.js](https://nodejs.org/) (version 8 and or above) and [npm](https://www.npmjs.com/) (version 5 or above). Node.js is used to run the development tools, which are JavaScript programs. npm is used to install and manage the JavaScript libraries required by cspace-ui and the development tools. On Mac and Windows, download and run the Node.js installer from [nodejs.org](https://nodejs.org/). This will install npm as well. On Linux, [install the necessary packages](https://nodejs.org/en/download/package-manager/) using the package manager.
+- [Node.js](https://nodejs.org/) (version 18) and [npm](https://www.npmjs.com/) (version 9). Node.js is used to run the development tools, which are JavaScript programs. npm is used to install and manage the JavaScript libraries required by cspace-ui and the development tools. On Mac and Windows, download and run the Node.js installer from [nodejs.org](https://nodejs.org/). This will install npm as well. On Linux, [install the necessary packages](https://nodejs.org/en/download/package-manager/) using the package manager.
 
 - Chrome or Firefox. cspace-ui is a JavaScript application for web browsers, so a web browser is required to run and test it during development. The test runner ([Karma](https://karma-runner.github.io/)) will attempt to use [Chrome](https://www.google.com/chrome/browser/desktop/index.html) by default. To use [Firefox](https://www.mozilla.org/en-US/firefox/new/), set the environment variable `KARMA_BROWSERS` to `Firefox` in the shell in which tests are executed.
 
@@ -41,9 +41,11 @@ If the tests succeed, the environment is ready.
 
 To run the cspace-ui application, use the command:
 ```
-npm run devserver
+npm run devserver [--back-end=<url>]
 ```
-This starts a local web server, listening on port 8080. In a web browser, open the URL `http://localhost:8080`. The CollectionSpace UI should appear. This UI is configured to connect to the REST API on the nightly build server (https://nightly.collectionspace.org), so it should be possible to log in and see records from that server.
+This starts a local web server, listening on port 8080. In a web browser, open the URL `http://localhost:8080`. The CollectionSpace UI should appear. This UI will connect to the REST API at the specified back-end URL, and will use the UI configuration (the index.html page) retrieved from that server.
+
+If the `back-end` option is not supplied, the local index.html file will be loaded, and the UI configuration can be changed by editing that file. By default, the UI will connect to the REST API at http://localhost:8180, but this can be changed by setting the `serverUrl` property to your desired server in index.html. Note that in this case, the server must be configured to allow CORS requests from `http://localhost:8080`. Using the `back-end` option avoids the need to change CORS settings on the server.
 
 As source code files are edited, changes are automatically detected and deployed into the dev server, and the browser is automatically notified to reload the page. The latest code should always be running in the browser without any intervention.
 

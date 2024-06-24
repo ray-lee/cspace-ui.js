@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import SubrecordEditor from '../../../../src/components/record/SubrecordEditor';
 import SubrecordEditorContainer from '../../../../src/containers/record/SubrecordEditorContainer';
 
@@ -9,7 +10,7 @@ chai.should();
 
 const mockStore = configureMockStore();
 
-describe('SubrecordEditorContainer', function suite() {
+describe('SubrecordEditorContainer', () => {
   const containerCsid = '1234';
   const subrecordName = 'contact';
   const subrecordCsid = '5678';
@@ -46,24 +47,22 @@ describe('SubrecordEditorContainer', function suite() {
     }),
   });
 
-  const context = {
-    store,
-  };
-
-  it('should set props on SubrecordEditor', function test() {
+  it('should set props on SubrecordEditor', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <SubrecordEditorContainer
+        store={store}
         containerCsid={containerCsid}
         name={subrecordName}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, SubrecordEditor);
 
-    result.type.should.equal(SubrecordEditor);
-    result.props.should.have.property('csid').that.equals(subrecordCsid);
-    result.props.should.have.property('data').that.equals(subrecordData);
-    result.props.should.have.property('perms').that.equals(perms);
+    editor.props.should.have.property('csid').that.equals(subrecordCsid);
+    editor.props.should.have.property('data').that.equals(subrecordData);
+    editor.props.should.have.property('perms').that.equals(perms);
   });
 });

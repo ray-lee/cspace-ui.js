@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import MiniViewPopupAutocompleteInput from '../../../../src/components/record/MiniViewPopupAutocompleteInput';
 import MiniViewPopupAutoCompleteInputContainer from '../../../../src/containers/record/MiniViewPopupAutocompleteInputContainer';
 
@@ -9,8 +10,8 @@ chai.should();
 
 const mockStore = configureMockStore([]);
 
-describe('MiniViewPopupAutoCompleteInput', function suite() {
-  it('should set props on MiniViewPopupAutocompleteInput', function test() {
+describe('MiniViewPopupAutoCompleteInput', () => {
+  it('should set props on MiniViewPopupAutocompleteInput', () => {
     const perms = Immutable.fromJS({
       person: {
         data: 'CRUDL',
@@ -23,14 +24,13 @@ describe('MiniViewPopupAutoCompleteInput', function suite() {
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<MiniViewPopupAutoCompleteInputContainer />, context);
+    shallowRenderer.render(<MiniViewPopupAutoCompleteInputContainer store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, MiniViewPopupAutocompleteInput);
 
-    result.type.should.equal(MiniViewPopupAutocompleteInput);
-    result.props.should.have.property('perms', perms);
+    input.props.should.have.property('perms', perms);
   });
 });

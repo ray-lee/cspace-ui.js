@@ -1,16 +1,16 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import Immutable from 'immutable';
 import { IntlProvider } from 'react-intl';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import AdminPage from '../../../../src/components/pages/AdminPage';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
-describe('AdminPage', function suite() {
+describe('AdminPage', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -30,7 +30,8 @@ describe('AdminPage', function suite() {
         <Router>
           <AdminPage match={{ url: '/admin' }} perms={perms} />
         </Router>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -47,7 +48,8 @@ describe('AdminPage', function suite() {
         <Router>
           <AdminPage match={{ url: '/admin' }} perms={perms} />
         </Router>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     expect(this.container.firstElementChild).to.equal(null);
   });
@@ -64,7 +66,8 @@ describe('AdminPage', function suite() {
         <Router>
           <AdminPage match={{ url: '/admin' }} perms={perms} />
         </Router>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const links = this.container.querySelectorAll('a');
 

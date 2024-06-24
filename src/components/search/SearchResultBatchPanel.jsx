@@ -1,5 +1,3 @@
-/* global window */
-
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
@@ -25,7 +23,7 @@ const getSearchDescriptor = (config, recordType) => {
     recordType: 'batch',
     searchQuery: {
       p: 0,
-      size: 5,
+      size: config.defaultSearchPanelSize || 5,
       doctype: objectName,
       mode: 'list',
     },
@@ -34,8 +32,12 @@ const getSearchDescriptor = (config, recordType) => {
 
 const propTypes = {
   color: PropTypes.string,
-  config: PropTypes.object,
-  history: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
+  history: PropTypes.shape({
+    push: PropTypes.func,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   selectedItems: PropTypes.instanceOf(Immutable.Map),
@@ -62,7 +64,8 @@ export default class SearchResultBatchPanel extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       recordType,
     } = this.props;
@@ -106,8 +109,7 @@ export default class SearchResultBatchPanel extends Component {
     } = this.props;
 
     if (invoke) {
-      const createsNewFocus =
-        (batchMetadata.getIn(['document', 'ns2:batch_common', 'createsNewFocus']) === 'true');
+      const createsNewFocus = (batchMetadata.getIn(['document', 'ns2:batch_common', 'createsNewFocus']) === 'true');
 
       const handleValidationSuccess = () => {
         if (createsNewFocus) {

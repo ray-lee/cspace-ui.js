@@ -4,19 +4,19 @@ import reducer, { getConfig, getSystemInfo } from '../../../src/reducers/cspace'
 
 import {
   CSPACE_CONFIGURED,
-  READ_SYSTEM_INFO_FULFILLED,
-  READ_SYSTEM_INFO_REJECTED,
+  SYSTEM_INFO_READ_FULFILLED,
+  SYSTEM_INFO_READ_REJECTED,
 } from '../../../src/constants/actionCodes';
 
 chai.use(chaiImmutable);
 chai.should();
 
-describe('cspace reducer', function suite() {
-  it('should have an empty initial state', function test() {
+describe('cspace reducer', () => {
+  it('should have an empty initial state', () => {
     reducer(undefined, {}).should.equal(Immutable.Map());
   });
 
-  it('should handle CSPACE_CONFIGURED', function test() {
+  it('should handle CSPACE_CONFIGURED', () => {
     let state = reducer(undefined, {
       type: CSPACE_CONFIGURED,
       payload: {
@@ -60,9 +60,9 @@ describe('cspace reducer', function suite() {
     }));
   });
 
-  it('should handle READ_SYSTEM_INFO_FULFILLED', function test() {
+  it('should handle SYSTEM_INFO_READ_FULFILLED', () => {
     const state = reducer(undefined, {
-      type: READ_SYSTEM_INFO_FULFILLED,
+      type: SYSTEM_INFO_READ_FULFILLED,
       payload: {
         data: {
           'ns2:system_info_common': {
@@ -96,9 +96,9 @@ describe('cspace reducer', function suite() {
     }));
   });
 
-  it('should handle READ_SYSTEM_INFO_REJECTED', function test() {
+  it('should handle SYSTEM_INFO_READ_REJECTED', () => {
     const state = reducer(undefined, {
-      type: READ_SYSTEM_INFO_REJECTED,
+      type: SYSTEM_INFO_READ_REJECTED,
       payload: {
         data: 'Error',
         message: 'Network Error',

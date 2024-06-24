@@ -1,10 +1,11 @@
 import get from 'lodash/get';
 import { defineMessages } from 'react-intl';
-import getSession from './cspace';
+import getSession from '../helpers/session';
 import getErrorDescription from '../helpers/getErrorDescription';
 import { createInvocationData } from '../helpers/invocationHelpers';
 import { getCsid } from '../helpers/recordDataHelpers';
 import getNotificationID from '../helpers/notificationHelpers';
+import { hasBlockingError } from '../helpers/validationHelpers';
 import { getNewRecordData, getRecordValidationErrors } from '../reducers';
 import { showNotification } from './notification';
 import { validateRecordData } from './record';
@@ -43,7 +44,7 @@ const messages = defineMessages({
   },
 });
 
-export const invoke = (config, batchMetadata, invocationDescriptor, onValidationSuccess) =>
+export const invoke = (config, batchMetadata, invocationDescriptor, onValidationSuccess) => (
   (dispatch, getState) => {
     const batchCsid = getCsid(batchMetadata);
     const batchNameGetter = get(config, ['recordTypes', 'batch', 'invocableName']);
@@ -58,7 +59,7 @@ export const invoke = (config, batchMetadata, invocationDescriptor, onValidation
     if (paramRecordTypeConfig) {
       validateParams = dispatch(validateRecordData(paramRecordTypeConfig, paramRecordCsid))
         .then(() => {
-          if (getRecordValidationErrors(getState(), paramRecordCsid)) {
+          if (hasBlockingError(getRecordValidationErrors(getState(), paramRecordCsid))) {
             return Promise.reject();
           }
 
@@ -111,7 +112,7 @@ export const invoke = (config, batchMetadata, invocationDescriptor, onValidation
 
           numAffectedInt = parseInt(numAffected, 10);
 
-          if (isNaN(numAffectedInt)) {
+          if (Number.isNaN(numAffectedInt)) {
             numAffectedInt = undefined;
           }
 
@@ -160,6 +161,7 @@ export const invoke = (config, batchMetadata, invocationDescriptor, onValidation
           }, notificationID));
         });
     });
-  };
+  }
+);
 
 export default {};

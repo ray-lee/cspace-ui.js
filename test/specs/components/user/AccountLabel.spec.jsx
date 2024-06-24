@@ -1,14 +1,14 @@
 import React from 'react';
-import { render } from 'react-dom';
 import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import AccountLabel from '../../../../src/components/user/AccountLabel';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
-describe('AccountLabel', function suite() {
+describe('AccountLabel', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });

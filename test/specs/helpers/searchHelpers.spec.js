@@ -13,14 +13,25 @@ import {
 
 import {
   OP_AND,
+  OP_COMPLETE,
   OP_CONTAIN,
   OP_OR,
   OP_EQ,
   OP_LT,
+  OP_LTC,
   OP_LTE,
   OP_GT,
+  OP_GTC,
   OP_GTE,
+  OP_GROUP,
   OP_MATCH,
+  OP_NOT_MATCH,
+  OP_NOT_COMPLETE,
+  OP_NOT_EQ,
+  OP_NOT_CONTAIN,
+  OP_NOT_RANGE,
+  OP_NULL,
+  OP_NOT_NULL,
   OP_RANGE,
 } from '../../../src/constants/searchOperators';
 
@@ -29,20 +40,24 @@ import {
 } from '../../../src/helpers/configHelpers';
 
 import {
+  clearAdvancedSearchConditionValues,
+  createCounter,
+  dateEndTimestamp,
+  dateStartTimestamp,
   normalizeCondition,
   normalizeBooleanCondition,
+  normalizeGroupCondition,
   normalizeRangeFieldCondition,
   normalizeFieldCondition,
   normalizeFieldValue,
   normalizeListFieldValue,
   normalizeStringFieldValue,
-  normalizePatternValue,
-  normalizeTimestampRangeStartValue,
-  normalizeTimestampRangeEndValue,
   operatorToNXQL,
   pathToNXQL,
+  patternValueToNXQL,
   valueToNXQL,
   booleanConditionToNXQL,
+  groupConditionToNXQL,
   rangeFieldConditionToNXQL,
   fieldConditionToNXQL,
   structuredDateFieldConditionToNXQL,
@@ -55,15 +70,15 @@ import {
   getSubrecordSearchName,
 } from '../../../src/helpers/searchHelpers';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.use(chaiImmutable);
 
-describe('searchHelpers', function moduleSuite() {
-  describe('normalizeBooleanCondition', function suite() {
+describe('searchHelpers', () => {
+  describe('normalizeBooleanCondition', () => {
     const fields = {};
 
-    it('should normalize the child conditions', function test() {
+    it('should normalize the child conditions', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -107,7 +122,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should remove child conditions that normalize to null', function test() {
+    it('should remove child conditions that normalize to null', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -146,7 +161,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return the child condition if only one child condition remains after normalization', function test() {
+    it('should return the child condition if only one child condition remains after normalization', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -175,7 +190,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return null if no child conditions remain after normalization', function test() {
+    it('should return null if no child conditions remain after normalization', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -201,10 +216,120 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('normalizeFieldCondition', function suite() {
+  describe('normalizeGroupCondition', () => {
     const fields = {};
 
-    it('should normalize the value of the condition', function test() {
+    it('should normalize the child conditions of the boolean child condition', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_AND,
+          value: [{
+            op: OP_RANGE,
+            path: 'collectionobjects_common/titleGroupList/titleGroup/title',
+            value: ['aaa', null],
+          }],
+        },
+      });
+
+      normalizeGroupCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_AND,
+          value: [{
+            op: OP_GTE,
+            path: 'collectionobjects_common/titleGroupList/titleGroup/title',
+            value: 'aaa',
+          }],
+        },
+      }));
+    });
+
+    it('should return null if the condition has no path', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+      });
+
+      expect(normalizeGroupCondition(fields, condition)).to.equal(null);
+    });
+
+    it('should return null if the condition has no child condition value', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+      });
+
+      expect(normalizeGroupCondition(fields, condition)).to.equal(null);
+    });
+
+    it('should wrap a non-boolean child condition in an AND condition', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_EQ,
+          path: 'collectionobjects_common/titleGroupList/titleGroup/title',
+          value: 'the title',
+        },
+      });
+
+      normalizeGroupCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_AND,
+          value: [{
+            op: OP_EQ,
+            path: 'collectionobjects_common/titleGroupList/titleGroup/title',
+            value: 'the title',
+          }],
+        },
+      }));
+    });
+
+    it('should return null if the boolean child condition has no child conditions', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_AND,
+        },
+      });
+
+      expect(normalizeGroupCondition(fields, condition)).to.equal(null);
+    });
+
+    it('should return null if the normalized boolean child condition has no child conditions', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/titleGroupList/titleGroup',
+        value: {
+          op: OP_AND,
+          value: [{
+            op: OP_EQ,
+            path: 'collectionobjects_common/titleGroupList/titleGroup/title',
+          }],
+        },
+      });
+
+      expect(normalizeGroupCondition(fields, condition)).to.equal(null);
+    });
+  });
+
+  describe('normalizeFieldCondition', () => {
+    const fields = {};
+
+    it('should return null if the condition has no path', () => {
+      const condition = Immutable.Map({
+        path: null,
+      });
+
+      expect(normalizeFieldCondition(fields, condition)).to.equal(null);
+    });
+
+    it('should normalize the value of the condition', () => {
       const condition = Immutable.Map({
         op: OP_MATCH,
         path: 'collectionobjects_common/objectNumber',
@@ -218,7 +343,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return null if the normalized value is null', function test() {
+    it('should return null if the normalized value is null, but the operator expects a value', () => {
       const condition = Immutable.Map({
         op: OP_MATCH,
         path: 'collectionobjects_common/objectNumber',
@@ -227,105 +352,164 @@ describe('searchHelpers', function moduleSuite() {
 
       expect(normalizeFieldCondition(fields, condition)).to.equal(null);
     });
+
+    it('should return a value-less condition if the normalized value is null, and the operator does not expect a value', () => {
+      const condition = Immutable.Map({
+        op: OP_NULL,
+        path: 'collectionobjects_common/objectNumber',
+        value: '   ',
+      });
+
+      normalizeFieldCondition(fields, condition).should.equal(Immutable.Map({
+        op: OP_NULL,
+        path: 'collectionobjects_common/objectNumber',
+      }));
+    });
   });
 
-  describe('normalizeRangeFieldCondition', function suite() {
+  describe('normalizeRangeFieldCondition', () => {
     const fields = {
       document: {
         'ns2:part': {
-          updatedAt: {
+          fuzzyDate: {
             [configKey]: {
-              dataType: DATA_TYPE_DATETIME,
+              dataType: DATA_TYPE_STRUCTURED_DATE,
+            },
+            dateEarliestScalarValue: {
+              [configKey]: {
+                dataType: DATA_TYPE_DATE,
+              },
+            },
+            dateLatestScalarValue: {
+              [configKey]: {
+                dataType: DATA_TYPE_DATE,
+              },
             },
           },
         },
       },
     };
 
-    it('should normalize the value of the condition', function test() {
+    it('should return null if the condition has no path', () => {
+      const condition = Immutable.Map({
+        path: null,
+      });
+
+      expect(normalizeRangeFieldCondition(fields, condition)).to.equal(null);
+    });
+
+    it('should normalize the value of the condition', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: [' 2', ' 4 '],
       });
 
       normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: ['2', '4'],
       }));
     });
 
-    it('should add start/end times to timestamps', function test() {
+    it('should return null if the value normalizes to null', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/updatedAt',
-        value: ['2017-03-04', '2017-03-08'],
-      });
-
-      normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
-        op: OP_RANGE,
-        path: 'ns2:part/updatedAt',
-        value: ['2017-03-04T00:00:00.000', '2017-03-08T23:59:59.999'],
-      }));
-    });
-
-    it('should return null if the value normalizes to null', function test() {
-      const condition = Immutable.fromJS({
-        op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: [' ', null],
       });
 
       expect(normalizeRangeFieldCondition(fields, condition)).to.equal(null);
     });
 
-    it('should return null if the condition has no value', function test() {
+    it('should return null if the condition has no value', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
       });
 
       expect(normalizeRangeFieldCondition(fields, condition)).to.equal(null);
     });
 
-    it('should return a >= condition if the end of range is omitted', function test() {
+    it('should return a >= condition if the value is not a list and the field is not a structured date', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
+        value: '2',
+      });
+
+      normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_GTE,
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
+        value: '2',
+      }));
+    });
+
+    it('should return a >= condition if the end of range is omitted and the field is not a structured date', () => {
+      const condition = Immutable.fromJS({
+        op: OP_RANGE,
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: ['2'],
       });
 
       normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
         op: OP_GTE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: '2',
       }));
     });
 
-    it('should return a <= condition if the end of range is omitted', function test() {
+    it('should return a > or contains condition if the end of range is omitted and the field is a structured date', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/fuzzyDate',
+        value: ['2000-01-01'],
+      });
+
+      normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_GTC,
+        path: 'ns2:part/fuzzyDate',
+        value: '2000-01-01',
+      }));
+    });
+
+    it('should return a <= condition if the start of range is omitted and the field is not a structured date', () => {
+      const condition = Immutable.fromJS({
+        op: OP_RANGE,
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: [undefined, '4'],
       });
 
       normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
         op: OP_LTE,
-        path: 'ns2:part/numberOfObjects',
+        path: 'ns2:part/objectCountGroupList/objectCountGroup/objectCount',
         value: '4',
+      }));
+    });
+
+    it('should return a < or contains condition if the start of range is omitted and the field is a structured date', () => {
+      const condition = Immutable.fromJS({
+        op: OP_RANGE,
+        path: 'ns2:part/fuzzyDate',
+        value: [undefined, '2000-01-01'],
+      });
+
+      normalizeRangeFieldCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_LTC,
+        path: 'ns2:part/fuzzyDate',
+        value: '2000-01-01',
       }));
     });
   });
 
-  describe('normalizeCondition', function suite() {
+  describe('normalizeCondition', () => {
     const fields = {};
 
-    it('should return null for null input', function test() {
+    it('should return null for null input', () => {
       expect(normalizeCondition(fields, null)).to.equal(null);
     });
 
-    it('should normalize OP_AND conditions', function test() {
+    it('should normalize OP_AND conditions', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -344,7 +528,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should normalize OP_OR conditions', function test() {
+    it('should normalize OP_OR conditions', () => {
       const condition = Immutable.fromJS({
         op: OP_OR,
         value: [
@@ -363,7 +547,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should normalize OP_MATCH conditions', function test() {
+    it('should normalize OP_MATCH conditions', () => {
       const condition = Immutable.Map({
         op: OP_MATCH,
         path: 'collectionobjects_common/objectNumber',
@@ -377,29 +561,64 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should normalize OP_RANGE conditions', function test() {
+    it('should normalize OP_RANGE conditions', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
-        path: 'collectionobjects_common/numberOfObjects',
+        path: 'collectionobjects_common/objectCountGroupList/objectCountGroup/objectCount',
         value: [' 2', ' 4 '],
       });
 
       normalizeCondition(fields, condition).should.equal(Immutable.fromJS({
         op: OP_RANGE,
-        path: 'collectionobjects_common/numberOfObjects',
+        path: 'collectionobjects_common/objectCountGroupList/objectCountGroup/objectCount',
         value: ['2', '4'],
+      }));
+    });
+
+    it('should normalize OP_GROUP conditions', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/materialGroupList/materialGroup',
+        value: {
+          op: OP_AND,
+          value: [
+            {
+              op: OP_EQ,
+              path: 'collectionobjects_common/materialGroupList/materialGroup/material',
+              value: 'glass',
+            },
+            {
+              path: null,
+            },
+          ],
+        },
+      });
+
+      normalizeCondition(fields, condition).should.equal(Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'collectionobjects_common/materialGroupList/materialGroup',
+        value: {
+          op: OP_AND,
+          value: [
+            {
+              op: OP_EQ,
+              path: 'collectionobjects_common/materialGroupList/materialGroup/material',
+              value: 'glass',
+            },
+          ],
+        },
       }));
     });
   });
 
-  describe('normalizeListFieldValue', function suite() {
-    it('should return null if the list is undefined, null, or empty', function test() {
+  describe('normalizeListFieldValue', () => {
+    it('should return null if the list is undefined, null, or empty', () => {
       expect(normalizeListFieldValue(undefined)).to.equal(null);
       expect(normalizeListFieldValue(null)).to.equal(null);
       expect(normalizeListFieldValue(Immutable.List())).to.equal(null);
     });
 
-    it('should remove empty and whitespace-only list items', function test() {
+    it('should remove empty and whitespace-only list items', () => {
       normalizeListFieldValue(Immutable.List([
         'foo', '', 'bar', null, 'baz', undefined, 'abc', '  ',
       ])).should.equal(Immutable.List([
@@ -407,7 +626,7 @@ describe('searchHelpers', function moduleSuite() {
       ]));
     });
 
-    it('should normalize items', function test() {
+    it('should normalize items', () => {
       normalizeListFieldValue(Immutable.List([
         '  foo ', '\t', ' bar baz',
       ])).should.equal(Immutable.List([
@@ -415,91 +634,38 @@ describe('searchHelpers', function moduleSuite() {
       ]));
     });
 
-    it('should return null if the list is empty after normalizing items', function test() {
+    it('should return null if the list is empty after normalizing items', () => {
       expect(normalizeListFieldValue(Immutable.List([
         '   ', '\t', null, undefined, '',
       ]))).to.equal(null);
     });
 
-    it('should return the item if the list contains only one item', function test() {
+    it('should return the item if the list contains only one item', () => {
       normalizeListFieldValue(Immutable.List(['foo'])).should.equal('foo');
     });
   });
 
-  describe('normalizeStringFieldValue', function suite() {
-    it('should return null if the value is undefined, null, or empty', function test() {
+  describe('normalizeStringFieldValue', () => {
+    it('should return null if the value is undefined, null, or empty', () => {
       expect(normalizeStringFieldValue(undefined)).to.equal(null);
       expect(normalizeStringFieldValue(null)).to.equal(null);
       expect(normalizeStringFieldValue('')).to.equal(null);
     });
 
-    it('should trim the value', function test() {
+    it('should trim the value', () => {
       normalizeStringFieldValue(' foo ').should.equal('foo');
       normalizeStringFieldValue('foo bar ').should.equal('foo bar');
       normalizeStringFieldValue('   foo').should.equal('foo');
     });
 
-    it('should return null if the value contains only whitespace', function test() {
+    it('should return null if the value contains only whitespace', () => {
       expect(normalizeStringFieldValue(' ')).to.equal(null);
       expect(normalizeStringFieldValue('\t  \n')).to.equal(null);
     });
   });
 
-  describe('normalizePatternValue', function suite() {
-    it('should return the value if the value is undefined, null, or empty', function test() {
-      expect(normalizePatternValue(undefined)).to.equal(undefined);
-      expect(normalizePatternValue(null)).to.equal(null);
-      expect(normalizePatternValue('')).to.equal('');
-    });
-
-    it('should replace * not preceded by an odd number of backslashes with %', function test() {
-      expect(normalizePatternValue('foo*bar*baz')).to.equal('foo%bar%baz');
-      expect(normalizePatternValue('*foo')).to.equal('%foo');
-      expect(normalizePatternValue('foo*')).to.equal('foo%');
-      expect(normalizePatternValue('foo**bar')).to.equal('foo%bar');
-      expect(normalizePatternValue('foo*\\*bar')).to.equal('foo%\\*bar');
-      expect(normalizePatternValue('foo\\*\\*bar')).to.equal('foo\\*\\*bar');
-      expect(normalizePatternValue('foo\\*bar')).to.equal('foo\\*bar');
-      expect(normalizePatternValue('foo\\\\*bar')).to.equal('foo\\\\%bar');
-      expect(normalizePatternValue('\\*foo\\\\\\*bar')).to.equal('\\*foo\\\\\\%bar');
-      expect(normalizePatternValue('\\\\*foo\\***bar')).to.equal('\\\\%foo\\*%bar');
-    });
-  });
-
-  describe('normalizeTimestampRangeStartValue', function suite() {
-    it('should return null if the value is undefined, null, or empty', function test() {
-      expect(normalizeTimestampRangeStartValue(undefined)).to.equal(null);
-      expect(normalizeTimestampRangeStartValue(null)).to.equal(null);
-      expect(normalizeTimestampRangeStartValue('')).to.equal(null);
-    });
-
-    it('should trim the value', function test() {
-      expect(normalizeTimestampRangeStartValue(' 1997-05-23T13:00:00  ')).to.equal('1997-05-23T13:00:00');
-    });
-
-    it('should add a time if the value does not have one', function test() {
-      expect(normalizeTimestampRangeStartValue('1997-05-23')).to.equal('1997-05-23T00:00:00.000');
-    });
-  });
-
-  describe('normalizeTimestampRangeEndValue', function suite() {
-    it('should return null if the value is undefined, null, or empty', function test() {
-      expect(normalizeTimestampRangeEndValue(undefined)).to.equal(null);
-      expect(normalizeTimestampRangeEndValue(null)).to.equal(null);
-      expect(normalizeTimestampRangeEndValue('')).to.equal(null);
-    });
-
-    it('should trim the value', function test() {
-      expect(normalizeTimestampRangeEndValue(' 1997-05-23T13:00:00  ')).to.equal('1997-05-23T13:00:00');
-    });
-
-    it('should add a time if the value does not have one', function test() {
-      expect(normalizeTimestampRangeEndValue('1997-05-23')).to.equal('1997-05-23T23:59:59.999');
-    });
-  });
-
-  describe('normalizeFieldValue', function suite() {
-    it('should normalize list values', function test() {
+  describe('normalizeFieldValue', () => {
+    it('should normalize list values', () => {
       normalizeFieldValue(Immutable.List([
         'foo', '', 'bar', null, 'baz', undefined, 'abc', '  ',
       ])).should.equal(Immutable.List([
@@ -507,13 +673,13 @@ describe('searchHelpers', function moduleSuite() {
       ]));
     });
 
-    it('should normalize string values', function test() {
+    it('should normalize string values', () => {
       normalizeStringFieldValue('foo bar ').should.equal('foo bar');
     });
   });
 
-  describe('operatorToNXQL', function suite() {
-    it('should return an NXQL operator', function test() {
+  describe('operatorToNXQL', () => {
+    it('should return an NXQL operator', () => {
       operatorToNXQL(OP_AND).should.equal('AND');
       operatorToNXQL(OP_OR).should.equal('OR');
       operatorToNXQL(OP_EQ).should.equal('=');
@@ -526,7 +692,7 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('pathToNXQL', function suite() {
+  describe('pathToNXQL', () => {
     const fields = {
       document: {
         'ns2:collectionobjects_common': {
@@ -550,17 +716,17 @@ describe('searchHelpers', function moduleSuite() {
       },
     };
 
-    it('should remove ns prefix from the part name', function test() {
+    it('should remove ns prefix from the part name', () => {
       pathToNXQL(fields, 'ns2:collectionspace_core/updatedAt').should
         .equal('collectionspace_core:updatedAt');
     });
 
-    it('should separate the part and the rest of the path with :', function test() {
+    it('should separate the part and the rest of the path with :', () => {
       pathToNXQL(fields, 'ns2:collectionobjects_common/objectNumber').should
         .equal('collectionobjects_common:objectNumber');
     });
 
-    it('should replace repeating items with *', function test() {
+    it('should replace repeating items with *', () => {
       pathToNXQL(fields, 'ns2:collectionobjects_common/titleGroupList/titleGroup/title').should
         .equal('collectionobjects_common:titleGroupList/*/title');
 
@@ -569,7 +735,40 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('valueToNXQL', function suite() {
+  describe('dateStartTimestamp', () => {
+    it('should add a time if the value does not have one', () => {
+      expect(dateStartTimestamp('1997-05-23')).to.equal('1997-05-23T00:00:00.000');
+    });
+  });
+
+  describe('dateEndTimestamp', () => {
+    it('should add a time if the value does not have one', () => {
+      expect(dateEndTimestamp('1997-05-23')).to.equal('1997-05-23T23:59:59.999');
+    });
+  });
+
+  describe('patternValueToNXQL', () => {
+    it('should return the value if the value is undefined, null, or empty', () => {
+      expect(patternValueToNXQL(undefined)).to.equal(undefined);
+      expect(patternValueToNXQL(null)).to.equal(null);
+      expect(patternValueToNXQL('')).to.equal('');
+    });
+
+    it('should replace * not preceded by an odd number of backslashes with %', () => {
+      expect(patternValueToNXQL('foo*bar*baz')).to.equal('foo%bar%baz');
+      expect(patternValueToNXQL('*foo')).to.equal('%foo');
+      expect(patternValueToNXQL('foo*')).to.equal('foo%');
+      expect(patternValueToNXQL('foo**bar')).to.equal('foo%bar');
+      expect(patternValueToNXQL('foo*\\*bar')).to.equal('foo%\\*bar');
+      expect(patternValueToNXQL('foo\\*\\*bar')).to.equal('foo\\*\\*bar');
+      expect(patternValueToNXQL('foo\\*bar')).to.equal('foo\\*bar');
+      expect(patternValueToNXQL('foo\\\\*bar')).to.equal('foo\\\\%bar');
+      expect(patternValueToNXQL('\\*foo\\\\\\*bar')).to.equal('\\*foo\\\\\\%bar');
+      expect(patternValueToNXQL('\\\\*foo\\***bar')).to.equal('\\\\%foo\\*%bar');
+    });
+  });
+
+  describe('valueToNXQL', () => {
     const fields = {
       document: {
         stringField: {
@@ -606,45 +805,51 @@ describe('searchHelpers', function moduleSuite() {
       },
     };
 
-    it('should convert string typed values to quoted strings', function test() {
+    it('should convert string typed values to quoted strings', () => {
       valueToNXQL('foo', 'stringField', fields).should.equal('"foo"');
     });
 
-    it('should escape quotes in strings that contain quotes', function test() {
+    it('should escape quotes in strings that contain quotes', () => {
       valueToNXQL('"I\'m not here"', 'anotherStringField', fields).should.equal('"\\"I\'m not here\\""');
     });
 
-    it('should convert int typed values to unquoted numeric strings', function test() {
+    it('should convert int typed values to unquoted numeric strings', () => {
       valueToNXQL('3', 'intField', fields).should.equal('3');
+      valueToNXQL('3.14', 'intField', fields).should.equal('3.14');
+      valueToNXQL('-24', 'intField', fields).should.equal('-24');
+      valueToNXQL('0.0', 'intField', fields).should.equal('0');
     });
 
-    it('should convert float typed values to unquoted numeric strings', function test() {
+    it('should convert float typed values to unquoted numeric strings', () => {
+      valueToNXQL('3', 'floatField', fields).should.equal('3');
       valueToNXQL('3.14', 'floatField', fields).should.equal('3.14');
+      valueToNXQL('-24', 'floatField', fields).should.equal('-24');
+      valueToNXQL('0.0', 'floatField', fields).should.equal('0');
     });
 
-    it('should convert bool typed values to unquoted 0 or 1', function test() {
+    it('should convert bool typed values to unquoted 0 or 1', () => {
       valueToNXQL(true, 'boolField', fields).should.equal('1');
       valueToNXQL(false, 'boolField', fields).should.equal('0');
     });
 
-    it('should convert datetime typed values to quoted strings preceded by \'TIMESTAMP\'', function test() {
+    it('should convert datetime typed values to quoted strings preceded by \'TIMESTAMP\'', () => {
       valueToNXQL('2017-03-08T17:04:34.000Z', 'dateTimeField', fields).should.equal('TIMESTAMP "2017-03-08T17:04:34.000Z"');
     });
 
-    it('should convert datetime typed values to UTC', function test() {
+    it('should convert datetime typed values to UTC', () => {
       valueToNXQL('2017-03-08T17:04:34.000-08:00', 'dateTimeField', fields).should
         .equal('TIMESTAMP "2017-03-09T01:04:34.000Z"');
     });
 
-    it('should transform the value using the configured searchTransform function, if present', function test() {
+    it('should transform the value using the configured searchTransform function, if present', () => {
       valueToNXQL('foo', 'transformedStringField', fields).should.equal('"transformed foo"');
     });
   });
 
-  describe('booleanConditionToNXQL', function suite() {
+  describe('booleanConditionToNXQL', () => {
     const fields = {};
 
-    it('should convert AND conditions to NXQL', function test() {
+    it('should convert AND conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -670,7 +875,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:foo = "val1" AND part:bar = "val2" AND part:baz = "val3")');
     });
 
-    it('should convert OR conditions to NXQL', function test() {
+    it('should convert OR conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_OR,
         value: [
@@ -696,7 +901,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:foo = "val1" OR part:bar = "val2" OR part:baz = "val3")');
     });
 
-    it('should convert nested AND/OR conditions to NXQL', function test() {
+    it('should convert nested AND/OR conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -727,7 +932,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:foo = "val1" AND (part:bar = "val2" OR part:baz = "val3"))');
     });
 
-    it('should return \'\' for an unknown operator', function test() {
+    it('should return \'\' for an unknown operator', () => {
       const condition = Immutable.fromJS({
         op: 'foobar',
       });
@@ -736,7 +941,90 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('rangeFieldConditionToNXQL', function suite() {
+  describe('groupConditionToNXQL', () => {
+    const fields = {
+      document: {
+        'ns2:part': {
+          groupList: {
+            group: {
+              [configKey]: {
+                repeating: true,
+              },
+              foo: {},
+              bar: {},
+              baz: {},
+              nestedGroupList: {
+                nestedGroup: {
+                  [configKey]: {
+                    repeating: true,
+                  },
+                  geordi: {},
+                  worf: {},
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    it('should correlate paths to the fields in the group', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'ns2:part/groupList/group',
+        value: {
+          op: OP_AND,
+          value: [
+            {
+              op: OP_EQ,
+              path: 'ns2:part/groupList/group/foo',
+              value: 'val1',
+            },
+            {
+              op: OP_EQ,
+              path: 'ns2:part/groupList/group/bar',
+              value: 'val2',
+            },
+            {
+              op: OP_EQ,
+              path: 'ns2:part/groupList/group/baz',
+              value: 'val3',
+            },
+          ],
+        },
+      });
+
+      groupConditionToNXQL(fields, condition, createCounter()).should
+        .equal('(part:groupList/*1/foo = "val1" AND part:groupList/*1/bar = "val2" AND part:groupList/*1/baz = "val3")');
+    });
+
+    it('should correlate paths to the fields in nested groups', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GROUP,
+        path: 'ns2:part/groupList/group/nestedGroupList/nestedGroup',
+        value: {
+          op: OP_OR,
+          value: [
+            {
+              op: OP_GT,
+              path: 'ns2:part/groupList/group/nestedGroupList/nestedGroup/worf',
+              value: 'val1',
+            },
+            {
+              op: OP_LT,
+              path: 'ns2:part/groupList/group/nestedGroupList/nestedGroup/geordi',
+              value: 'val2',
+            },
+          ],
+        },
+      });
+
+      groupConditionToNXQL(fields, condition, createCounter()).should
+        .equal('(part:groupList/*2/nestedGroupList/*1/worf > "val1" OR part:groupList/*2/nestedGroupList/*1/geordi < "val2")');
+    });
+  });
+
+  describe('rangeFieldConditionToNXQL', () => {
     const fields = {
       document: {
         'ns2:part': {
@@ -745,11 +1033,22 @@ describe('searchHelpers', function moduleSuite() {
               dataType: DATA_TYPE_STRUCTURED_DATE,
             },
           },
+          updatedAt: {
+            [configKey]: {
+              dataType: DATA_TYPE_DATETIME,
+            },
+          },
+          id: {
+            [configKey]: {
+              dataType: DATA_TYPE_STRING,
+              searchCompareField: 'ns2:part/sortableID',
+            },
+          },
         },
       },
     };
 
-    it('should convert range conditions to NXQL', function test() {
+    it('should convert range conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
         path: 'ns2:part/foo',
@@ -760,7 +1059,18 @@ describe('searchHelpers', function moduleSuite() {
         .equal('part:foo BETWEEN "c" AND "g"');
     });
 
-    it('should convert structured date range conditions to NXQL', function test() {
+    it('should add start/end times to timestamps', () => {
+      const condition = Immutable.fromJS({
+        op: OP_RANGE,
+        path: 'ns2:part/updatedAt',
+        value: ['2017-03-04', '2017-03-08'],
+      });
+
+      rangeFieldConditionToNXQL(fields, condition).should
+        .match(new RegExp('^part:updatedAt BETWEEN TIMESTAMP "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z" AND TIMESTAMP "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"$'));
+    });
+
+    it('should convert structured date range conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
         path: 'ns2:part/date',
@@ -770,9 +1080,20 @@ describe('searchHelpers', function moduleSuite() {
       rangeFieldConditionToNXQL(fields, condition).should
         .equal('(part:date/dateEarliestScalarValue <= "2000-12-31" AND part:date/dateLatestScalarValue > "2000-01-01")');
     });
+
+    it('should resolve the sortCompareField path', () => {
+      const condition = Immutable.fromJS({
+        op: OP_RANGE,
+        path: 'ns2:part/id',
+        value: ['c', 'g'],
+      });
+
+      rangeFieldConditionToNXQL(fields, condition).should
+        .equal('part:sortableID BETWEEN "c" AND "g"');
+    });
   });
 
-  describe('fieldConditionToNXQL', function suite() {
+  describe('fieldConditionToNXQL', () => {
     const fields = {
       document: {
         'ns2:part': {
@@ -791,11 +1112,22 @@ describe('searchHelpers', function moduleSuite() {
               },
             },
           },
+          updatedAt: {
+            [configKey]: {
+              dataType: DATA_TYPE_DATETIME,
+            },
+          },
+          id: {
+            [configKey]: {
+              dataType: DATA_TYPE_STRING,
+              searchCompareField: 'ns2:part/sortableID',
+            },
+          },
         },
       },
     };
 
-    it('should convert field conditions to NXQL', function test() {
+    it('should convert field conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_LTE,
         path: 'ns2:part/foo',
@@ -806,7 +1138,27 @@ describe('searchHelpers', function moduleSuite() {
         .equal('part:foo <= "bar"');
     });
 
-    it('should convert structured date field conditions to NXQL', function test() {
+    it('should convert is null conditions to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NULL,
+        path: 'ns2:part/foo',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .equal('part:foo IS NULL');
+    });
+
+    it('should convert is not null conditions to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_NULL,
+        path: 'ns2:part/foo',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .equal('part:foo IS NOT NULL');
+    });
+
+    it('should convert structured date field conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_LT,
         path: 'ns2:part/date',
@@ -814,21 +1166,54 @@ describe('searchHelpers', function moduleSuite() {
       });
 
       fieldConditionToNXQL(fields, condition).should
-        .equal('part:date/dateEarliestScalarValue < TIMESTAMP "2000-01-01T00:00:00.000Z"');
+        .equal('part:date/dateLatestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z"');
     });
 
-    it('should convert contain operation to match operation with wildcards on either end', function test() {
+    it('should convert contain operation to match operation with wildcards on either end', () => {
       const condition = Immutable.fromJS({
         op: OP_CONTAIN,
         path: 'ns2:part/foo',
-        value: 'bar',
+        value: 'bar%baz',
       });
 
       fieldConditionToNXQL(fields, condition).should
-        .equal('part:foo ILIKE "%bar%"');
+        .equal('part:foo ILIKE "%bar%baz%"');
     });
 
-    it('should expand list values into multiple OR clauses', function test() {
+    it('should convert not contain operation to not match operation with wildcards on either end', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_CONTAIN,
+        path: 'ns2:part/foo',
+        value: 'bar%baz',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .equal('part:foo NOT ILIKE "%bar%baz%"');
+    });
+
+    it('should substitute * in the value of a match operation with %', () => {
+      const condition = Immutable.fromJS({
+        op: OP_MATCH,
+        path: 'ns2:part/foo',
+        value: 'hello*world',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .equal('part:foo ILIKE "hello%world"');
+    });
+
+    it('should substitute * in the value of a not match operation with %', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_MATCH,
+        path: 'ns2:part/foo',
+        value: 'hello*world',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .equal('part:foo NOT ILIKE "hello%world"');
+    });
+
+    it('should expand list values into multiple OR clauses', () => {
       const condition = Immutable.fromJS({
         op: OP_LTE,
         path: 'ns2:part/foo',
@@ -838,12 +1223,87 @@ describe('searchHelpers', function moduleSuite() {
       fieldConditionToNXQL(fields, condition).should
         .equal('(part:foo <= "bar" OR part:foo <= "baz")');
     });
+
+    it('should convert = and not = operations on datetimes to range searches', () => {
+      const eqCondition = Immutable.fromJS({
+        op: OP_EQ,
+        path: 'ns2:part/updatedAt',
+        value: '2015-08-16',
+      });
+
+      fieldConditionToNXQL(fields, eqCondition).should
+        .match(new RegExp('part:updatedAt BETWEEN TIMESTAMP "2015-08-1\\dT\\d\\d:00:00.000Z" AND TIMESTAMP "2015-08-1\\dT\\d\\d:59:59.999Z"'));
+
+      const notEqCondition = Immutable.fromJS({
+        op: OP_NOT_EQ,
+        path: 'ns2:part/updatedAt',
+        value: '2015-08-16',
+      });
+
+      fieldConditionToNXQL(fields, notEqCondition).should
+        .match(new RegExp('part:updatedAt NOT BETWEEN TIMESTAMP "2015-08-1\\dT\\d\\d:00:00.000Z" AND TIMESTAMP "2015-08-1\\dT\\d\\d:59:59.999Z"'));
+    });
+
+    it('should add the latest timestamp to the date value of a > operation on datetimes', () => {
+      const condition = Immutable.fromJS({
+        op: OP_GT,
+        path: 'ns2:part/updatedAt',
+        value: '2015-08-16',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .match(/part:updatedAt > TIMESTAMP "2015-08-1\dT\d\d:59:59.999Z"/);
+    });
+
+    it('should add the latest timestamp to the date value of a <= operation on datetimes', () => {
+      const condition = Immutable.fromJS({
+        op: OP_LTE,
+        path: 'ns2:part/updatedAt',
+        value: '2015-08-16',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .match(/part:updatedAt <= TIMESTAMP "2015-08-1\dT\d\d:59:59.999Z"/);
+    });
+
+    it('should add the earliest timestamp to the date value of other operations on datetimes', () => {
+      const condition = Immutable.fromJS({
+        op: OP_LT,
+        path: 'ns2:part/updatedAt',
+        value: '2015-08-16',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .match(/part:updatedAt < TIMESTAMP "2015-08-1\dT\d\d:00:00.000Z"/);
+    });
+
+    it('should resolve the searchCompareField path when the condition has a comparison operator', () => {
+      const condition = Immutable.fromJS({
+        op: OP_LT,
+        path: 'ns2:part/id',
+        value: '2020.1',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .match(/part:sortableID < "2020.1"/);
+    });
+
+    it('should not resolve the searchCompareField path when the condition does not have a comparison operator', () => {
+      const condition = Immutable.fromJS({
+        op: OP_CONTAIN,
+        path: 'ns2:part/id',
+        value: '2020.1',
+      });
+
+      fieldConditionToNXQL(fields, condition).should
+        .match(/part:id ILIKE "%2020.1%"/);
+    });
   });
 
-  describe('advancedSearchConditionToNXQL', function suite() {
+  describe('advancedSearchConditionToNXQL', () => {
     const fields = {};
 
-    it('should convert boolean conditions to NXQL', function test() {
+    it('should convert boolean conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_AND,
         value: [
@@ -864,7 +1324,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:foo = "val1" AND part:bar = "val2")');
     });
 
-    it('should convert range conditions to NXQL', function test() {
+    it('should convert range conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
         path: 'ns2:part/foo',
@@ -875,7 +1335,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('part:foo BETWEEN "q" AND "z"');
     });
 
-    it('should convert field conditions to NXQL', function test() {
+    it('should convert field conditions to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_GT,
         path: 'ns2:part/foo',
@@ -886,12 +1346,12 @@ describe('searchHelpers', function moduleSuite() {
         .equal('part:foo > "bar"');
     });
 
-    it('should return null for a null condition', function test() {
+    it('should return null for a null condition', () => {
       expect(advancedSearchConditionToNXQL(fields, null)).to.equal(null);
     });
   });
 
-  describe('structuredDateFieldConditionToNXQL', function suite() {
+  describe('structuredDateFieldConditionToNXQL', () => {
     const fields = {
       document: {
         'ns2:part': {
@@ -914,7 +1374,7 @@ describe('searchHelpers', function moduleSuite() {
       },
     };
 
-    it('should convert range operations to NXQL', function test() {
+    it('should convert range operations to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_RANGE,
         path: 'ns2:part/fuzzyDate',
@@ -925,7 +1385,18 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:fuzzyDate/dateEarliestScalarValue <= TIMESTAMP "2000-12-31T00:00:00.000Z" AND part:fuzzyDate/dateLatestScalarValue > TIMESTAMP "2000-01-01T00:00:00.000Z")');
     });
 
-    it('should convert contain operations to NXQL', function test() {
+    it('should convert not range operations to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_RANGE,
+        path: 'ns2:part/fuzzyDate',
+        value: ['2000-01-01', '2000-12-31'],
+      });
+
+      structuredDateFieldConditionToNXQL(fields, condition).should
+        .equal('(part:fuzzyDate/dateEarliestScalarValue > TIMESTAMP "2000-12-31T00:00:00.000Z" OR part:fuzzyDate/dateLatestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z")');
+    });
+
+    it('should convert contain operations to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_CONTAIN,
         path: 'ns2:part/fuzzyDate',
@@ -936,7 +1407,18 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:fuzzyDate/dateEarliestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z" AND part:fuzzyDate/dateLatestScalarValue > TIMESTAMP "2000-01-01T00:00:00.000Z")');
     });
 
-    it('should convert = operations to NXQL', function test() {
+    it('should convert not contain operations to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_CONTAIN,
+        path: 'ns2:part/fuzzyDate',
+        value: '2000-01-01',
+      });
+
+      structuredDateFieldConditionToNXQL(fields, condition).should
+        .equal('(part:fuzzyDate/dateEarliestScalarValue > TIMESTAMP "2000-01-01T00:00:00.000Z" OR part:fuzzyDate/dateLatestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z")');
+    });
+
+    it('should convert = operations to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_EQ,
         path: 'ns2:part/fuzzyDate',
@@ -947,7 +1429,18 @@ describe('searchHelpers', function moduleSuite() {
         .equal('(part:fuzzyDate/dateEarliestScalarValue = TIMESTAMP "2000-01-01T00:00:00.000Z" AND part:fuzzyDate/dateLatestScalarValue = TIMESTAMP "2000-01-02T00:00:00.000Z")');
     });
 
-    it('should convert < operations to NXQL', function test() {
+    it('should convert not = operations to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_EQ,
+        path: 'ns2:part/fuzzyDate',
+        value: '2000-01-01',
+      });
+
+      structuredDateFieldConditionToNXQL(fields, condition).should
+        .equal('(part:fuzzyDate/dateEarliestScalarValue <> TIMESTAMP "2000-01-01T00:00:00.000Z" OR part:fuzzyDate/dateLatestScalarValue <> TIMESTAMP "2000-01-02T00:00:00.000Z")');
+    });
+
+    it('should convert < operations to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_LT,
         path: 'ns2:part/fuzzyDate',
@@ -955,12 +1448,12 @@ describe('searchHelpers', function moduleSuite() {
       });
 
       structuredDateFieldConditionToNXQL(fields, condition).should
-        .equal('part:fuzzyDate/dateEarliestScalarValue < TIMESTAMP "2000-01-01T00:00:00.000Z"');
+        .equal('part:fuzzyDate/dateLatestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z"');
     });
 
-    it('should convert <= operations to NXQL', function test() {
+    it('should convert < or contains operations to NXQL', () => {
       const condition = Immutable.fromJS({
-        op: OP_LTE,
+        op: OP_LTC,
         path: 'ns2:part/fuzzyDate',
         value: '2000-01-01',
       });
@@ -969,7 +1462,7 @@ describe('searchHelpers', function moduleSuite() {
         .equal('part:fuzzyDate/dateEarliestScalarValue <= TIMESTAMP "2000-01-01T00:00:00.000Z"');
     });
 
-    it('should convert > operations to NXQL', function test() {
+    it('should convert > operations to NXQL', () => {
       const condition = Immutable.fromJS({
         op: OP_GT,
         path: 'ns2:part/fuzzyDate',
@@ -977,12 +1470,12 @@ describe('searchHelpers', function moduleSuite() {
       });
 
       structuredDateFieldConditionToNXQL(fields, condition).should
-        .equal('part:fuzzyDate/dateLatestScalarValue > TIMESTAMP "2000-01-02T00:00:00.000Z"');
+        .equal('part:fuzzyDate/dateEarliestScalarValue > TIMESTAMP "2000-01-01T00:00:00.000Z"');
     });
 
-    it('should convert >= operations to NXQL', function test() {
+    it('should convert > or contains operations to NXQL', () => {
       const condition = Immutable.fromJS({
-        op: OP_GTE,
+        op: OP_GTC,
         path: 'ns2:part/fuzzyDate',
         value: '2000-01-01',
       });
@@ -990,10 +1483,30 @@ describe('searchHelpers', function moduleSuite() {
       structuredDateFieldConditionToNXQL(fields, condition).should
         .equal('part:fuzzyDate/dateLatestScalarValue > TIMESTAMP "2000-01-01T00:00:00.000Z"');
     });
+
+    it('should convert complete operations to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_COMPLETE,
+        path: 'ns2:part/fuzzyDate',
+      });
+
+      structuredDateFieldConditionToNXQL(fields, condition).should
+        .equal('(part:fuzzyDate/dateEarliestScalarValue IS NOT NULL AND part:fuzzyDate/dateLatestScalarValue IS NOT NULL)');
+    });
+
+    it('should convert not complete operations to NXQL', () => {
+      const condition = Immutable.fromJS({
+        op: OP_NOT_COMPLETE,
+        path: 'ns2:part/fuzzyDate',
+      });
+
+      structuredDateFieldConditionToNXQL(fields, condition).should
+        .equal('(part:fuzzyDate/dateEarliestScalarValue IS NULL OR part:fuzzyDate/dateLatestScalarValue IS NULL)');
+    });
   });
 
-  describe('searchDescriptorToLocation', function suite() {
-    it('should put the record type, vocabulary, csid, and subresource into the location\'s pathname', function test() {
+  describe('searchDescriptorToLocation', () => {
+    it('should put the record type, vocabulary, csid, and subresource into the location\'s pathname', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'person',
         vocabulary: 'local',
@@ -1007,7 +1520,7 @@ describe('searchHelpers', function moduleSuite() {
       });
     });
 
-    it('should stringify the searchQuery, and put it into the location\'s search', function test() {
+    it('should stringify the searchQuery, and put it into the location\'s search', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'person',
         vocabulary: 'local',
@@ -1030,7 +1543,7 @@ describe('searchHelpers', function moduleSuite() {
       });
     });
 
-    it('should increment the page number by one (to make it human readable)', function test() {
+    it('should increment the page number by one (to make it human readable)', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1046,8 +1559,8 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('getListType', function suite() {
-    it('should return the list type of the given search descriptor\'s subresource, if it has one', function test() {
+  describe('getListType', () => {
+    it('should return the list type of the given search descriptor\'s subresource, if it has one', () => {
       const config = {
         subresources: {
           refs: {
@@ -1065,7 +1578,7 @@ describe('searchHelpers', function moduleSuite() {
       getListType(config, searchDescriptor).should.equal('refDoc');
     });
 
-    it('should return \'common\' if the given search desriptor does not have a subresource', function test() {
+    it('should return \'common\' if the given search desriptor does not have a subresource', () => {
       const config = {
         subresources: {
           refs: {
@@ -1082,8 +1595,8 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('getNextPageSearchDescriptor', function suite() {
-    it('should increment the page number of the given search descriptor', function test() {
+  describe('getNextPageSearchDescriptor', () => {
+    it('should increment the page number of the given search descriptor', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1101,7 +1614,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should treat the given search descriptor as having page 0 if it has no page', function test() {
+    it('should treat the given search descriptor as having page 0 if it has no page', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1119,8 +1632,8 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('getPreviousPageSearchDescriptor', function suite() {
-    it('should decrement the page number of the given search descriptor', function test() {
+  describe('getPreviousPageSearchDescriptor', () => {
+    it('should decrement the page number of the given search descriptor', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1138,7 +1651,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return null if the given search descriptor is on page 0', function test() {
+    it('should return null if the given search descriptor is on page 0', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1150,7 +1663,7 @@ describe('searchHelpers', function moduleSuite() {
       expect(getPreviousPageSearchDescriptor(searchDescriptor)).to.equal(null);
     });
 
-    it('should treat the given search descriptor as having page 0 if it has no page', function test() {
+    it('should treat the given search descriptor as having page 0 if it has no page', () => {
       const searchDescriptor = Immutable.fromJS({
         recordType: 'collectionobject',
         searchQuery: {
@@ -1162,8 +1675,8 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('getFirstItem', function suite() {
-    it('should return the first item of a list result', function test() {
+  describe('getFirstItem', () => {
+    it('should return the first item of a list result', () => {
       const config = {
         listTypes: {
           myListType: {
@@ -1194,7 +1707,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return undefined if there are no items in the list result', function test() {
+    it('should return undefined if there are no items in the list result', () => {
       const config = {
         listTypes: {
           myListType: {
@@ -1211,7 +1724,7 @@ describe('searchHelpers', function moduleSuite() {
       expect(getFirstItem(config, listData, 'myListType')).to.equal(undefined);
     });
 
-    it('should return the item in a single (non-array) list result', function test() {
+    it('should return the item in a single (non-array) list result', () => {
       const config = {
         listTypes: {
           myListType: {
@@ -1234,7 +1747,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should default to the \'common\' list type if no list type is supplied', function test() {
+    it('should default to the \'common\' list type if no list type is supplied', () => {
       const config = {
         listTypes: {
           common: {
@@ -1265,7 +1778,7 @@ describe('searchHelpers', function moduleSuite() {
       }));
     });
 
-    it('should return null if the specified list type is not found in the configuration', function test() {
+    it('should return null if the specified list type is not found in the configuration', () => {
       const config = {
         listTypes: {
           common: {
@@ -1280,7 +1793,7 @@ describe('searchHelpers', function moduleSuite() {
       expect(getFirstItem(config, listData, 'badListType')).to.equal(null);
     });
 
-    it('should return null if no list data is supplied', function test() {
+    it('should return null if no list data is supplied', () => {
       const config = {
         listTypes: {
           common: {
@@ -1294,12 +1807,126 @@ describe('searchHelpers', function moduleSuite() {
     });
   });
 
-  describe('getSubrecordSearchName', function suite() {
-    it('should return the search name for the given csid and subrecord name', function test() {
+  describe('getSubrecordSearchName', () => {
+    it('should return the search name for the given csid and subrecord name', () => {
       const csid = '1234';
       const subrecordName = 'contact';
 
       getSubrecordSearchName(csid, subrecordName).should.equal(`subrecord/${csid}/${subrecordName}`);
+    });
+  });
+
+  describe('clearAdvancedSearchConditionValues', () => {
+    it('should clear values from field conditions in the search condition', () => {
+      const condition = Immutable.fromJS({
+        op: OP_AND,
+        value: [
+          {
+            op: OP_EQ,
+            path: 'path1',
+            value: 'value1',
+          },
+          {
+            op: OP_OR,
+            value: [
+              {
+                op: OP_RANGE,
+                path: 'path2',
+                value: ['value2-1', 'value2-2'],
+              },
+              {
+                op: OP_NULL,
+                path: 'path3',
+              },
+              {
+                op: OP_GROUP,
+                value: {
+                  op: OP_AND,
+                  value: {
+                    op: OP_EQ,
+                    path: 'path6',
+                    value: 'value 6',
+                  },
+                },
+              },
+            ],
+          },
+          {
+            op: OP_GROUP,
+            path: 'path3',
+            value: {
+              op: OP_AND,
+              value: [
+                {
+                  op: OP_GT,
+                  path: 'path4',
+                  value: 'value4',
+                },
+                {
+                  op: OP_LT,
+                  path: 'path5',
+                  value: 'value5',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      clearAdvancedSearchConditionValues(condition).should.equal(Immutable.fromJS({
+        op: OP_AND,
+        value: [
+          {
+            op: OP_EQ,
+            path: 'path1',
+          },
+          {
+            op: OP_OR,
+            value: [
+              {
+                op: OP_RANGE,
+                path: 'path2',
+              },
+              {
+                op: OP_NULL,
+                path: 'path3',
+              },
+              {
+                op: OP_GROUP,
+                value: {
+                  op: OP_AND,
+                  value: {
+                    op: OP_EQ,
+                    path: 'path6',
+                  },
+                },
+              },
+            ],
+          },
+          {
+            op: OP_GROUP,
+            path: 'path3',
+            value: {
+              op: OP_AND,
+              value: [
+                {
+                  op: OP_GT,
+                  path: 'path4',
+                },
+                {
+                  op: OP_LT,
+                  path: 'path5',
+                },
+              ],
+            },
+          },
+        ],
+      }));
+    });
+
+    it('should return the condition if it is null or undefined', () => {
+      expect(clearAdvancedSearchConditionValues(null)).to.equal(null);
+      expect(clearAdvancedSearchConditionValues(undefined)).to.equal(undefined);
     });
   });
 });

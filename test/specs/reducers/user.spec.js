@@ -9,31 +9,34 @@ import {
   AUTH_RENEW_FULFILLED,
   LOGIN_FULFILLED,
   LOGOUT_FULFILLED,
+  PREFS_LOADED,
 } from '../../../src/constants/actionCodes';
 
 import reducer, {
+  arePrefsLoaded,
   getPerms,
   getRoleNames,
   getScreenName,
   getUsername,
 } from '../../../src/reducers/user';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.use(chaiImmutable);
 chai.should();
 
-describe('user reducer', function suite() {
-  it('should have empty immutable initial state', function test() {
+describe('user reducer', () => {
+  it('should have empty immutable initial state', () => {
     reducer(undefined, {}).should.equal(Immutable.Map());
   });
 
-  it('should handle CSPACE_CONFIGURED', function test() {
+  it('should handle CSPACE_CONFIGURED', () => {
     const username = 'user@collectionspace.org';
 
     const state = reducer(undefined, {
       type: CSPACE_CONFIGURED,
-      payload: {
+      payload: {},
+      meta: {
         username,
       },
     });
@@ -45,7 +48,7 @@ describe('user reducer', function suite() {
     getUsername(state).should.equal(username);
   });
 
-  it('should handle ACCOUNT_PERMS_READ_FULFILLED', function test() {
+  it('should handle ACCOUNT_PERMS_READ_FULFILLED', () => {
     const config = {
       recordTypes: {
         collectionobject: {
@@ -116,8 +119,8 @@ describe('user reducer', function suite() {
     getScreenName(state).should.equal(screenName);
   });
 
-  context('on ACCOUNT_ROLES_READ_FULFILLED', function context() {
-    it('should set the user\'s role names from the response', function test() {
+  context('on ACCOUNT_ROLES_READ_FULFILLED', () => {
+    it('should set the user\'s role names from the response', () => {
       const response = {
         data: {
           'ns2:account_role': {
@@ -153,7 +156,7 @@ describe('user reducer', function suite() {
       getRoleNames(state).should.equal(state.get('roleNames'));
     });
 
-    it('should set the user\'s role names when there is a single (non-array) role', function test() {
+    it('should set the user\'s role names when there is a single (non-array) role', () => {
       const response = {
         data: {
           'ns2:account_role': {
@@ -181,7 +184,7 @@ describe('user reducer', function suite() {
       getRoleNames(state).should.equal(state.get('roleNames'));
     });
 
-    it('should not change the state when there are no roles', function test() {
+    it('should not change the state when there are no roles', () => {
       const response = {
         data: {
           'ns2:account_role': {
@@ -201,7 +204,7 @@ describe('user reducer', function suite() {
     });
   });
 
-  it('should handle AUTH_RENEW_FULFILLED', function test() {
+  it('should handle AUTH_RENEW_FULFILLED', () => {
     const config = {
       recordTypes: {
         collectionobject: {
@@ -272,7 +275,7 @@ describe('user reducer', function suite() {
     getScreenName(state).should.equal(screenName);
   });
 
-  it('should handle LOGIN_FULFILLED', function test() {
+  it('should handle LOGIN_FULFILLED', () => {
     const username = 'user@collectionspace.org';
 
     const state = reducer(undefined, {
@@ -289,7 +292,7 @@ describe('user reducer', function suite() {
     getUsername(state).should.equal(username);
   });
 
-  it('should handle LOGOUT_FULFILLED', function test() {
+  it('should handle LOGOUT_FULFILLED', () => {
     const state = reducer(undefined, {
       type: LOGOUT_FULFILLED,
     });
@@ -299,7 +302,7 @@ describe('user reducer', function suite() {
     expect(getUsername(state)).to.equal(undefined);
   });
 
-  it('should handle SET_ACCOUNT_PERMS', function test() {
+  it('should handle SET_ACCOUNT_PERMS', () => {
     const initialState = Immutable.fromJS({
       perms: {
         group: {
@@ -330,5 +333,17 @@ describe('user reducer', function suite() {
         },
       },
     }));
+  });
+
+  it('should handle PREFS_LOADED', () => {
+    const state = reducer(undefined, {
+      type: PREFS_LOADED,
+    });
+
+    state.should.equal(Immutable.Map({
+      prefsLoaded: true,
+    }));
+
+    arePrefsLoaded(state).should.equal(true);
   });
 });

@@ -1,8 +1,8 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import Footer from '../../../../src/components/sections/Footer';
 
 chai.should();
@@ -13,12 +13,12 @@ const intl = {
   formatRelative: () => null,
   formatNumber: () => null,
   formatPlural: () => null,
-  formatMessage: message => `formatted ${message.id}`,
+  formatMessage: (message) => `formatted ${message.id}`,
   formatHTMLMessage: () => null,
   now: () => null,
 };
 
-describe('Footer', function suite() {
+describe('Footer', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -29,7 +29,8 @@ describe('Footer', function suite() {
     render(
       <IntlProvider locale="en">
         <Footer config={config} intl={intl} />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('FOOTER');
   });
@@ -41,7 +42,7 @@ describe('Footer', function suite() {
           major: '5',
           minor: '1',
           patch: '0',
-          build: '1',
+          build: '5678',
         },
       },
     });
@@ -49,12 +50,13 @@ describe('Footer', function suite() {
     render(
       <IntlProvider locale="en">
         <Footer config={{}} intl={intl} systemInfo={systemInfo} />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const lists = this.container.querySelectorAll('ul');
     const items = lists[1].querySelectorAll('li');
 
-    items[0].textContent.should.equal('Release 5.1');
+    items[0].textContent.should.equal('Release 5.1.0 (5678)');
   });
 
   it('should render no version number if it is not present in system info', function test() {
@@ -65,7 +67,8 @@ describe('Footer', function suite() {
     render(
       <IntlProvider locale="en">
         <Footer config={{}} intl={intl} systemInfo={systemInfo} />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const lists = this.container.querySelectorAll('ul');
     const items = lists[1].querySelectorAll('li');
@@ -84,7 +87,8 @@ describe('Footer', function suite() {
     render(
       <IntlProvider locale="en">
         <Footer config={{}} intl={intl} systemInfo={systemInfo} />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const lists = this.container.querySelectorAll('ul');
     const items = lists[1].querySelectorAll('li');
@@ -110,7 +114,8 @@ describe('Footer', function suite() {
     render(
       <IntlProvider locale="en">
         <Footer config={config} intl={intl} />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const lists = this.container.querySelectorAll('ul');
     const items = lists[1].querySelectorAll('li');

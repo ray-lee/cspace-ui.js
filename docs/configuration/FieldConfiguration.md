@@ -86,7 +86,7 @@ cspaceUI((configContext) => {
 });
 ```
 
-ℹ️ The `defineMessages` function used in the example is exported by the [react-intl](https://github.com/yahoo/react-intl/wiki) package.
+ℹ️ The `defineMessages` function used in the example is exported by the [react-intl](https://github.com/yahoo/react-intl/wiki) package. It is optional. Messages may also be defined using a plain object.
 
 ## Description
 
@@ -125,9 +125,11 @@ The data type of the field's value. When the field descriptor is defined in a co
 ```
 messages: MessageDescriptorMap
 ```
-A [react-intl message descriptor map](https://github.com/yahoo/react-intl/wiki/API#definemessages) containing messages for the field. A message with the key `name` must be supplied. This message is displayed as the label of the field on record editor forms. A message with the key `fullName` may optionally be supplied. This message is used to describe the field on search forms, in search results, and in notification messages. If `fullName` is not supplied, the `name` message is used instead.
+A [react-intl message descriptor map](https://github.com/yahoo/react-intl/wiki/API#definemessages) containing messages for the field. A message with the key `name` must be supplied. This message is displayed as the label of the field on record editor forms. Messages with the keys `fullName` and `groupName` may optionally be supplied. The `fullName` message is used to describe the field on search forms, in search results, and in notification messages. If `fullName` is not supplied, the `name` message is used instead. The `groupName` message is used to describe the field on search forms, within a group search. If `groupName` is not supplied, the `fullName` or `name` message is used instead.
 
-ℹ️ The `fullName` message is used when a field is described out of the context of any parent fields, so the message should be fully descriptive and unambiguous. The `name` message is used only on the record form, where labels for parent fields are available to provide context, so the message should be short, and should avoid duplicating information contained in parent field labels.
+ℹ️ The `fullName` message is used when a field is described out of the context of any ancestor fields, so the message should be fully descriptive and unambiguous with respect to other fields on the record. The `groupName` message is used when a field is described in the context of its parent (group) field, so the message should be unambiguous with respect to other fields in the same group. The `name` message is used only on the record form, where labels for all ancestor fields are available to provide context, so the message should be as concise as possible, and should avoid duplicating information contained in ancestor field labels.
+
+The [style guide](../style) has more information, including examples, about the usage of each message.
 
 ### repeating
 ```
@@ -137,11 +139,11 @@ If true, the field is repeating (multivalued), and will be rendered with add and
 
 ### required
 ```
-required: boolean | (requiredContext) => boolean
+required: boolean | (computeContext) => boolean
 ```
 If true, the field is required. It will be rendered with a required indictor, and will trigger an error notification if it is left empty.
 
-If a function is provided, the function will be called with a requiredContext object as an argument,  and it must return a boolean. The requiredContext has the following properties:
+If a function is provided, the function will be called with a computeContext object as an argument,  and it must return a boolean. The computeContext has the following properties:
 
 | Property          | Type           | Description |
 | ----------------- | -------------- | ----------- |
@@ -179,3 +181,15 @@ Configuration that describes how the field is to be rendered on the record edito
 | -------- | -------- | ----------- |
 | `type`   | Function | The React component that should be used to render the field. When the field descriptor is defined in a configurer function, React component types that may be used are provided in the configuration context passed to the configurer, under the `inputComponents` property. |
 | `props`  | Object   | Props to set on the React component when it is rendered. The possible props will depend on the type of component. |
+
+Many React input components used in the CollectionSpace UI have a `readOnly` prop that accepts a boolean. When configured, a function may be supplied instead. The function will be called with a computeContext object as an argument, and it must return a boolean, which will be passed to the `readOnly` prop of the component. The computeContext has the following properties:
+
+| Property          | Type           | Description |
+| ----------------- | -------------- | ----------- |
+| `fieldDescriptor` | Object         | The field's descriptor, containing its configuration and the configuration of any descendants. |
+| `form`            | String         | The name of the form (template) that is in use. |
+| `path`            | Array          | The path to the field in the record data. |
+| `recordData`      | Immutable.Map  | The record data. |
+| `recordType`      | String         | The name of the record type. |
+| `roleNames`       | Immutable.List | The current user's roles. |
+| `subrecordData`   | Immutable.Map  | The data of the record's subrecords, if any (e.g. blob in media, contact in person/organization). |

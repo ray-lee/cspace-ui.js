@@ -3,6 +3,7 @@ import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
+import { findWithType } from 'react-shallow-testutils';
 import SearchResultTraverser from '../../../../src/components/search/SearchResultTraverser';
 import SearchResultTraverserContainer from '../../../../src/containers/search/SearchResultTraverserContainer';
 import { searchKey } from '../../../../src/reducers/search';
@@ -12,7 +13,7 @@ import {
   getPreviousPageSearchDescriptor,
 } from '../../../../src/helpers/searchHelpers';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.use(chaiImmutable);
 chai.should();
@@ -57,33 +58,30 @@ const store = mockStore({
   }),
 });
 
-const context = {
-  store,
-};
-
-describe('SearchResultTraverserContainer', function suite() {
-  it('should set props on SearchResultTraverser', function test() {
+describe('SearchResultTraverserContainer', () => {
+  it('should set props on SearchResultTraverser', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <SearchResultTraverserContainer
+        store={store}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const traverser = findWithType(result, SearchResultTraverser);
 
-    result.type.should.equal(SearchResultTraverser);
-
-    result.props.nextPageSearchDescriptor.should.equal(nextPageSearchDescriptor);
-    result.props.prevPageSearchDescriptor.should.equal(prevPageSearchDescriptor);
-    result.props.searchState.should.equal(searchState);
-    result.props.nextPageSearchState.should.equal(nextPageSearchState);
-    result.props.prevPageSearchState.should.equal(prevPageSearchState);
-    result.props.search.should.be.a('function');
+    traverser.props.nextPageSearchDescriptor.should.equal(nextPageSearchDescriptor);
+    traverser.props.prevPageSearchDescriptor.should.equal(prevPageSearchDescriptor);
+    traverser.props.searchState.should.equal(searchState);
+    traverser.props.nextPageSearchState.should.equal(nextPageSearchState);
+    traverser.props.prevPageSearchState.should.equal(prevPageSearchState);
+    traverser.props.search.should.be.a('function');
   });
 
-  it('should set prevPageSearchState to undefined if the search descriptor is on page 0', function test() {
+  it('should set prevPageSearchState to undefined if the search descriptor is on page 0', () => {
     const pageZeroSearchDescriptor = Immutable.fromJS({
       recordType: 'collectionobject',
       searchQuery: {
@@ -95,12 +93,15 @@ describe('SearchResultTraverserContainer', function suite() {
 
     shallowRenderer.render(
       <SearchResultTraverserContainer
+        store={store}
         searchName={searchName}
         searchDescriptor={pageZeroSearchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const traverser = findWithType(result, SearchResultTraverser);
 
-    expect(result.props.prevPageSearchState).to.equal(undefined);
+    expect(traverser.props.prevPageSearchState).to.equal(undefined);
   });
 });

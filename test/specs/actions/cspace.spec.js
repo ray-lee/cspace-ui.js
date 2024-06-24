@@ -1,26 +1,19 @@
-/* global window */
-
 import Immutable from 'immutable';
 import configureMockStore from 'redux-mock-store';
 import chaiAsPromised from 'chai-as-promised';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
-import LoginModal from '../../../src/components/login/LoginModal';
+import { setupWorker, rest } from 'msw';
+import getSession from '../../../src/helpers/session';
+import { MODAL_LOGIN } from '../../../src/constants/modalNames';
 
 import {
   CSPACE_CONFIGURED,
-  PREFS_LOADED,
-  READ_SYSTEM_INFO_FULFILLED,
-  READ_SYSTEM_INFO_REJECTED,
-  ACCOUNT_PERMS_READ_FULFILLED,
-  ACCOUNT_ROLES_READ_FULFILLED,
-  AUTH_VOCABS_READ_STARTED,
-  AUTH_VOCABS_READ_FULFILLED,
-  RESET_LOGIN,
+  SYSTEM_INFO_READ_FULFILLED,
+  SYSTEM_INFO_READ_REJECTED,
   OPEN_MODAL,
 } from '../../../src/constants/actionCodes';
 
-import getSession, {
+import {
   configureCSpace,
   createSession,
   setSession,
@@ -32,24 +25,32 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('cspace action creator', function suite() {
-  describe('configureCSpace', function actionSuite() {
-    beforeEach(() => {
-      moxios.install();
-    });
+describe('cspace action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('configureCSpace', () => {
+    const serverUrl = 'http://something.org';
 
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should create a CSpace session and make it the active session', function test() {
+    it('should create a CSpace session and make it the active session', () => {
       const store = mockStore({
         user: Immutable.Map(),
       });
 
       const cspaceConfig = {
         foo: 'bar',
-        serverUrl: 'http://something.org',
+        serverUrl,
       };
 
       store.dispatch(configureCSpace(cspaceConfig));
@@ -57,22 +58,17 @@ describe('cspace action creator', function suite() {
       const session = getSession();
 
       session.should.be.an('object');
-      session.config().should.have.property('url', 'http://something.org');
+      session.config().should.have.property('url', serverUrl);
     });
 
-    it('should dispatch CSPACE_CONFIGURED, ACCOUNT_PERMS_READ_FULFILLED, ACCOUNT_ROLES_READ_FULFILLED, PREFS_LOADED, and AUTH_VOCABS_READ_FULFILLED', function test() {
-      moxios.stubRequest(/.*/, {
-        status: 200,
-        response: {},
-      });
-
+    it('should dispatch CSPACE_CONFIGURED', () => {
       const store = mockStore({
         user: Immutable.Map(),
       });
 
       const cspaceConfig = {
         foo: 'bar',
-        serverUrl: 'http://something.org',
+        serverUrl,
         recordTypes: {
           person: {
             serviceConfig: {
@@ -82,118 +78,20 @@ describe('cspace action creator', function suite() {
           },
         },
       };
-
-      // Set a stored cspace-client username.
-
-      window.localStorage.setItem('cspace-client', JSON.stringify({
-        'cspace-ui': {
-          [cspaceConfig.serverUrl]: {
-            username: 'user@collectionspace.org',
-          },
-        },
-      }));
 
       store.dispatch(configureCSpace(cspaceConfig));
 
-      return new Promise((resolve) => {
-        window.setTimeout(() => {
-          const actions = store.getActions();
+      const actions = store.getActions();
 
-          actions.should.have.lengthOf(6);
+      actions.should.have.lengthOf(1);
 
-          actions[0].should
-            .include({ type: CSPACE_CONFIGURED })
-            .and.have.property('payload')
-              .that.has.property('url', 'http://something.org');
-
-          actions[1].should.include({ type: ACCOUNT_PERMS_READ_FULFILLED });
-          actions[2].should.include({ type: ACCOUNT_ROLES_READ_FULFILLED });
-          actions[3].should.include({ type: PREFS_LOADED });
-          actions[4].should.include({ type: AUTH_VOCABS_READ_STARTED });
-          actions[5].should.include({ type: AUTH_VOCABS_READ_FULFILLED });
-
-          window.localStorage.removeItem('cspace-client');
-
-          resolve();
-        }, 0);
-      });
+      actions[0].should
+        .include({ type: CSPACE_CONFIGURED })
+        .and.have.property('payload')
+        .that.has.property('url', serverUrl);
     });
 
-    it('should resolve if the readAccountPerms query returns a 401 error', function test() {
-      moxios.stubRequest(/\/accounts\/0\/accountperms/, {
-        status: 401,
-        response: {},
-      });
-
-      const store = mockStore({
-        user: Immutable.Map(),
-      });
-
-      const cspaceConfig = {
-        foo: 'bar',
-        serverUrl: 'http://something.org',
-        recordTypes: {
-          person: {
-            serviceConfig: {
-              servicePath: 'personauthorities',
-              serviceType: 'authority',
-            },
-          },
-        },
-      };
-
-      // Set a stored cspace-client username.
-
-      window.localStorage.setItem('cspace-client', JSON.stringify({
-        'cspace-ui': {
-          [cspaceConfig.serverUrl]: {
-            username: 'user@collectionspace.org',
-          },
-        },
-      }));
-
-      return store.dispatch(configureCSpace(cspaceConfig))
-        .then(() => Promise.resolve());
-    });
-
-    it('should reject if the readAccountPerms query returns an error other than 401', function test() {
-      moxios.stubRequest(/\/accounts\/0\/accountperms/, {
-        status: 500,
-        response: {},
-      });
-
-      const store = mockStore({
-        user: Immutable.Map(),
-      });
-
-      const cspaceConfig = {
-        foo: 'bar',
-        serverUrl: 'http://something.org',
-        recordTypes: {
-          person: {
-            serviceConfig: {
-              servicePath: 'personauthorities',
-              serviceType: 'authority',
-            },
-          },
-        },
-      };
-
-      // Set a stored cspace-client username.
-
-      window.localStorage.setItem('cspace-client', JSON.stringify({
-        'cspace-ui': {
-          [cspaceConfig.serverUrl]: {
-            username: 'user@collectionspace.org',
-          },
-        },
-      }));
-
-      return store.dispatch(configureCSpace(cspaceConfig))
-        .catch(() => Promise.resolve());
-    });
-
-    it('should configure an onError callback that is a function', function test() {
+    it('should configure an onError callback that is a function', () => {
       const store = mockStore({
         user: Immutable.Map(),
       });
@@ -207,7 +105,7 @@ describe('cspace action creator', function suite() {
     });
   });
 
-  describe('onError callback', function onErrorSuite() {
+  describe('onError callback', () => {
     const store = mockStore({
       notification: Immutable.Map(),
       user: Immutable.Map(),
@@ -219,21 +117,22 @@ describe('cspace action creator', function suite() {
 
     afterEach(() => {
       store.clearActions();
+      worker.resetHandlers();
     });
 
-    it('should reject with the error', function test() {
+    it('should reject with the error', () => {
       const error = new Error();
 
-      onError(error).should.eventually.be.rejectedWith(error);
+      return onError(error).should.eventually.be.rejectedWith(error);
     });
 
-    it('should dispatch RESET_LOGIN and OPEN_MODAL if the error is an invalid token 401 error', function test() {
+    it('should dispatch OPEN_MODAL if the error is an invalid token 401 error', () => {
       const error = {
         response: {
           status: 401,
-          data: {
-            error: 'invalid_token',
-          },
+          headers: new Map([
+            ['Www-Authenticate', 'Bearer error="invalid_token"'],
+          ]),
         },
       };
 
@@ -241,54 +140,56 @@ describe('cspace action creator', function suite() {
 
       const actions = store.getActions();
 
-      actions.length.should.equal(2);
+      actions.length.should.equal(1);
 
       actions[0].should.deep.equal({
-        type: RESET_LOGIN,
-        meta: {
-          username: '',
-        },
-      });
-
-      actions[1].should.deep.equal({
         type: OPEN_MODAL,
         meta: {
-          name: LoginModal.modalName,
+          name: MODAL_LOGIN,
         },
       });
     });
   });
 
-  describe('createSession', function actionSuite() {
-    it('should return a cspace session', function test() {
-      const username = 'user@collectionspace.org';
-      const password = 'topsecret';
+  describe('createSession', () => {
+    it('should return a cspace session', () => {
+      const authCode = '1234';
+      const codeVerifier = 'topsecret';
+      const redirectUri = '/authorized';
 
-      const session = createSession(username, password);
+      const session = createSession(authCode, codeVerifier, redirectUri);
 
       session.should.be.an('object');
-      session.config().should.have.property('username', username);
+      session.config().should.have.property('authCode', authCode);
+      session.config().should.have.property('codeVerifier', codeVerifier);
+      session.config().should.have.property('redirectUri', redirectUri);
     });
   });
 
-  describe('setSession', function actionSuite() {
-    it('should create a CSPACE_CONFIGURED action', function test() {
-      const username = 'user@collectionspace.org';
-      const password = 'topsecret';
+  describe('setSession', () => {
+    it('should create a CSPACE_CONFIGURED action', () => {
+      const authCode = '1234';
+      const codeVerifier = 'topsecret';
+      const redirectUri = '/authorized';
 
-      const session = createSession(username, password);
+      const session = createSession(authCode, codeVerifier, redirectUri);
 
       setSession(session).should
         .include({ type: CSPACE_CONFIGURED })
         .and.have.property('payload')
-          .that.has.property('username', username);
+        .that.includes({
+          authCode,
+          codeVerifier,
+          redirectUri,
+        });
     });
 
-    it('should update the active session', function test() {
-      const username = 'user@collectionspace.org';
-      const password = 'topsecret';
+    it('should update the active session', () => {
+      const authCode = '1234';
+      const codeVerifier = 'topsecret';
+      const redirectUri = 'authorized';
 
-      const session = createSession(username, password);
+      const session = createSession(authCode, codeVerifier, redirectUri);
 
       setSession(session);
 
@@ -296,10 +197,9 @@ describe('cspace action creator', function suite() {
     });
   });
 
-  describe('readSystemInfo', function actionSuite() {
+  describe('readSystemInfo', () => {
     const store = mockStore({
       cspace: Immutable.Map(),
-      // user: Immutable.Map(),
     });
 
     const tenantId = '123';
@@ -308,34 +208,39 @@ describe('cspace action creator', function suite() {
       tenantId,
     };
 
-    const systemInfoUrl = `/cspace-services/systeminfo?tid=${tenantId}`;
+    const systemInfoUrl = '/cspace-services/systeminfo';
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
+    const systemInfoPayload = {
+      'ns2:system_info_common': {
+        version: {
+          major: '5',
+          minor: '1',
+        },
+      },
+    };
 
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch READ_SYSTEM_INFO_FULFILLED on success', function test() {
-      moxios.stubRequest(systemInfoUrl, {
-        status: 200,
-        response: {
-          'ns2:system_info_common': {
-            version: {
-              major: '5',
-              minor: '1',
-            },
-          },
-        },
-      });
+    it('should dispatch SYSTEM_INFO_READ_FULFILLED on success', () => {
+      worker.use(
+        rest.get(systemInfoUrl, (req, res, ctx) => {
+          const {
+            searchParams,
+          } = req.url;
+
+          if (searchParams.get('tid') === tenantId) {
+            return res(ctx.json(systemInfoPayload));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(readSystemInfo(config))
         .then(() => {
@@ -343,30 +248,16 @@ describe('cspace action creator', function suite() {
 
           actions.should.have.lengthOf(1);
 
-          actions[0].should.deep.equal({
-            type: READ_SYSTEM_INFO_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {
-                'ns2:system_info_common': {
-                  version: {
-                    major: '5',
-                    minor: '1',
-                  },
-                },
-              },
-            },
-          });
+          actions[0].type.should.equal(SYSTEM_INFO_READ_FULFILLED);
+          actions[0].payload.status.should.equal(200);
+          actions[0].payload.data.should.deep.equal(systemInfoPayload);
         });
     });
 
-    it('should dispatch READ_SYSTEM_INFO_REJECTED on error', function test() {
-      moxios.stubRequest(systemInfoUrl, {
-        status: 404,
-        response: {},
-      });
+    it('should dispatch SYSTEM_INFO_READ_REJECTED on error', () => {
+      worker.use(
+        rest.get(systemInfoUrl, (req, res, ctx) => res(ctx.status(404))),
+      );
 
       return store.dispatch(readSystemInfo(config))
         .then(() => {
@@ -374,7 +265,7 @@ describe('cspace action creator', function suite() {
 
           actions.should.have.lengthOf(1);
 
-          actions[0].type.should.equal(READ_SYSTEM_INFO_REJECTED);
+          actions[0].type.should.equal(SYSTEM_INFO_READ_REJECTED);
         });
     });
   });

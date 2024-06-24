@@ -6,12 +6,20 @@ import { components as inputComponents } from 'cspace-input';
 import { Panel } from 'cspace-layout';
 import Dock from '../sections/Dock';
 import SearchButtonBar from './SearchButtonBar';
-import AdvancedSearchBuilder from './AdvancedSearchBuilder';
-import { getSearchableRecordTypes } from '../../helpers/searchHelpers';
+import AdvancedSearchBuilderContainer from '../../containers/search/AdvancedSearchBuilderContainer';
 import { ConnectedPanel } from '../../containers/layout/PanelContainer';
 import styles from '../../../styles/cspace-ui/SearchForm.css';
 import recordTypeStyles from '../../../styles/cspace-ui/SearchFormRecordType.css';
 import vocabStyles from '../../../styles/cspace-ui/SearchFormVocab.css';
+
+import {
+  getSearchableRecordTypes,
+} from '../../helpers/searchHelpers';
+
+import {
+  getRecordFieldOptionListName,
+  getRecordGroupOptionListName,
+} from '../../helpers/configHelpers';
 
 const {
   Label,
@@ -40,13 +48,15 @@ const messages = defineMessages({
 });
 
 const propTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    messages: PropTypes.object,
+  }),
   dockTop: PropTypes.number,
   intl: intlShape,
   keywordValue: PropTypes.string,
   recordTypeValue: PropTypes.string,
   vocabularyValue: PropTypes.string,
-  advancedSearchCondition: PropTypes.object,
+  advancedSearchCondition: PropTypes.instanceOf(Immutable.Map),
   preferredAdvancedSearchBooleanOp: PropTypes.string,
   recordTypeInputReadOnly: PropTypes.bool,
   recordTypeInputRootType: PropTypes.string,
@@ -55,6 +65,8 @@ const propTypes = {
   showButtons: PropTypes.bool,
   perms: PropTypes.instanceOf(Immutable.Map),
   getAuthorityVocabCsid: PropTypes.func,
+  buildRecordFieldOptionLists: PropTypes.func,
+  deleteOptionList: PropTypes.func,
   onAdvancedSearchConditionCommit: PropTypes.func,
   onClearButtonClick: PropTypes.func,
   onKeywordCommit: PropTypes.func,
@@ -75,20 +87,52 @@ export default class SearchForm extends Component {
     this.handleVocabularyDropdownCommit = this.handleVocabularyDropdownCommit.bind(this);
   }
 
-  formatRecordTypeLabel(name, config) {
+  componentDidMount() {
     const {
-      intl,
+      config,
+      recordTypeValue,
+      buildRecordFieldOptionLists,
     } = this.props;
 
-    return (intl.formatMessage(config.messages.record.collectionName) || name);
+    if (buildRecordFieldOptionLists && recordTypeValue) {
+      buildRecordFieldOptionLists(config, recordTypeValue);
+    }
   }
 
-  formatVocabularyLabel(name, config) {
+  componentDidUpdate(prevProps) {
     const {
-      intl,
+      config,
+      recordTypeValue,
+      buildRecordFieldOptionLists,
+      deleteOptionList,
     } = this.props;
 
-    return (intl.formatMessage(config.messages.name) || name);
+    const {
+      recordTypeValue: prevRecordTypeValue,
+    } = prevProps;
+
+    if (recordTypeValue !== prevRecordTypeValue) {
+      if (deleteOptionList) {
+        deleteOptionList(getRecordFieldOptionListName(prevRecordTypeValue));
+        deleteOptionList(getRecordGroupOptionListName(prevRecordTypeValue));
+      }
+
+      if (buildRecordFieldOptionLists && recordTypeValue) {
+        buildRecordFieldOptionLists(config, recordTypeValue);
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    const {
+      recordTypeValue,
+      deleteOptionList,
+    } = this.props;
+
+    if (deleteOptionList) {
+      deleteOptionList(getRecordFieldOptionListName(recordTypeValue));
+      deleteOptionList(getRecordGroupOptionListName(recordTypeValue));
+    }
   }
 
   handleFormSubmit(event) {
@@ -133,6 +177,22 @@ export default class SearchForm extends Component {
     }
   }
 
+  formatRecordTypeLabel(name, config) {
+    const {
+      intl,
+    } = this.props;
+
+    return (intl.formatMessage(config.messages.record.collectionName) || name);
+  }
+
+  formatVocabularyLabel(name, config) {
+    const {
+      intl,
+    } = this.props;
+
+    return (intl.formatMessage(config.messages.name) || name);
+  }
+
   renderVocabularyInput(recordTypes) {
     const {
       intl,
@@ -141,9 +201,9 @@ export default class SearchForm extends Component {
     } = this.props;
 
     if (
-      !recordTypeValue ||
-      !recordTypes[recordTypeValue] ||
-      !recordTypes[recordTypeValue].vocabularies
+      !recordTypeValue
+      || !recordTypes[recordTypeValue]
+      || !recordTypes[recordTypeValue].vocabularies
     ) {
       return null;
     }
@@ -261,7 +321,7 @@ export default class SearchForm extends Component {
               onCommit={this.handleKeywordInputCommit}
             />
           </ConnectedPanel>
-          <AdvancedSearchBuilder
+          <AdvancedSearchBuilderContainer
             condition={advancedSearchCondition}
             config={config}
             preferredBooleanOp={preferredAdvancedSearchBooleanOp}

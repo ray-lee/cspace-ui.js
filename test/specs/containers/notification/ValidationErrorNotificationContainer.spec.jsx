@@ -1,6 +1,7 @@
 import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
+import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
 import ValidationErrorNotification from '../../../../src/components/notification/ValidationErrorNotification';
 import ValidationErrorNotificationContainer from '../../../../src/containers/notification/ValidationErrorNotificationContainer';
@@ -9,8 +10,8 @@ chai.should();
 
 const mockStore = configureMockStore();
 
-describe('ValidationErrorNotificationContainer', function suite() {
-  it('should set props on ValidationErrorNotification', function test() {
+describe('ValidationErrorNotificationContainer', () => {
+  it('should set props on ValidationErrorNotification', () => {
     const csid = '1234';
     const validationErrors = Immutable.Map();
 
@@ -22,14 +23,18 @@ describe('ValidationErrorNotificationContainer', function suite() {
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ValidationErrorNotificationContainer csid={csid} />, context);
+    shallowRenderer.render(
+      <ValidationErrorNotificationContainer
+        store={store}
+        csid={csid}
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const notification = findWithType(result, ValidationErrorNotification);
 
-    result.type.should.equal(ValidationErrorNotification);
-    result.props.should.have.property('errors', validationErrors);
+    notification.props.should.have.property('errors', validationErrors);
   });
 });

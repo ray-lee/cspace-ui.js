@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
+import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
 import SearchResultTable from '../../../../src/components/search/SearchResultTable';
@@ -13,7 +14,7 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('SearchResultTableContainer', function suite() {
+describe('SearchResultTableContainer', () => {
   const searchName = 'testSearch';
   const searchDescriptor = Immutable.Map();
   const searchResult = {};
@@ -22,7 +23,7 @@ describe('SearchResultTableContainer', function suite() {
     code: 'ERROR_CODE',
   };
 
-  it('should set props on SearchResultTable', function test() {
+  it('should set props on SearchResultTable', () => {
     const store = mockStore({
       search: Immutable.fromJS({
         [searchName]: {
@@ -38,58 +39,54 @@ describe('SearchResultTableContainer', function suite() {
       user: Immutable.Map(),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedSearchResultTable
+        store={store}
         config={{}}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const table = findWithType(result, SearchResultTable);
 
-    result.type.should.equal(SearchResultTable);
+    table.props.isSearchPending.should.equal(true);
+    table.props.searchResult.should.equal(Immutable.fromJS(searchResult));
+    table.props.searchError.should.equal(Immutable.fromJS(searchError));
 
-    result.props.isSearchPending.should.equal(true);
-    result.props.searchResult.should.equal(Immutable.fromJS(searchResult));
-    result.props.searchError.should.equal(Immutable.fromJS(searchError));
-
-    result.props.formatCellData.should.be.a('function');
-    result.props.formatColumnLabel.should.be.a('function');
+    table.props.formatCellData.should.be.a('function');
+    table.props.formatColumnLabel.should.be.a('function');
   });
 
-  it('should connect formatColumnLabel to intl.formatMessage', function test() {
+  it('should connect formatColumnLabel to intl.formatMessage', () => {
     const store = mockStore({
       search: Immutable.Map(),
       user: Immutable.Map(),
     });
 
-    const context = {
-      store,
-    };
-
     const intl = {
-      formatMessage: message => `formatted ${message.id}`,
+      formatMessage: (message) => `formatted ${message.id}`,
     };
 
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedSearchResultTable
+        store={store}
         config={{}}
         intl={intl}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
 
-    result.props.formatColumnLabel({
+    const table = findWithType(result, SearchResultTable);
+    table.props.formatColumnLabel({
       messages: {
         label: {
           id: 'column.object.objectNumber',
@@ -98,15 +95,11 @@ describe('SearchResultTableContainer', function suite() {
     }).should.equal('formatted column.object.objectNumber');
   });
 
-  it('should supply formatCellData with intl and config', function test() {
+  it('should supply formatCellData with intl and config', () => {
     const store = mockStore({
       search: Immutable.Map(),
       user: Immutable.Map(),
     });
-
-    const context = {
-      store,
-    };
 
     const intl = {};
     const config = {};
@@ -115,18 +108,21 @@ describe('SearchResultTableContainer', function suite() {
 
     shallowRenderer.render(
       <ConnectedSearchResultTable
+        store={store}
         intl={intl}
         config={config}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const table = findWithType(result, SearchResultTable);
 
     let suppliedIntl = null;
     let suppliedConfig = null;
 
-    result.props.formatCellData({
+    table.props.formatCellData({
       formatValue: (data, { intl: intlArg, config: configArg }) => {
         suppliedIntl = intlArg;
         suppliedConfig = configArg;
@@ -137,27 +133,26 @@ describe('SearchResultTableContainer', function suite() {
     suppliedConfig.should.equal(config);
   });
 
-  it('should have formatCellData return the data if the column config does not contain a formatValue function', function test() {
+  it('should have formatCellData return the data if the column config does not contain a formatValue function', () => {
     const store = mockStore({
       search: Immutable.Map(),
       user: Immutable.Map(),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedSearchResultTable
+        store={store}
         config={{}}
         searchName={searchName}
         searchDescriptor={searchDescriptor}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const table = findWithType(result, SearchResultTable);
 
-    result.props.formatCellData({}, 'data').should.equal('data');
+    table.props.formatCellData({}, 'data').should.equal('data');
   });
 });

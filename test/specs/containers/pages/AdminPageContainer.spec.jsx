@@ -2,6 +2,7 @@ import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import AdminPage from '../../../../src/components/pages/AdminPage';
 import AdminPageContainer from '../../../../src/containers/pages/AdminPageContainer';
 
@@ -29,18 +30,17 @@ const store = mockStore({
   }),
 });
 
-describe('AdminPageContainer', function suite() {
-  it('should set props on AdminPage', function test() {
-    const context = { store };
-
+describe('AdminPageContainer', () => {
+  it('should set props on AdminPage', () => {
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<AdminPageContainer />, context);
+    shallowRenderer.render(<AdminPageContainer store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const admin = findWithType(result, AdminPage);
 
-    result.type.should.equal(AdminPage);
-    result.props.should.have.property('perms', perms);
-    result.props.should.have.property('preferredTab', adminTab);
+    admin.type.should.equal(AdminPage);
+    admin.props.should.have.property('perms', perms);
+    admin.props.should.have.property('preferredTab', adminTab);
   });
 });

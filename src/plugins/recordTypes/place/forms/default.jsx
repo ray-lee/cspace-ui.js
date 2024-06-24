@@ -152,6 +152,10 @@ const template = (configContext) => {
         </Field>
       </Panel>
 
+      <Panel name="authorities" collapsible collapsed>
+        {extensions.associatedAuthority.form}
+      </Panel>
+
       <Panel name="hierarchy" collapsible collapsed>
         <Field name="relation-list-item" subpath="rel:relations-common-list" />
       </Panel>
@@ -159,7 +163,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.place.default.name',

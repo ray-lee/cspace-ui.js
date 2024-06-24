@@ -1,12 +1,12 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import InvokeButton from '../../../../src/components/invocable/InvokeButton';
 
 chai.should();
 
-describe('InvokeButton', function suite() {
+describe('InvokeButton', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -15,7 +15,8 @@ describe('InvokeButton', function suite() {
     render(
       <IntlProvider locale="en">
         <InvokeButton />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('BUTTON');
   });
@@ -24,7 +25,8 @@ describe('InvokeButton', function suite() {
     render(
       <IntlProvider locale="en">
         <InvokeButton isRunning />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.disabled.should.equal(true);
   });

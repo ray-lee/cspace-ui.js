@@ -22,6 +22,10 @@ export default (configContext) => {
     extensions,
   } = configContext.config;
 
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
+
   return {
     document: {
       [config]: {
@@ -42,6 +46,10 @@ export default (configContext) => {
         movementReferenceNumber: {
           [config]: {
             messages: defineMessages({
+              inUse: {
+                id: 'field.movements_common.movementReferenceNumber.inUse',
+                defaultMessage: 'The reference number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.movements_common.movementReferenceNumber.name',
                 defaultMessage: 'Reference number',
@@ -50,6 +58,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'movements_common:movementReferenceNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -77,13 +90,13 @@ export default (configContext) => {
         currentLocation: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.movements_common.currentLocation.name',
-                defaultMessage: 'Location',
-              },
               fullName: {
                 id: 'field.movements_common.currentLocation.fullName',
                 defaultMessage: 'Current location',
+              },
+              name: {
+                id: 'field.movements_common.currentLocation.name',
+                defaultMessage: 'Location',
               },
             }),
             required: true,
@@ -98,6 +111,10 @@ export default (configContext) => {
         currentLocationFitness: {
           [config]: {
             messages: defineMessages({
+              fullName: {
+                id: 'field.movements_common.currentLocationFitness.fullName',
+                defaultMessage: 'Current location fitness',
+              },
               name: {
                 id: 'field.movements_common.currentLocationFitness.name',
                 defaultMessage: 'Fitness',
@@ -114,6 +131,10 @@ export default (configContext) => {
         currentLocationNote: {
           [config]: {
             messages: defineMessages({
+              fullName: {
+                id: 'field.movements_common.currentLocationNote.fullName',
+                defaultMessage: 'Current location note',
+              },
               name: {
                 id: 'field.movements_common.currentLocationNote.name',
                 defaultMessage: 'Note',
@@ -209,13 +230,13 @@ export default (configContext) => {
         movementContact: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.movements_common.movementContact.name',
-                defaultMessage: 'Contact',
-              },
               fullName: {
                 id: 'field.movements_common.movementContact.fullName',
                 defaultMessage: 'Movement contact',
+              },
+              name: {
+                id: 'field.movements_common.movementContact.name',
+                defaultMessage: 'Contact',
               },
             }),
             view: {
@@ -229,6 +250,10 @@ export default (configContext) => {
         movementNote: {
           [config]: {
             messages: defineMessages({
+              fullName: {
+                id: 'field.movements_common.movementNote.fullName',
+                defaultMessage: 'Movement note',
+              },
               name: {
                 id: 'field.movements_common.movementNote.name',
                 defaultMessage: 'Note',
@@ -311,13 +336,13 @@ export default (configContext) => {
           inventoryContact: {
             [config]: {
               messages: defineMessages({
-                name: {
-                  id: 'field.movements_common.inventoryContact.name',
-                  defaultMessage: 'Contact',
-                },
                 fullName: {
                   id: 'field.movements_common.inventoryContact.fullName',
                   defaultMessage: 'Inventory contact',
+                },
+                name: {
+                  id: 'field.movements_common.inventoryContact.name',
+                  defaultMessage: 'Contact',
                 },
               }),
               repeating: true,
@@ -333,18 +358,15 @@ export default (configContext) => {
         inventoryNote: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.movements_common.inventoryNote.name',
-                defaultMessage: 'Note',
-              },
               fullName: {
                 id: 'field.movements_common.inventoryNote.fullName',
                 defaultMessage: 'Inventory note',
               },
+              name: {
+                id: 'field.movements_common.inventoryNote.name',
+                defaultMessage: 'Note',
+              },
             }),
-            searchView: {
-              type: TextInput,
-            },
             view: {
               type: TextInput,
               props: {

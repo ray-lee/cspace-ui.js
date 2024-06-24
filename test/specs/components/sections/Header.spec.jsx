@@ -1,5 +1,4 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import { IntlProvider } from 'react-intl';
 import { Provider as StoreProvider } from 'react-redux';
@@ -7,6 +6,7 @@ import configureMockStore from 'redux-mock-store';
 import Immutable from 'immutable';
 
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import Header from '../../../../src/components/sections/Header';
@@ -24,7 +24,7 @@ const config = {
   recordTypes: {},
 };
 
-describe('Header', function suite() {
+describe('Header', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -35,11 +35,12 @@ describe('Header', function suite() {
         <StoreProvider store={store}>
           <ConfigProvider config={config}>
             <Router>
-              <Header username="username" />
+              <Header username="username" screenName="username" />
             </Router>
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('HEADER');
   });

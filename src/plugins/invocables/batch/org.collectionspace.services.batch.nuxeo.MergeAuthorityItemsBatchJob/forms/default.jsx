@@ -1,5 +1,3 @@
-import { defineMessages } from 'react-intl';
-
 const template = (configContext) => {
   const {
     React,
@@ -10,19 +8,12 @@ const template = (configContext) => {
   } = configContext.recordComponents;
 
   return (
-    <Field name="params">
-      <Field name="targetCSID" />
+    <Field name="document">
+      <Field name="target" />
     </Field>
   );
 };
 
-export default configContext => ({
-  messages: defineMessages({
-    name: {
-      id: 'form.report.Merge Authority Items.default.name',
-      defaultMessage: 'Standard Template',
-    },
-  }),
-  sortOrder: 0,
+export default (configContext) => ({
   template: template(configContext),
 });

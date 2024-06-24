@@ -34,6 +34,10 @@ const template = (configContext) => {
             <Field name="organizers">
               <Field name="organizer" />
             </Field>
+
+            <Field name="publishToList">
+              <Field name="publishTo" />
+            </Field>
           </Col>
         </Cols>
 
@@ -138,7 +142,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.exhibition.default.name',

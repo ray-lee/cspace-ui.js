@@ -9,6 +9,7 @@ const template = (configContext) => {
     Col,
     Cols,
     Panel,
+    Row,
   } = configContext.layoutComponents;
 
   const {
@@ -27,8 +28,10 @@ const template = (configContext) => {
           </Col>
 
           <Col>
-            <Field name="groupEarliestSingleDate" />
-            <Field name="groupLatestDate" />
+            <Row>
+              <Field name="groupEarliestSingleDate" />
+              <Field name="groupLatestDate" />
+            </Row>
           </Col>
         </Cols>
 
@@ -38,7 +41,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.group.default.name',

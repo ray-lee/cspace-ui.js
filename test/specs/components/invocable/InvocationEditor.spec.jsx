@@ -1,5 +1,4 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { createRenderer } from 'react-test-renderer/shallow';
 import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
@@ -10,9 +9,10 @@ import InvocationEditor from '../../../../src/components/invocable/InvocationEdi
 import InvocationDescriptorEditor from '../../../../src/components/invocable/InvocationDescriptorEditor';
 import RecordFormContainer from '../../../../src/containers/record/RecordFormContainer';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
@@ -25,7 +25,7 @@ const store = mockStore({
   user: Immutable.Map(),
 });
 
-describe('InvocationEditor', function suite() {
+describe('InvocationEditor', () => {
   const reportName = 'testReport';
 
   const reportRecordTypeConfig = {
@@ -57,8 +57,7 @@ describe('InvocationEditor', function suite() {
         },
       },
       report: {
-        invocableName: data =>
-          data.getIn(['document', 'ns2:reports_common', 'filename']),
+        invocableName: (data) => data.getIn(['document', 'ns2:reports_common', 'filename']),
         messages: {
           record: {
             invokeUnsaved: {
@@ -111,7 +110,7 @@ describe('InvocationEditor', function suite() {
     this.container = createTestContainer(this);
   });
 
-  it('should render an InvocationDescriptorEditor with the supported modes and record types', function test() {
+  it('should render an InvocationDescriptorEditor with the supported modes and record types', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
@@ -120,7 +119,7 @@ describe('InvocationEditor', function suite() {
         invocationDescriptor={invocationDescriptor}
         metadata={reportMetadata}
         recordType="report"
-      />
+      />,
     );
 
     const result = shallowRenderer.getRenderOutput();
@@ -133,7 +132,9 @@ describe('InvocationEditor', function suite() {
     invocationDescriptorEditor.props.modes.should.deep.equal(['nocontext', 'list', 'group', 'single']);
   });
 
-  it('should filter out supported modes that are not allowed, if allowedModes is supplied', function test() {
+  it('should filter out supported modes that are not allowed, if allowedModes is supplied', () => {
+    const getAllowedModes = () => ['group', 'single'];
+
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
@@ -142,8 +143,8 @@ describe('InvocationEditor', function suite() {
         invocationDescriptor={invocationDescriptor}
         metadata={reportMetadata}
         recordType="report"
-        allowedModes={['group', 'single']}
-      />
+        allowedModes={getAllowedModes}
+      />,
     );
 
     const result = shallowRenderer.getRenderOutput();
@@ -152,7 +153,7 @@ describe('InvocationEditor', function suite() {
     invocationDescriptorEditor.props.modes.should.deep.equal(['group', 'single']);
   });
 
-  it('should support an invocable with a single (non-list) forDocTypes', function test() {
+  it('should support an invocable with a single (non-list) forDocTypes', () => {
     const singleForDocTypeReportMetadata = Immutable.fromJS({
       document: {
         'ns2:reports_common': {
@@ -172,7 +173,7 @@ describe('InvocationEditor', function suite() {
         invocationDescriptor={invocationDescriptor}
         metadata={singleForDocTypeReportMetadata}
         recordType="report"
-      />
+      />,
     );
 
     const result = shallowRenderer.getRenderOutput();
@@ -181,7 +182,7 @@ describe('InvocationEditor', function suite() {
     invocationDescriptorEditor.props.recordTypes.should.deep.equal(['collectionobject']);
   });
 
-  it('should render a RecordFormContainer if the invocable has a record type config', function test() {
+  it('should render a RecordFormContainer if the invocable has a record type config', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
@@ -191,7 +192,7 @@ describe('InvocationEditor', function suite() {
         metadata={reportMetadata}
         paramData={paramData}
         recordType="report"
-      />
+      />,
     );
 
     const result = shallowRenderer.getRenderOutput();
@@ -226,7 +227,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     createNewRecordCalled.should.equal(true);
   });
@@ -251,7 +253,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const newReportMetadata = Immutable.fromJS({
       document: {
@@ -274,7 +277,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     createNewRecordCalled.should.equal(true);
   });
@@ -287,7 +291,8 @@ describe('InvocationEditor', function suite() {
             createNewRecord={() => undefined}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.textContent.should.contain('Loading');
   });
@@ -307,7 +312,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-FormStatusMessage--warning').textContent
       .should.equal('Record modified!');
@@ -330,7 +336,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-FormStatusMessage--error').textContent
       .should.equal('Single target missing!');
@@ -357,7 +364,8 @@ describe('InvocationEditor', function suite() {
             />
           </ConfigProvider>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-FormStatusMessage--error').textContent
       .should.equal('Single target missing!');

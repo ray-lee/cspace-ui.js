@@ -17,6 +17,16 @@
   font-size: 12px;
 }
 
+.closed {
+  composes: common;
+  width: 0%;
+  flex: none !important;
+}
+
+.audit {
+  composes: common;
+}
+
 .object {
   composes: common;
 }
@@ -33,6 +43,7 @@
   composes: common;
 }
 
+.audit :global(.cspace-layout-Panel--common),
 .object :global(.cspace-layout-Panel--common),
 .procedure :global(.cspace-layout-Panel--common),
 .utility :global(.cspace-layout-Panel--common) {

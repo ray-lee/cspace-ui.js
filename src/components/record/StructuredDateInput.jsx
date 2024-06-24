@@ -74,11 +74,15 @@ const messages = defineMessages({
 });
 
 const propTypes = {
+  // eslint-disable-next-line react/forbid-foreign-prop-types
   ...BaseStructuredDateInput.propTypes,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    structDateVocabNames: PropTypes.arrayOf(PropTypes.string),
+  }),
   intl: intlShape,
   perms: PropTypes.instanceOf(Immutable.Map),
   readTerms: PropTypes.func,
+  structDateVocabNames: PropTypes.arrayOf(PropTypes.string),
 };
 
 class StructuredDateInput extends Component {
@@ -94,10 +98,13 @@ class StructuredDateInput extends Component {
     const {
       config,
       readTerms,
+      structDateVocabNames: propStructDateVocabNames,
     } = this.props;
 
     if (readTerms) {
-      config.structDateVocabNames.forEach((vocabName) => {
+      const structDateVocabNames = propStructDateVocabNames || config.structDateVocabNames;
+
+      structDateVocabNames.forEach((vocabName) => {
         readTerms(vocabName);
       });
     }
@@ -108,6 +115,7 @@ class StructuredDateInput extends Component {
       config,
       perms,
       readTerms,
+      structDateVocabNames: propStructDateVocabNames,
     } = this.props;
 
     const {
@@ -115,7 +123,9 @@ class StructuredDateInput extends Component {
     } = prevProps;
 
     if (readTerms && perms !== prevPerms) {
-      config.structDateVocabNames.forEach((vocabName) => {
+      const structDateVocabNames = propStructDateVocabNames || config.structDateVocabNames;
+
+      structDateVocabNames.forEach((vocabName) => {
         readTerms(vocabName);
       });
     }
@@ -147,12 +157,11 @@ class StructuredDateInput extends Component {
 
   render() {
     const {
-      /* eslint-disable no-unused-vars */
       config,
       intl,
       perms,
       readTerms,
-      /* eslint-enable no-unused-vars */
+      structDateVocabNames,
       ...remainingProps
     } = this.props;
 

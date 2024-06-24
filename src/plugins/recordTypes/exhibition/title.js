@@ -1,8 +1,7 @@
-export default configContext => (data) => {
+export default (configContext) => (data) => {
   const {
     getPart,
   } = configContext.recordDataHelpers;
-
 
   if (!data) {
     return '';
@@ -17,5 +16,5 @@ export default configContext => (data) => {
   const exhibitionNumber = common.get('exhibitionNumber');
   const title = common.get('title');
 
-  return [exhibitionNumber, title].filter(part => !!part).join(' – ');
+  return [exhibitionNumber, title].filter((part) => !!part).join(' – ');
 };

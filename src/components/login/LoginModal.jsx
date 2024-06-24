@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import Immutable from 'immutable';
 import { defineMessages, FormattedMessage } from 'react-intl';
 import { Modal } from 'cspace-layout';
-import LoginFormContainer from '../../containers/login/LoginFormContainer';
-
-const formId = 'loginModal.loginForm';
+import LoginForm from './LoginForm';
 
 const renderButtonBar = () => null;
 
@@ -17,21 +16,37 @@ const messages = defineMessages({
 });
 
 const propTypes = {
+  isLoginPending: PropTypes.bool,
+  isLoginSuccess: PropTypes.bool,
+  isLoginWindowOpen: PropTypes.bool,
+  isLoginWindowOpenFailed: PropTypes.bool,
   isOpen: PropTypes.bool,
+  loginError: PropTypes.instanceOf(Immutable.Map),
   onCloseButtonClick: PropTypes.func,
-  onSuccess: PropTypes.func,
+  openLoginWindow: PropTypes.func,
 };
 
 export default function LoginModal(props) {
   const {
+    isLoginPending,
+    isLoginSuccess,
+    isLoginWindowOpen,
+    isLoginWindowOpenFailed,
     isOpen,
+    loginError,
     onCloseButtonClick,
-    onSuccess,
+    openLoginWindow,
   } = props;
 
   if (!isOpen) {
     return null;
   }
+
+  useEffect(() => {
+    if (isLoginSuccess && onCloseButtonClick) {
+      onCloseButtonClick();
+    }
+  }, [isLoginSuccess]);
 
   return (
     <Modal
@@ -42,16 +57,18 @@ export default function LoginModal(props) {
       renderButtonBar={renderButtonBar}
       onCloseButtonClick={onCloseButtonClick}
     >
-      <LoginFormContainer
-        formId={formId}
-        isExpired
-        showForgotLink={false}
-        showHeader={false}
-        onSuccess={onSuccess}
+      <LoginForm
+        isLoginExpired
+        isLoginPending={isLoginPending}
+        isLoginSuccess={isLoginSuccess}
+        isLoginWindowOpen={isLoginWindowOpen}
+        isLoginWindowOpenFailed={isLoginWindowOpenFailed}
+        loginError={loginError}
+        openLoginWindow={openLoginWindow}
+        showPrompt
       />
     </Modal>
   );
 }
 
-LoginModal.modalName = 'LoginModal';
 LoginModal.propTypes = propTypes;

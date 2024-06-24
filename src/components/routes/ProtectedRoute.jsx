@@ -5,14 +5,17 @@ import Immutable from 'immutable';
 import ProtectedPage from '../pages/ProtectedPage';
 
 const propTypes = {
-  component: PropTypes.func,
+  component: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.object,
+  ]),
   decorated: PropTypes.bool,
   openModalName: PropTypes.string,
   perms: PropTypes.instanceOf(Immutable.Map),
   screenName: PropTypes.string,
   username: PropTypes.string,
+  userPrefsLoaded: PropTypes.bool,
   closeModal: PropTypes.func,
-  resetLogin: PropTypes.func,
 };
 
 export default function ProtectedRoute(props) {
@@ -23,24 +26,24 @@ export default function ProtectedRoute(props) {
     perms,
     screenName,
     username,
+    userPrefsLoaded,
     closeModal,
-    resetLogin,
     ...remainingProps
   } = props;
 
   return (
     <Route
       {...remainingProps}
-      render={routeProps => (
+      render={(routeProps) => (
         username ? (
           <ProtectedPage
             openModalName={openModalName}
             perms={perms}
             screenName={screenName}
             username={username}
+            userPrefsLoaded={userPrefsLoaded}
             decorated={decorated}
             closeModal={closeModal}
-            resetLogin={resetLogin}
             {...routeProps}
           >
             <Component {...routeProps} />
@@ -48,9 +51,11 @@ export default function ProtectedRoute(props) {
         ) : (
           <Redirect
             to={{
-              pathname: '/login',
+              pathname: '/authorize',
               state: {
-                continuation: routeProps.location,
+                continuation: routeProps.location
+                  ? `${routeProps.location.pathname}${routeProps.location.search}${routeProps.location.hash}`
+                  : undefined,
               },
             }}
           />

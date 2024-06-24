@@ -24,6 +24,10 @@ export default (configContext) => {
     extensions,
   } = configContext.config;
 
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
+
   return {
     document: {
       [config]: {
@@ -45,6 +49,10 @@ export default (configContext) => {
           [config]: {
             cloneable: false,
             messages: defineMessages({
+              inUse: {
+                id: 'field.valuationcontrols_common.valuationcontrolRefNumber.inUse',
+                defaultMessage: 'The reference number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.valuationcontrols_common.valuationcontrolRefNumber.name',
                 defaultMessage: 'Reference number',
@@ -54,6 +62,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'valuationcontrols_common:valuationcontrolRefNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -108,13 +121,13 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_FLOAT,
                 messages: defineMessages({
-                  name: {
-                    id: 'field.valuationcontrols_common.valueAmount.name',
-                    defaultMessage: 'Value',
-                  },
                   fullName: {
                     id: 'field.valuationcontrols_common.valueAmount.fullName',
                     defaultMessage: 'Amount value',
+                  },
+                  name: {
+                    id: 'field.valuationcontrols_common.valueAmount.name',
+                    defaultMessage: 'Value',
                   },
                 }),
                 view: {

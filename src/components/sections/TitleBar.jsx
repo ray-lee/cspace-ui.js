@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Helmet from 'react-helmet';
+import { Helmet } from 'react-helmet';
 import classNames from 'classnames';
 import styles from '../../../styles/cspace-ui/TitleBar.css';
 import subtitleStyles from '../../../styles/cspace-ui/Subtitle.css';
@@ -70,7 +70,11 @@ export default class TitleBar extends Component {
     // If the height of the title bar content changes while the title bar is docked, fire onDocked
     // in order to notify listeners of the new height.
 
-    if (node && this.state.docked) {
+    const {
+      docked,
+    } = this.state;
+
+    if (node && docked) {
       const contentNode = node.firstElementChild;
 
       if (contentNode.offsetHeight !== this.dockedHeight) {
@@ -91,20 +95,6 @@ export default class TitleBar extends Component {
     window.removeEventListener('scroll', this.handleScroll, false);
   }
 
-  getDocumentTitle() {
-    const titleNode = this.domNode.querySelector('h1');
-    const titleText = titleNode ? titleNode.textContent : null;
-
-    const asideNode = this.domNode.querySelector('aside');
-    const asideText = asideNode ? asideNode.textContent : null;
-
-    return [titleText, asideText].filter(part => !!part).join(' | ');
-  }
-
-  setDomNode(ref) {
-    this.domNode = ref;
-  }
-
   handleScroll() {
     const {
       onDocked,
@@ -114,7 +104,11 @@ export default class TitleBar extends Component {
 
     if (!node) return;
 
-    if (this.state.docked) {
+    const {
+      docked,
+    } = this.state;
+
+    if (docked) {
       if (window.scrollY < node.offsetTop) {
         this.setState({
           docked: false,
@@ -131,6 +125,20 @@ export default class TitleBar extends Component {
         onDocked(this.dockedHeight);
       }
     }
+  }
+
+  getDocumentTitle() {
+    const titleNode = this.domNode.querySelector('h1');
+    const titleText = titleNode ? titleNode.textContent : null;
+
+    const asideNode = this.domNode.querySelector('aside');
+    const asideText = asideNode ? asideNode.textContent : null;
+
+    return [titleText, asideText].filter((part) => !!part).join(' | ');
+  }
+
+  setDomNode(ref) {
+    this.domNode = ref;
   }
 
   renderDocumentTitle() {

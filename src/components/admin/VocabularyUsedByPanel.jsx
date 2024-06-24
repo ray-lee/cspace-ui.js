@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage, intlShape } from 'react-intl';
 import Immutable from 'immutable';
 import { findVocabularyUses } from '../../helpers/configHelpers';
+import { formatExtensionFieldName } from '../../helpers/formatHelpers';
 import { ConnectedPanel as Panel } from '../../containers/layout/PanelContainer';
 import styles from '../../../styles/cspace-ui/VocabularyUsedByPanel.css';
 
@@ -16,21 +17,6 @@ const messages = defineMessages({
     defaultMessage: 'No uses found.',
   },
 });
-
-const formatFieldName = (fieldConfig, intl) => {
-  const formattedParentName = fieldConfig.extensionParentConfig
-    ? formatFieldName(fieldConfig.extensionParentConfig, intl)
-    : null;
-
-  const {
-    fullName,
-    name,
-  } = fieldConfig.messages;
-
-  const formattedName = intl.formatMessage(fullName || name);
-
-  return [formattedParentName, formattedName].filter(part => !!part).join(' - ');
-};
 
 const renderUses = (uses, config, intl) => {
   const usedByRecordTypes = uses ? Object.keys(uses) : null;
@@ -49,22 +35,28 @@ const renderUses = (uses, config, intl) => {
     const formattedRecordName = intl.formatMessage(recordTypes[recordType].messages.record.name);
 
     const formattedFieldNames = uses[recordType]
-      .map(fieldConfig => formatFieldName(fieldConfig, intl))
+      .map((fieldConfig) => formatExtensionFieldName(intl, fieldConfig))
       .sort();
 
     formattedUses[formattedRecordName] = formattedFieldNames;
   });
 
-  const items = Object.keys(formattedUses).sort().map((formattedRecordName, index) =>
+  const items = Object.keys(formattedUses).sort().map((formattedRecordName, index) => (
+    // FIXME: Use a different key
+    // eslint-disable-next-line react/no-array-index-key
     <li key={index}>
       <div>{formattedRecordName}</div>
       <ul>
-        {formattedUses[formattedRecordName].map((formattedFieldName, fieldIndex) =>
-          <li key={fieldIndex}>{formattedFieldName}</li>
-        )}
+        {
+          formattedUses[formattedRecordName].map((formattedFieldName, fieldIndex) => (
+            // FIXME: Use a different key
+            // eslint-disable-next-line react/no-array-index-key
+            <li key={fieldIndex}>{formattedFieldName}</li>
+          ))
+        }
       </ul>
     </li>
-  );
+  ));
 
   return (
     <ul>
@@ -74,7 +66,9 @@ const renderUses = (uses, config, intl) => {
 };
 
 const propTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   data: PropTypes.instanceOf(Immutable.Map),
 };
 

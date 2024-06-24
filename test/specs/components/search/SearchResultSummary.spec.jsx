@@ -1,5 +1,4 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import configureMockStore from 'redux-mock-store';
 import { MemoryRouter as Router } from 'react-router';
@@ -7,6 +6,7 @@ import { Provider as StoreProvider } from 'react-redux';
 import Immutable from 'immutable';
 import { ERR_API } from '../../../../src/constants/errorCodes';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import SearchResultSummary from '../../../../src/components/search/SearchResultSummary';
 
 chai.should();
@@ -14,13 +14,13 @@ chai.should();
 const mockStore = configureMockStore();
 
 const store = mockStore({
-  optionList: {
+  optionList: Immutable.Map({
     searchResultPagePageSizes: [
       { value: '10' },
       { value: '20' },
       { value: '40' },
     ],
-  },
+  }),
 });
 
 const searchDescriptor = Immutable.fromJS({
@@ -30,7 +30,7 @@ const searchDescriptor = Immutable.fromJS({
   },
 });
 
-describe('SearchResultSummary', function suite() {
+describe('SearchResultSummary', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -43,7 +43,8 @@ describe('SearchResultSummary', function suite() {
             <SearchResultSummary searchDescriptor={searchDescriptor} />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -68,7 +69,8 @@ describe('SearchResultSummary', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-SearchResultSummary--error > span').textContent.should
       .contain('not allowed to perform this search');

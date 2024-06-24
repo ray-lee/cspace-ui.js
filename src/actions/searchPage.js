@@ -20,15 +20,22 @@ export const clearSearchPage = () => ({
   type: CLEAR_SEARCH_PAGE,
 });
 
-export const setSearchPageKeyword = value => ({
+export const setSearchPageKeyword = (value) => ({
   type: SET_SEARCH_PAGE_KEYWORD,
   payload: value,
 });
 
-export const setSearchPageAdvanced = condition => ({
-  type: SET_SEARCH_PAGE_ADVANCED,
-  payload: condition,
-});
+export const setSearchPageAdvanced = (condition) => (dispatch, getState) => {
+  const recordType = getSearchPageRecordType(getState());
+
+  dispatch({
+    type: SET_SEARCH_PAGE_ADVANCED,
+    payload: condition,
+    meta: {
+      recordType,
+    },
+  });
+};
 
 export const initiateSearch = (config, push) => (dispatch, getState) => {
   const state = getState();
@@ -60,5 +67,19 @@ export const initiateSearch = (config, push) => (dispatch, getState) => {
   push({
     pathname,
     search: `?${queryString}`,
+    state: {
+      originSearchPage: {
+        // Keep the search descriptor a plain object, not an Immutable, so that it can be stored in
+        // location state.
+        searchDescriptor: {
+          recordType,
+          vocabulary,
+          searchQuery: {
+            as: advancedSearchCondition && advancedSearchCondition.toJS(),
+            kw: keyword,
+          },
+        },
+      },
+    },
   });
 };

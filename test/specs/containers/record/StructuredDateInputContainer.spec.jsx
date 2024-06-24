@@ -3,24 +3,25 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import StructuredDateInput from '../../../../src/components/record/StructuredDateInput';
 import { ConnectedStructuredDateInput } from '../../../../src/containers/record/StructuredDateInputContainer';
 
 import {
   READ_VOCABULARY_ITEMS_STARTED,
-} from '../../../../src/actions/vocabulary';
+} from '../../../../src/constants/actionCodes';
 
 chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('StructuredDateInputContainer', function suite() {
+describe('StructuredDateInputContainer', () => {
   const config = {
     structDateOptionListNames: ['dateQualifiers'],
     structDateVocabNames: ['dateera', 'datecertainty', 'datequalifier'],
   };
 
-  it('should set props on StructuredDateInput', function test() {
+  it('should set props on StructuredDateInput', () => {
     const dateQualifiers = [
       { value: 'qual1', label: 'Qual 1' },
     ];
@@ -43,35 +44,83 @@ describe('StructuredDateInputContainer', function suite() {
 
     const store = mockStore({
       vocabulary,
-      optionList: optionLists,
+      optionList: Immutable.Map(optionLists),
       user: Immutable.Map({
         perms,
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <ConnectedStructuredDateInput config={config} />, context);
+      <ConnectedStructuredDateInput
+        store={store}
+        config={config}
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, StructuredDateInput);
 
-    result.type.should.equal(StructuredDateInput);
-    result.props.optionLists.should.deep.equal(optionLists);
-    result.props.perms.should.equal(perms);
+    input.props.optionLists.should.deep.equal(optionLists);
+    input.props.perms.should.equal(perms);
 
-    result.props.terms.should.deep.equal({
+    input.props.terms.should.deep.equal({
       dateera: [],
       datecertainty: [],
       datequalifier: [],
     });
   });
 
-  it('should connect readTerms to readVocabularyItems action creator', function test() {
+  it('should override vocab names in config with vocab names in props if present', () => {
+    const dateQualifiers = [
+      { value: 'qual1', label: 'Qual 1' },
+    ];
+
+    const optionLists = {
+      dateQualifiers,
+    };
+
+    const vocabulary = {
+      dateera: { items: [] },
+      datecertainty: { items: [] },
+      datequalifier: { items: [] },
+      foobar: { items: [] },
+    };
+
+    const perms = Immutable.fromJS({
+      collectionobject: {
+        data: 'CRUDL',
+      },
+    });
+
+    const store = mockStore({
+      vocabulary,
+      optionList: Immutable.Map(optionLists),
+      user: Immutable.Map({
+        perms,
+      }),
+    });
+
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(
+      <ConnectedStructuredDateInput
+        config={config}
+        store={store}
+        structDateVocabNames={['foobar']}
+      />,
+    );
+
+    const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, StructuredDateInput);
+
+    input.props.terms.should.deep.equal({
+      foobar: [],
+    });
+  });
+
+  it('should connect readTerms to readVocabularyItems action creator', () => {
     const dateQualifiers = [
       { value: 'qual1', label: 'Qual 1' },
     ];
@@ -87,30 +136,31 @@ describe('StructuredDateInputContainer', function suite() {
     };
 
     const store = mockStore({
-      optionList: optionLists,
+      optionList: Immutable.Map(optionLists),
       user: Immutable.Map(),
       vocabulary: {
         [vocabularyName]: vocabulary,
       },
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <ConnectedStructuredDateInput config={config} />, context);
+      <ConnectedStructuredDateInput
+        store={store}
+        config={config}
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, StructuredDateInput);
 
     // The call to readTerms will fail because we haven't stubbed out everything it needs,
     // but there's enough to verify that the readVocabularyItems action creator gets called, and
     // dispatches READ_VOCABULARY_ITEMS_STARTED.
 
     try {
-      result.props.readTerms(vocabularyName);
+      input.props.readTerms(vocabularyName);
     } catch (error) {
       const action = store.getActions()[0];
 

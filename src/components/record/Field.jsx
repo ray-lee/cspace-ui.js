@@ -14,6 +14,7 @@ import {
   configKey,
   dataPathToFieldDescriptorPath,
   isFieldRequired,
+  isFieldViewReadOnly,
 } from '../../helpers/configHelpers';
 
 import {
@@ -28,7 +29,7 @@ const {
 
 const { Label } = inputComponents;
 
-const renderLabel = (fieldDescriptor, providedLabelMessage, requiredContext, props) => {
+const renderLabel = (fieldDescriptor, providedLabelMessage, computeContext, props) => {
   const fieldConfig = fieldDescriptor[configKey];
   const message = providedLabelMessage || get(fieldConfig, ['messages', 'name']);
 
@@ -39,11 +40,13 @@ const renderLabel = (fieldDescriptor, providedLabelMessage, requiredContext, pro
   const configuredProps = {};
 
   if ('required' in fieldConfig) {
-    configuredProps.required = isFieldRequired(requiredContext);
+    configuredProps.required = isFieldRequired(computeContext);
   }
 
-  if ('readOnly' in fieldConfig) {
-    configuredProps.readOnly = fieldConfig.readOnly;
+  const viewReadOnly = isFieldViewReadOnly(computeContext);
+
+  if (typeof viewReadOnly !== 'undefined') {
+    configuredProps.readOnly = viewReadOnly;
   }
 
   return (
@@ -54,7 +57,10 @@ const renderLabel = (fieldDescriptor, providedLabelMessage, requiredContext, pro
 };
 
 const propTypes = {
-  labelMessage: PropTypes.object,
+  labelMessage: PropTypes.shape({
+    id: PropTypes.string,
+    defaultMessage: PropTypes.string,
+  }),
   viewType: PropTypes.string,
 
   // Code in this component doesn't use these props, but the propTypes need to exist, because
@@ -65,8 +71,9 @@ const propTypes = {
   /* eslint-disable react/no-unused-prop-types */
   name: PropTypes.string,
   // The value prop will be validated by the base component, so allow anything here.
+  // eslint-disable-next-line react/forbid-prop-types
   value: PropTypes.any,
-  parentPath: PropTypes.array,
+  parentPath: PropTypes.arrayOf(PropTypes.string),
   subpath: pathPropType,
   tabular: PropTypes.bool,
   label: PropTypes.node,
@@ -80,12 +87,16 @@ const propTypes = {
 };
 
 const contextTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   formName: PropTypes.string,
   intl: intlShape,
   recordData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
-  recordTypeConfig: PropTypes.object,
+  recordTypeConfig: PropTypes.shape({
+    fields: PropTypes.object,
+  }),
   roleNames: PropTypes.instanceOf(Immutable.List),
   subrecordData: PropTypes.instanceOf(Immutable.Map),
 };
@@ -99,6 +110,7 @@ export default function Field(props, context) {
     recordType,
     roleNames,
     subrecordData,
+    recordTypeConfig: contextRecordTypeConfig,
   } = context;
 
   const {
@@ -106,7 +118,7 @@ export default function Field(props, context) {
     viewType,
   } = props;
 
-  const recordTypeConfig = context.recordTypeConfig || get(config, ['recordTypes', recordType]);
+  const recordTypeConfig = contextRecordTypeConfig || get(config, ['recordTypes', recordType]);
   const fullPath = getPath(props);
 
   // Filter out numeric parts of the path, since they indicate repeating instances that won't be
@@ -147,15 +159,31 @@ export default function Field(props, context) {
 
   const configuredProps = viewConfig.props || {};
   const providedProps = {};
+
+  // FIXME: Do this without looking at the base component propTypes, so that propTypes can be
+  // removed in production builds.
+  // eslint-disable-next-line react/forbid-foreign-prop-types
   const basePropTypes = BaseComponent.propTypes;
 
   Object.keys(props).forEach((propName) => {
     if (propName in basePropTypes) {
+      // eslint-disable-next-line react/destructuring-assignment
       providedProps[propName] = props[propName];
     }
   });
 
-  const effectiveReadOnly = providedProps.readOnly || configuredProps.readOnly;
+  const computeContext = {
+    isSearch,
+    path,
+    recordData,
+    subrecordData,
+    fieldDescriptor: field,
+    recordType,
+    form: formName,
+    roleNames,
+  };
+
+  const effectiveReadOnly = providedProps.readOnly || isFieldViewReadOnly(computeContext);
   const computedProps = {};
 
   if (fieldConfig.repeating && viewType !== 'search') {
@@ -163,17 +191,7 @@ export default function Field(props, context) {
   }
 
   if ('label' in basePropTypes) {
-    const requiredContext = {
-      path,
-      recordData,
-      subrecordData,
-      fieldDescriptor: field,
-      recordType,
-      form: formName,
-      roleNames,
-    };
-
-    computedProps.label = renderLabel(field, labelMessage, requiredContext, {
+    computedProps.label = renderLabel(field, labelMessage, computeContext, {
       readOnly: effectiveReadOnly,
     });
   }
@@ -182,7 +200,7 @@ export default function Field(props, context) {
     const valueMessage = get(fieldConfig, ['messages', 'value']);
 
     if (valueMessage) {
-      computedProps.formatValue = value => intl.formatMessage(valueMessage, { value });
+      computedProps.formatValue = (value) => intl.formatMessage(valueMessage, { value });
     }
   }
 
@@ -192,7 +210,7 @@ export default function Field(props, context) {
       const childLabelMessage = childInput.props.labelMessage;
       const childField = field[childName];
 
-      const requiredContext = {
+      const childComputeContext = {
         path: [...path, childName],
         recordData,
         subrecordData,
@@ -202,7 +220,7 @@ export default function Field(props, context) {
         roleNames,
       };
 
-      return (childField && renderLabel(childField, childLabelMessage, requiredContext, {
+      return (childField && renderLabel(childField, childLabelMessage, childComputeContext, {
         key: childName,
         readOnly: effectiveReadOnly,
       }));
@@ -213,9 +231,9 @@ export default function Field(props, context) {
     computedProps.viewType = viewType;
   }
 
-  const effectiveProps = Object.assign({}, computedProps, configuredProps, providedProps, {
-    readOnly: effectiveReadOnly,
-  });
+  const effectiveProps = {
+    ...computedProps, ...configuredProps, ...providedProps, readOnly: effectiveReadOnly,
+  };
 
   return (
     <BaseComponent {...effectiveProps} />

@@ -1,8 +1,8 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
+import { setupWorker, rest } from 'msw';
 
 import {
   configureCSpace,
@@ -15,49 +15,64 @@ import {
 chai.use(chaiImmutable);
 chai.should();
 
-describe('structured date action creator', function suite() {
-  describe('parseDisplayDate', function actionSuite() {
+describe('structured date action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('parseDisplayDate', () => {
     const mockStore = configureMockStore([thunk]);
     const store = mockStore();
 
-    const parseStructuredDateUrl = /^\/cspace-services\/structureddates\?dateToParse=.*/;
+    const parseStructuredDateUrl = '/cspace-services/structureddates';
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should resolve to an object containing a parsed structured date value', function test() {
-      moxios.stubRequest(parseStructuredDateUrl, {
-        status: 200,
-        response: {
-          'ns2:structureddate_common': {
-            displayDate: '2000',
-            earliestSingleDate: {
-              year: '2000',
-              month: '1',
-              day: '1',
-              era: 'urn:cspace:core.collectionspace.org:vocabularies:name(dateera):item:name(ce)\'CE\'',
-            },
-            latestDate: {
-              year: '2000',
-              month: '12',
-              day: '31',
-              era: 'urn:cspace:core.collectionspace.org:vocabularies:name(dateera):item:name(ce)\'CE\'',
-            },
-            scalarValuesComputed: 'false',
-          },
-        },
-      });
+    it('should resolve to an object containing a parsed structured date value', () => {
+      const dateToParse = '2000';
+
+      worker.use(
+        rest.get(parseStructuredDateUrl, (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('dateToParse') === dateToParse
+          ) {
+            return res(ctx.json({
+              'ns2:structureddate_common': {
+                displayDate: '2000',
+                earliestSingleDate: {
+                  year: '2000',
+                  month: '1',
+                  day: '1',
+                  era: 'urn:cspace:core.collectionspace.org:vocabularies:name(dateera):item:name(ce)\'CE\'',
+                },
+                latestDate: {
+                  year: '2000',
+                  month: '12',
+                  day: '31',
+                  era: 'urn:cspace:core.collectionspace.org:vocabularies:name(dateera):item:name(ce)\'CE\'',
+                },
+                scalarValuesComputed: 'false',
+              },
+            }));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(parseDisplayDate('2000'))
         .then((result) => {
@@ -84,11 +99,10 @@ describe('structured date action creator', function suite() {
         });
     });
 
-    it('should resolve to an object with isError set to true when the display date is not parseable', function test() {
-      moxios.stubRequest(parseStructuredDateUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should resolve to an object with isError set to true when the display date is not parseable', () => {
+      worker.use(
+        rest.get(parseStructuredDateUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(parseDisplayDate('dsailjdfi'))
         .then((result) => {
@@ -96,8 +110,8 @@ describe('structured date action creator', function suite() {
         });
     });
 
-    it('should resolve to a structured date with all fields set to null when the display date is blank', function test() {
-      return store.dispatch(parseDisplayDate(''))
+    it('should resolve to a structured date with all fields set to null when the display date is blank', () => (
+      store.dispatch(parseDisplayDate(''))
         .then((result) => {
           result.should.have.property('value').that.equals(Immutable.Map({
             dateDisplayDate: null,
@@ -119,7 +133,7 @@ describe('structured date action creator', function suite() {
             dateLatestQualifierValue: null,
             scalarValuesComputed: null,
           }));
-        });
-    });
+        })
+    ));
   });
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
+import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
 import { Panel } from 'cspace-layout';
 
@@ -12,13 +13,13 @@ import {
   COLLAPSE_PANEL,
 } from '../../../../src/constants/actionCodes';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
 const mockStore = configureMockStore([]);
 
-describe('PanelContainer', function suite() {
+describe('PanelContainer', () => {
   const recordType = 'object';
   const panelName = 'desc';
 
@@ -41,7 +42,7 @@ describe('PanelContainer', function suite() {
     },
   };
 
-  it('should set props on Panel', function test() {
+  it('should set props on Panel', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {
@@ -54,24 +55,26 @@ describe('PanelContainer', function suite() {
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedPanel
+        store={store}
         config={config}
         recordType={recordType}
         name={panelName}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, Panel);
 
-    result.type.should.equal(Panel);
-    result.props.should.have.property('collapsed', true);
-    result.props.should.have.property('header').that.is.an('object');
-    result.props.should.have.property('onToggleCollapsed').that.is.a('function');
+    panel.type.should.equal(Panel);
+    panel.props.should.have.property('collapsed', true);
+    panel.props.should.have.property('header').that.is.an('object');
+    panel.props.should.have.property('onToggleCollapsed').that.is.a('function');
 
-    result.props.onToggleCollapsed(panelName, false);
+    panel.props.onToggleCollapsed(panelName, false);
 
     const action = store.getActions()[0];
 
@@ -81,7 +84,7 @@ describe('PanelContainer', function suite() {
     action.should.have.property('payload', false);
   });
 
-  it('should set collapsed from own props if state is not present in the store', function test() {
+  it('should set collapsed from own props if state is not present in the store', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {
@@ -92,91 +95,99 @@ describe('PanelContainer', function suite() {
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedPanel
+        store={store}
         config={config}
         recordType={recordType}
         name={panelName}
         collapsed
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, Panel);
 
-    result.props.should.have.property('collapsed', true);
+    panel.props.should.have.property('collapsed', true);
   });
 
-  it('should set header content using the message descriptor keyed by panel name', function test() {
+  it('should set header content using the message descriptor keyed by panel name', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {},
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedPanel
+        store={store}
         config={config}
         recordType={recordType}
         name={panelName}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
-    const header = result.props.header;
+    const panel = findWithType(result, Panel);
+    const { header } = panel.props;
     const formattedMessage = React.Children.only(header.props.children);
 
     formattedMessage.props.defaultMessage.should.equal('Description Information');
   });
 
-  it('should set header content using the message descriptor keyed by msgkey prop if supplied', function test() {
+  it('should set header content using the message descriptor keyed by msgkey prop if supplied', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {},
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedPanel
+        store={store}
         config={config}
         recordType={recordType}
         name={panelName}
         msgkey="foo"
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
-    const header = result.props.header;
+    const panel = findWithType(result, Panel);
+    const { header } = panel.props;
     const formattedMessage = React.Children.only(header.props.children);
 
     formattedMessage.props.defaultMessage.should.equal('Foo message');
   });
 
-  it('should render no header content if no message is found', function test() {
+  it('should render no header content if no message is found', () => {
     const store = mockStore({
       prefs: Immutable.fromJS({
         panels: {},
       }),
     });
 
-    const context = { store };
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedPanel
+        store={store}
         config={config}
         recordType={recordType}
         name={panelName}
         msgkey="bar"
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const panel = findWithType(result, Panel);
 
-    expect(result.props.header).to.equal(null);
+    expect(panel.props.header).to.equal(null);
   });
 });

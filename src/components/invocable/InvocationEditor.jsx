@@ -30,8 +30,10 @@ const renderLoading = () => (
 );
 
 const propTypes = {
-  allowedModes: PropTypes.arrayOf(PropTypes.string),
-  config: PropTypes.object,
+  allowedModes: PropTypes.func,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   invocationDescriptor: PropTypes.instanceOf(Immutable.Map),
   modeReadOnly: PropTypes.bool,
   invocationTargetReadOnly: PropTypes.bool,
@@ -49,7 +51,15 @@ export default class InvocationEditor extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.metadata !== this.props.metadata) {
+    const {
+      metadata: prevMetadata,
+    } = prevProps;
+
+    const {
+      metadata,
+    } = this.props;
+
+    if (prevMetadata !== metadata) {
       this.init();
     }
   }
@@ -79,7 +89,10 @@ export default class InvocationEditor extends Component {
     }
 
     if (allowedModes) {
-      modes = modes.filter(mode => allowedModes.includes(mode));
+      const supportedRecordTypes = this.getSupportedRecordTypes();
+      const reportAllowedModes = allowedModes(supportedRecordTypes);
+
+      modes = modes.filter((mode) => reportAllowedModes.includes(mode));
     }
 
     return modes;
@@ -101,7 +114,7 @@ export default class InvocationEditor extends Component {
       }
 
       const recordTypes = forDocTypes.map(
-        forDocType => getRecordTypeNameByServiceObjectName(config, forDocType)
+        (forDocType) => getRecordTypeNameByServiceObjectName(config, forDocType),
       ).toJS();
 
       return recordTypes;

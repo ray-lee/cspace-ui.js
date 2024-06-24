@@ -1,12 +1,12 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { Simulate } from 'react-dom/test-utils';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import ErrorBadge from '../../../../src/components/record/ErrorBadge';
 
 chai.should();
 
-describe('ErrorBadge', function suite() {
+describe('ErrorBadge', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -27,7 +27,8 @@ describe('ErrorBadge', function suite() {
     render(
       <div style={{ position: 'relative', width: '100px' }}>
         <ErrorBadge onClick={handleClick} />
-      </div>, this.container);
+      </div>, this.container,
+    );
 
     const button = this.container.querySelector('button');
 

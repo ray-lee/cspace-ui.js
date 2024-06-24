@@ -1,12 +1,12 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import WorkflowStateInput from '../../../../src/components/record/WorkflowStateInput';
 
 chai.should();
 
-describe('WorkflowStateInput', function suite() {
+describe('WorkflowStateInput', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -15,7 +15,8 @@ describe('WorkflowStateInput', function suite() {
     render(
       <IntlProvider locale="en">
         <WorkflowStateInput value="locked" />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.tagName.should.equal('DIV');
   });
@@ -24,7 +25,8 @@ describe('WorkflowStateInput', function suite() {
     render(
       <IntlProvider locale="en">
         <WorkflowStateInput value="locked" />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-WorkflowStateIcon--common').should.not.equal(null);
   });

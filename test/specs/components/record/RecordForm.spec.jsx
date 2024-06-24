@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from 'react-dom';
+import { Simulate } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
@@ -7,11 +7,13 @@ import Immutable from 'immutable';
 import { components as inputComponents } from 'cspace-input';
 
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
+import Field from '../../../../src/components/record/Field';
 import Panel from '../../../../src/containers/layout/PanelContainer';
 import RecordForm from '../../../../src/components/record/RecordForm';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
@@ -31,7 +33,57 @@ const config = {
   recordTypes: {
     collectionobject: {
       fields: {
-        document: {},
+        document: {
+          barList: {
+            '[config]': {
+              view: {
+                type: CompoundInput,
+              },
+            },
+            bar: {
+              '[config]': {
+                repeating: true,
+                view: {
+                  type: TextInput,
+                },
+              },
+            },
+          },
+          bazGroupList: {
+            '[config]': {
+              view: {
+                type: CompoundInput,
+              },
+            },
+            bazGroup: {
+              '[config]': {
+                repeating: true,
+                view: {
+                  type: CompoundInput,
+                  props: {
+                    tabular: true,
+                    sortableFields: {
+                      baz: true,
+                    },
+                  },
+                },
+              },
+              baz: {
+                '[config]': {
+                  messages: {
+                    name: {
+                      id: 'baz.name',
+                      defaultMessage: 'Baz',
+                    },
+                  },
+                  view: {
+                    type: TextInput,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       forms: {
         default: {
@@ -47,7 +99,16 @@ const config = {
                 <TextInput name="objectNumber" />
                 <TextInput name="desc" msgkey="foo" />
                 <TextInput name="color" label="Color" />
-                <TextInput name="bar" />
+
+                <Field name="barList">
+                  <Field name="bar" />
+                </Field>
+
+                <Field name="bazGroupList">
+                  <Field name="bazGroup">
+                    <Field name="baz" />
+                  </Field>
+                </Field>
               </Panel>
             </CompoundInput>
           ),
@@ -62,7 +123,7 @@ const config = {
           template: <p>inventory template</p>,
         },
         computed: {
-          template: data => data.getIn(['foo', 'bar']),
+          template: (data) => data.getIn(['foo', 'bar']),
         },
         computed2: {
           template: () => <div id="computedFormTemplate">Computed form template content</div>,
@@ -105,7 +166,7 @@ const config = {
   },
 };
 
-describe('RecordForm', function suite() {
+describe('RecordForm', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -120,7 +181,8 @@ describe('RecordForm', function suite() {
             recordTypeConfig={config.recordTypes.collectionobject}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -135,7 +197,8 @@ describe('RecordForm', function suite() {
             recordTypeConfig={config.recordTypes.foo}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     expect(this.container.firstElementChild).to.equal(null);
   });
@@ -151,7 +214,8 @@ describe('RecordForm', function suite() {
             formName="inventory"
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('p').textContent.should.equal('inventory template');
   });
@@ -174,7 +238,8 @@ describe('RecordForm', function suite() {
             formName="computed"
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('p').textContent.should.equal('inventory template');
   });
@@ -197,7 +262,8 @@ describe('RecordForm', function suite() {
             formName="computed"
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     expect(this.container.firstElementChild).to.equal(null);
   });
@@ -213,7 +279,8 @@ describe('RecordForm', function suite() {
             formName="computed2"
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('#computedFormTemplate').textContent.should.equal('Computed form template content');
   });
@@ -237,8 +304,215 @@ describe('RecordForm', function suite() {
             recordTypeConfig={config.recordTypes.collectionobject}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('input[data-name="objectNumber"]').value.should.equal(objectNumber);
+  });
+
+  it('should supply recordTypeConfig and csid parameters to onCommit function', function test() {
+    const csid = 'abcd';
+
+    let calledRecordTypeConfig = null;
+    let calledCsid = null;
+    let calledPath = null;
+    let calledValue = null;
+
+    const handleCommit = (recordTypeConfigArg, csidArg, pathArg, valueArg) => {
+      calledRecordTypeConfig = recordTypeConfigArg;
+      calledCsid = csidArg;
+      calledPath = pathArg;
+      calledValue = valueArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <RecordForm
+            config={config}
+            csid={csid}
+            recordType="collectionobject"
+            recordTypeConfig={config.recordTypes.collectionobject}
+            onCommit={handleCommit}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const field = this.container.querySelector('input[data-name="objectNumber"]');
+
+    field.value = '1-1234';
+
+    Simulate.blur(field);
+
+    calledRecordTypeConfig.should.equal(config.recordTypes.collectionobject);
+    calledCsid.should.equal(csid);
+    calledPath.should.deep.equal(['document', 'objectNumber']);
+    calledValue.should.equal('1-1234');
+  });
+
+  it('should supply recordTypeConfig and csid parameters to onAddInstance function', function test() {
+    const csid = 'abcd';
+
+    let calledRecordTypeConfig = null;
+    let calledCsid = null;
+    let calledPath = null;
+    let calledPosition = null;
+
+    const handleAddInstance = (recordTypeConfigArg, csidArg, pathArg, positionArg) => {
+      calledRecordTypeConfig = recordTypeConfigArg;
+      calledCsid = csidArg;
+      calledPath = pathArg;
+      calledPosition = positionArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <RecordForm
+            config={config}
+            csid={csid}
+            recordType="collectionobject"
+            recordTypeConfig={config.recordTypes.collectionobject}
+            onAddInstance={handleAddInstance}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const button = this.container.querySelector('button[data-name="add"]');
+
+    Simulate.click(button);
+
+    calledRecordTypeConfig.should.equal(config.recordTypes.collectionobject);
+    calledCsid.should.equal(csid);
+    calledPath.should.deep.equal(['document', 'barList', 'bar']);
+    expect(calledPosition).to.equal(undefined);
+  });
+
+  it('should supply recordTypeConfig and csid parameters to onMoveInstance function', function test() {
+    const csid = 'abcd';
+
+    let calledRecordTypeConfig = null;
+    let calledCsid = null;
+    let calledPath = null;
+    let calledNewPosition = null;
+
+    const handleMoveInstance = (recordTypeConfigArg, csidArg, pathArg, newPositionArg) => {
+      calledRecordTypeConfig = recordTypeConfigArg;
+      calledCsid = csidArg;
+      calledPath = pathArg;
+      calledNewPosition = newPositionArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <RecordForm
+            config={config}
+            csid={csid}
+            recordType="collectionobject"
+            recordTypeConfig={config.recordTypes.collectionobject}
+            onMoveInstance={handleMoveInstance}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const button = this.container.querySelector('button[data-name="moveToTop"]');
+
+    Simulate.click(button);
+
+    calledRecordTypeConfig.should.equal(config.recordTypes.collectionobject);
+    calledCsid.should.equal(csid);
+    calledPath.should.deep.equal(['document', 'barList', 'bar', '0']);
+    calledNewPosition.should.equal(0);
+  });
+
+  it('should supply recordTypeConfig and csid parameters to onRemoveInstance function', function test() {
+    const csid = 'abcd';
+
+    const data = Immutable.fromJS({
+      document: {
+        barList: {
+          bar: ['a', 'b'],
+        },
+      },
+    });
+
+    let calledRecordTypeConfig = null;
+    let calledCsid = null;
+    let calledPath = null;
+
+    const handleRemoveInstance = (recordTypeConfigArg, csidArg, pathArg) => {
+      calledRecordTypeConfig = recordTypeConfigArg;
+      calledCsid = csidArg;
+      calledPath = pathArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <RecordForm
+            config={config}
+            csid={csid}
+            data={data}
+            recordType="collectionobject"
+            recordTypeConfig={config.recordTypes.collectionobject}
+            onRemoveInstance={handleRemoveInstance}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const button = this.container.querySelector('button[data-name="remove"]');
+
+    Simulate.click(button);
+
+    calledRecordTypeConfig.should.equal(config.recordTypes.collectionobject);
+    calledCsid.should.equal(csid);
+    calledPath.should.deep.equal(['document', 'barList', 'bar', '0']);
+  });
+
+  it('should supply config, recordTypeConfig, and csid parameters to onSortInstances function', function test() {
+    const csid = 'abcd';
+
+    let calledConfig = null;
+    let calledRecordTypeConfig = null;
+    let calledCsid = null;
+    let calledPath = null;
+    let calledByField = null;
+
+    const handleSortInstances = (configArg, recordTypeConfigArg, csidArg, pathArg, byFieldArg) => {
+      calledConfig = configArg;
+      calledRecordTypeConfig = recordTypeConfigArg;
+      calledCsid = csidArg;
+      calledPath = pathArg;
+      calledByField = byFieldArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <StoreProvider store={store}>
+          <RecordForm
+            config={config}
+            csid={csid}
+            recordType="collectionobject"
+            recordTypeConfig={config.recordTypes.collectionobject}
+            onSortInstances={handleSortInstances}
+          />
+        </StoreProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const button = this.container.querySelector('button[data-name="baz"]');
+
+    Simulate.click(button);
+
+    calledConfig.should.equal(config);
+    calledRecordTypeConfig.should.equal(config.recordTypes.collectionobject);
+    calledCsid.should.equal(csid);
+    calledPath.should.deep.equal(['document', 'bazGroupList', 'bazGroup']);
+    calledByField.should.equal('baz');
   });
 });

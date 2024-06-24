@@ -3,184 +3,401 @@ import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage } from 'react-intl';
 import Immutable from 'immutable';
 import get from 'lodash/get';
-import SearchField from '../SearchField';
+import FieldInput from './FieldInput';
+import OperatorInput from './OperatorInput';
 import RangeSearchField from '../RangeSearchField';
-import { configKey } from '../../../helpers/configHelpers';
+import SearchField from '../SearchField';
+import RemoveConditionButton from '../RemoveConditionButton';
+import { OP_RANGE, OP_NOT_RANGE } from '../../../constants/searchOperators';
 
 import {
-  DATA_TYPE_BOOL,
-} from '../../../constants/dataTypes';
+  configKey,
+  getFieldDataType,
+} from '../../../helpers/configHelpers';
 
 import {
-  OP_CONTAIN,
-  OP_EQ,
-  OP_GT,
-  OP_GTE,
-  OP_LT,
-  OP_LTE,
-  OP_MATCH,
-  OP_RANGE,
-} from '../../../constants/searchOperators';
+  AutocompleteInput,
+  OptionPickerInput,
+  TermPickerInput,
+} from '../../../helpers/configContextInputs';
+
+import {
+  getOperatorsForDataType,
+  dataTypeSupportsMultipleValues,
+  operatorSupportsMultipleValues,
+  operatorExpectsValue,
+} from '../../../helpers/searchHelpers';
 
 import styles from '../../../../styles/cspace-ui/FieldConditionInput.css';
 
-const operatorMessages = {
-  full: defineMessages({
-    [OP_CONTAIN]: {
-      id: 'fieldConditionInput.OP_CONTAIN.full',
-      defaultMessage: 'contains',
-    },
-    [OP_EQ]: {
-      id: 'fieldConditionInput.OP_EQ.full',
-      defaultMessage: 'is',
-    },
-    [OP_GT]: {
-      id: 'fieldConditionInput.OP_GT.full',
-      defaultMessage: 'is greater than',
-    },
-    [OP_GTE]: {
-      id: 'fieldConditionInput.OP_GTE.full',
-      defaultMessage: 'is greater than or equal to',
-    },
-    [OP_LT]: {
-      id: 'fieldConditionInput.OP_LT.full',
-      defaultMessage: 'is less than',
-    },
-    [OP_LTE]: {
-      id: 'fieldConditionInput.OP_LTE.full',
-      defaultMessage: 'is less than or equal to',
-    },
-    [OP_MATCH]: {
-      id: 'fieldConditionInput.OP_MATCH.full',
-      defaultMessage: 'matches',
-    },
-    [OP_RANGE]: {
-      id: 'fieldConditionInput.OP_RANGE.full',
-      defaultMessage: 'is between',
-    },
-  }),
-  compact: defineMessages({
-    [OP_CONTAIN]: {
-      id: 'fieldConditionInput.OP_CONTAIN.compact',
-      defaultMessage: 'contains',
-    },
-    [OP_EQ]: {
-      id: 'fieldConditionInput.OP_EQ.compact',
-      defaultMessage: '=',
-    },
-    [OP_GT]: {
-      id: 'fieldConditionInput.OP_GT.compact',
-      defaultMessage: '>',
-    },
-    [OP_GTE]: {
-      id: 'fieldConditionInput.OP_GTE.compact',
-      defaultMessage: '≥',
-    },
-    [OP_LT]: {
-      id: 'fieldConditionInput.OP_LT.compact',
-      defaultMessage: '<',
-    },
-    [OP_LTE]: {
-      id: 'fieldConditionInput.OP_LTE.compact',
-      defaultMessage: '≤',
-    },
-    [OP_MATCH]: {
-      id: 'fieldConditionInput.OP_MATCH.compact',
-      defaultMessage: 'matches',
-    },
-    [OP_RANGE]: {
-      id: 'fieldConditionInput.OP_RANGE.compact',
-      defaultMessage: 'between',
-    },
-  }),
-};
-
 const propTypes = {
   condition: PropTypes.instanceOf(Immutable.Map),
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   inline: PropTypes.bool,
+  name: PropTypes.string,
   readOnly: PropTypes.bool,
+  recordType: PropTypes.string,
+  rootPath: PropTypes.string,
   onCommit: PropTypes.func,
+  onRemove: PropTypes.func,
 };
 
-const contextTypes = {
-  config: PropTypes.object,
-  recordType: PropTypes.string,
+const messages = defineMessages({
+  notFound: {
+    id: 'fieldConditionInput.notFound',
+    description: 'Message displayed in advanced search when a field is not found',
+    defaultMessage: 'field not found',
+  },
+});
+
+const isFieldControlled = (fieldDescriptor) => {
+  const viewType = get(fieldDescriptor, [configKey, 'view', 'type']);
+
+  return (
+    viewType === AutocompleteInput
+    || viewType === OptionPickerInput
+    || viewType === TermPickerInput
+  );
 };
 
 export default class FieldConditionInput extends Component {
   constructor() {
     super();
 
+    this.handleFieldCommit = this.handleFieldCommit.bind(this);
+    this.handleOperatorCommit = this.handleOperatorCommit.bind(this);
+    this.handleRef = this.handleRef.bind(this);
+    this.handleRemoveButtonClick = this.handleRemoveButtonClick.bind(this);
     this.handleValueCommit = this.handleValueCommit.bind(this);
+  }
+
+  componentDidMount() {
+    const {
+      condition,
+    } = this.props;
+
+    const path = condition.get('path');
+
+    if (path === null) {
+      // The condition was just added, and the field needs to be selected. Focus it.
+
+      if (this.domNode) {
+        const input = this.domNode.querySelector('input[data-name="field"]');
+
+        if (input) {
+          input.focus();
+        }
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    const {
+      condition,
+    } = this.props;
+
+    const {
+      condition: prevCondition,
+    } = prevProps;
+
+    if (condition !== prevCondition) {
+      const path = condition.get('path');
+
+      if (path) {
+        const ops = this.getOperators(path);
+
+        if (!ops.includes(condition.get('op'))) {
+          // The new field's operators don't include the current operator. Set the operator to the
+          // first of the new field's supported operators.
+
+          // FIXME: This doesn't work if componentDidUpdate in AdvancedSearchBuilder executes
+          // normalizeCondition, and the condition is normalized. In that case, it will restore the
+          // previous operator. This all needs to be reworked.
+
+          this.setOperator(ops[0]);
+        }
+      }
+
+      if (path !== null && prevCondition.get('path') === null) {
+        // The field was just selected. Focus the operator.
+
+        if (this.domNode) {
+          const input = this.domNode.querySelector('input[data-name="searchOp"]');
+
+          if (input) {
+            input.focus();
+          }
+        }
+      }
+    }
+  }
+
+  handleFieldCommit(path, fieldPath) {
+    const {
+      condition,
+      name,
+      onCommit,
+    } = this.props;
+
+    if (onCommit) {
+      // Delete the current value, since it may not be valid for the new field.
+
+      onCommit(name, condition.set('path', fieldPath).delete('value'));
+    }
+  }
+
+  handleOperatorCommit(path, operator) {
+    this.setOperator(operator);
+  }
+
+  handleRef(ref) {
+    this.domNode = ref;
+  }
+
+  handleRemoveButtonClick() {
+    const {
+      name,
+      onRemove,
+    } = this.props;
+
+    if (onRemove) {
+      onRemove(name);
+    }
   }
 
   handleValueCommit(path, value) {
     const {
       condition,
+      name,
       onCommit,
     } = this.props;
 
     if (onCommit) {
-      onCommit(condition.set('value', value));
+      onCommit(name, condition.set('value', value));
     }
   }
 
-  render() {
-    const {
-      condition,
-      inline,
-      readOnly,
-    } = this.props;
-
+  getOperators(path) {
     const {
       config,
       recordType,
-    } = this.context;
+    } = this.props;
 
-    const operator = condition.get('op');
+    const fieldDescriptor = get(
+      config, ['recordTypes', recordType, 'fields', 'document', ...path.split('/')],
+    );
+
+    const dataType = getFieldDataType(fieldDescriptor);
+    const isControlled = isFieldControlled(fieldDescriptor);
+
+    return getOperatorsForDataType(dataType, isControlled);
+  }
+
+  setOperator(operator) {
+    const {
+      condition,
+      name,
+      onCommit,
+    } = this.props;
+
+    if (onCommit) {
+      let nextCondition = condition.set('op', operator);
+
+      if (!operatorExpectsValue(operator)) {
+        // If the new operator doesn't expect a value, remove any values that exist.
+
+        nextCondition = nextCondition.delete('value');
+      } else if (!operatorSupportsMultipleValues(operator)) {
+        // If the new operator doesn't support multiple values, prune all values except the first.
+
+        const value = condition.get('value');
+
+        if (Immutable.List.isList(value)) {
+          nextCondition = nextCondition.set('value', value.first());
+        }
+      }
+
+      onCommit(name, nextCondition);
+    }
+  }
+
+  renderFieldInput() {
+    const {
+      condition,
+      config,
+      inline,
+      recordType,
+      rootPath,
+    } = this.props;
+
     const pathSpec = condition.get('path');
-    const value = condition.get('value');
+
+    if (!pathSpec) {
+      if (inline) {
+        return null;
+      }
+
+      return (
+        <FieldInput
+          config={config}
+          inline={inline}
+          name="field"
+          placeholder="Field"
+          recordType={recordType}
+          rootPath={rootPath}
+          onCommit={this.handleFieldCommit}
+        />
+      );
+    }
 
     const path = ['document', ...pathSpec.split('/')];
-    const name = path[path.length - 1];
-    const parentPath = path.slice(0, path.length - 1);
-
-    const fieldConfig = get(config, ['recordTypes', recordType, 'fields', ...path, configKey]);
-    const dataType = get(fieldConfig, 'dataType');
-    const messages = get(fieldConfig, 'messages');
-
-    const label = messages
-      ? <FormattedMessage {...(messages.fullName || messages.name)} />
-      : name;
-
-    const SearchFieldComponent = (operator === OP_RANGE) ? RangeSearchField : SearchField;
-    const className = inline ? styles.inline : styles.normal;
-    const opMessages = inline ? operatorMessages.compact : operatorMessages.full;
+    const fieldDescriptor = get(config, ['recordTypes', recordType, 'fields', ...path]);
 
     return (
-      <div className={className}>
-        <div>{label}</div>
-        {' '}
-        <FormattedMessage {...opMessages[operator]} tagName="div" />
-        {' '}
-        <div>
-          <SearchFieldComponent
+      <FieldInput
+        config={config}
+        inline={inline}
+        readOnly
+        recordType={recordType}
+        rootPath={rootPath}
+        value={pathSpec}
+        valueDescriptor={fieldDescriptor}
+        onCommit={this.handleFieldCommit}
+      />
+    );
+  }
+
+  renderOperatorInput() {
+    const {
+      condition,
+      config,
+      inline,
+      readOnly,
+      recordType,
+    } = this.props;
+
+    const pathSpec = condition.get('path');
+
+    if (!pathSpec) {
+      return (inline ? null : <div><span>...</span></div>);
+    }
+
+    const operator = condition.get('op');
+    const path = ['document', ...pathSpec.split('/')];
+
+    const fieldDescriptor = get(config, ['recordTypes', recordType, 'fields', ...path]);
+
+    if (!fieldDescriptor) {
+      return (inline ? null : <div><FormattedMessage {...messages.notFound} /></div>);
+    }
+
+    const dataType = getFieldDataType(fieldDescriptor);
+    const isControlled = isFieldControlled(fieldDescriptor);
+    const operators = getOperatorsForDataType(dataType, isControlled);
+
+    return (
+      <OperatorInput
+        compact={inline}
+        inline={inline}
+        name="searchOp"
+        operators={operators}
+        readOnly={readOnly}
+        value={operator}
+        onCommit={this.handleOperatorCommit}
+      />
+    );
+  }
+
+  renderValueInput() {
+    const {
+      condition,
+      config,
+      inline,
+      readOnly,
+      recordType,
+    } = this.props;
+
+    const pathSpec = condition.get('path');
+
+    let valueSearchField = null;
+
+    if (pathSpec) {
+      const operator = condition.get('op');
+      const value = condition.get('value');
+
+      const path = ['document', ...pathSpec.split('/')];
+      const name = path[path.length - 1];
+      const parentPath = path.slice(0, path.length - 1);
+
+      const fieldDescriptor = get(config, ['recordTypes', recordType, 'fields', ...path]);
+
+      if (!fieldDescriptor) {
+        return <div />;
+      }
+
+      const dataType = getFieldDataType(fieldDescriptor);
+
+      if (operatorExpectsValue(operator)) {
+        const ValueSearchFieldComponent = (operator === OP_RANGE || operator === OP_NOT_RANGE)
+          ? RangeSearchField
+          : SearchField;
+
+        valueSearchField = (
+          <ValueSearchFieldComponent
             inline={inline}
             parentPath={parentPath}
             name={name}
             readOnly={readOnly}
-            // Booleans only have two possible values, so null (don't care) or a single desired
-            // value is sufficient to describe all searches, and there's no need to allow multiple
-            // values.
-            repeating={dataType !== DATA_TYPE_BOOL}
+            repeating={
+              operatorSupportsMultipleValues(operator)
+              && dataTypeSupportsMultipleValues(dataType)
+            }
             value={value}
             onCommit={this.handleValueCommit}
           />
-        </div>
+        );
+      }
+    }
+
+    return (
+      <div>{valueSearchField}</div>
+    );
+  }
+
+  renderRemoveButton() {
+    const {
+      readOnly,
+    } = this.props;
+
+    if (readOnly) {
+      return null;
+    }
+
+    return (
+      <RemoveConditionButton onClick={this.handleRemoveButtonClick} />
+    );
+  }
+
+  render() {
+    const {
+      inline,
+    } = this.props;
+
+    const className = inline ? styles.inline : styles.normal;
+
+    return (
+      <div className={className} ref={this.handleRef}>
+        {this.renderFieldInput()}
+        {inline ? ' ' : null}
+        {this.renderOperatorInput()}
+        {inline ? ' ' : null}
+        {this.renderValueInput()}
+        {this.renderRemoveButton()}
       </div>
     );
   }
 }
 
 FieldConditionInput.propTypes = propTypes;
-FieldConditionInput.contextTypes = contextTypes;

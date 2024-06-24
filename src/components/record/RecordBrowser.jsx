@@ -4,7 +4,6 @@ import qs from 'qs';
 import get from 'lodash/get';
 import Immutable from 'immutable';
 import RecordBrowserNavBarContainer from '../../containers/record/RecordBrowserNavBarContainer';
-import RecordSidebarToggleButtonContainer from '../../containers/record/RecordSidebarToggleButtonContainer';
 import RecordEditorContainer from '../../containers/record/RecordEditorContainer';
 import RelatedRecordBrowserContainer from '../../containers/record/RelatedRecordBrowserContainer';
 import { searchDescriptorToLocation } from '../../helpers/searchHelpers';
@@ -12,11 +11,18 @@ import styles from '../../../styles/cspace-ui/RecordBrowser.css';
 
 const propTypes = {
   cloneCsid: PropTypes.string,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
   dockTop: PropTypes.number,
-  history: PropTypes.object,
-  location: PropTypes.object,
+  history: PropTypes.shape({
+    push: PropTypes.func,
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    state: PropTypes.object,
+  }),
   recordType: PropTypes.string,
   relatedCsid: PropTypes.string,
   relatedRecordType: PropTypes.string,
@@ -53,41 +59,6 @@ export default class RecordBrowser extends Component {
     this.clearPreferredRelatedCsid();
   }
 
-  clearPreferredRelatedCsid() {
-    const {
-      clearPreferredRelatedCsid,
-    } = this.props;
-
-    if (clearPreferredRelatedCsid) {
-      clearPreferredRelatedCsid();
-    }
-  }
-
-  cloneRecord() {
-    const {
-      csid,
-      recordType,
-      vocabulary,
-      history,
-    } = this.props;
-
-    const path =
-      [recordType, vocabulary]
-        .filter(part => !!part)
-        .join('/');
-
-    const query = {
-      clone: csid,
-    };
-
-    const queryString = qs.stringify(query);
-
-    history.push({
-      pathname: `/record/${path}`,
-      search: `?${queryString}`,
-    });
-  }
-
   handleRecordCreated(newRecordCsid, isNavigating) {
     if (!isNavigating) {
       const {
@@ -96,10 +67,9 @@ export default class RecordBrowser extends Component {
         vocabulary,
       } = this.props;
 
-      const path =
-        [recordType, vocabulary, newRecordCsid]
-          .filter(part => !!part)
-          .join('/');
+      const path = [recordType, vocabulary, newRecordCsid]
+        .filter((part) => !!part)
+        .join('/');
 
       history.replace(`/record/${path}`);
     }
@@ -130,6 +100,40 @@ export default class RecordBrowser extends Component {
 
       history.replace(newLocation);
     }
+  }
+
+  clearPreferredRelatedCsid() {
+    const {
+      clearPreferredRelatedCsid,
+    } = this.props;
+
+    if (clearPreferredRelatedCsid) {
+      clearPreferredRelatedCsid();
+    }
+  }
+
+  cloneRecord() {
+    const {
+      csid,
+      recordType,
+      vocabulary,
+      history,
+    } = this.props;
+
+    const path = [recordType, vocabulary]
+      .filter((part) => !!part)
+      .join('/');
+
+    const query = {
+      clone: csid,
+    };
+
+    const queryString = qs.stringify(query);
+
+    history.push({
+      pathname: `/record/${path}`,
+      search: `?${queryString}`,
+    });
   }
 
   render() {
@@ -189,10 +193,6 @@ export default class RecordBrowser extends Component {
           recordType={recordType}
           relatedRecordType={relatedRecordType}
           onSelect={onShowRelated}
-        />
-        <RecordSidebarToggleButtonContainer
-          recordType={recordType}
-          config={config}
         />
         {content}
       </div>

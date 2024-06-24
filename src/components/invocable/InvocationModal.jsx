@@ -11,11 +11,9 @@ import { normalizeInvocationDescriptor } from '../../helpers/invocationHelpers';
 import CancelButton from '../navigation/CancelButton';
 import styles from '../../../styles/cspace-ui/InvocationModal.css';
 import formatPickerStyles from '../../../styles/cspace-ui/InvocationFormatPicker.css';
-import OptionPickerInputContainer from '../../containers/record/OptionPickerInputContainer';
-
+import { OptionPickerInput } from '../../helpers/configContextInputs';
 
 const { Label } = inputComponents;
-
 
 const messages = defineMessages({
   cancel: {
@@ -41,8 +39,10 @@ const messages = defineMessages({
 });
 
 const propTypes = {
-  allowedModes: PropTypes.arrayOf(PropTypes.string),
-  config: PropTypes.object.isRequired,
+  allowedModes: PropTypes.func,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
   csid: PropTypes.string,
   data: PropTypes.instanceOf(Immutable.Map),
   initialInvocationDescriptor: PropTypes.instanceOf(Immutable.Map),
@@ -79,7 +79,8 @@ export default class InvocationModal extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       data,
       isOpen,
@@ -162,7 +163,7 @@ export default class InvocationModal extends Component {
     let csid = items.keySeq().toJS();
 
     if (mode === 'single' || mode === 'group') {
-      csid = csid[0];
+      [csid] = csid;
     }
 
     if (onInvokeButtonClick) {
@@ -200,26 +201,22 @@ export default class InvocationModal extends Component {
               });
             }
 
-            const nextInvocationDescriptor = this.state.invocationDescriptor.set(
-              'items', Immutable.Map({ [invocationCsid]: item })
-            );
-
-            this.setState({
-              invocationDescriptor: nextInvocationDescriptor,
-            });
+            this.setState((prevState) => ({
+              invocationDescriptor: prevState.invocationDescriptor.set(
+                'items', Immutable.Map({ [invocationCsid]: item }),
+              ),
+            }));
           })
           .catch(() => {
             const item = Immutable.Map({
               csid: invocationCsid,
             });
 
-            const nextInvocationDescriptor = this.state.invocationDescriptor.set(
-              'items', Immutable.Map({ [invocationCsid]: item })
-            );
-
-            this.setState({
-              invocationDescriptor: nextInvocationDescriptor,
-            });
+            this.setState((prevState) => ({
+              invocationDescriptor: prevState.invocationDescriptor.set(
+                'items', Immutable.Map({ [invocationCsid]: item }),
+              ),
+            }));
           });
       }
     }
@@ -228,11 +225,7 @@ export default class InvocationModal extends Component {
   renderFormatPicker() {
     const {
       recordType,
-    } = this.props;
-
-    const {
-      csid,
-      getMimeTypes,
+      data,
     } = this.props;
 
     const {
@@ -242,21 +235,18 @@ export default class InvocationModal extends Component {
     if (recordType === 'report') {
       let mimeList = [];
 
-      if (getMimeTypes) {
-        const documentData = getMimeTypes(csid);
-        if (documentData) {
-          mimeList = documentData.getIn(['document', 'ns2:reports_common', 'supportsOutputMIMEList', 'outputMIME']);
-        }
+      if (data) {
+        mimeList = data.getIn(['document', 'ns2:reports_common', 'supportsOutputMIMEList', 'outputMIME']);
       }
 
-      const prefilter = option => mimeList.includes(option.value);
+      const prefilter = (option) => mimeList.includes(option.value);
 
       return (
         <div className={formatPickerStyles.common}>
-          <OptionPickerInputContainer
+          <OptionPickerInput
             blankable={false}
             label={<Label><FormattedMessage {...messages.format} /></Label>}
-            source={'reportMimeTypes'}
+            source="reportMimeTypes"
             prefilter={mimeList ? prefilter : null}
             value={invocationDescriptor.get('outputMIME')}
             onCommit={this.handleFormatPickerCommit}
@@ -408,5 +398,4 @@ export default class InvocationModal extends Component {
   }
 }
 
-InvocationModal.modalName = 'InvocationModal';
 InvocationModal.propTypes = propTypes;

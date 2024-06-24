@@ -13,9 +13,15 @@ import styles from '../../../styles/cspace-ui/RelatedRecordBrowser.css';
 
 const propTypes = {
   cloneCsid: PropTypes.string,
-  config: PropTypes.object,
-  history: PropTypes.object,
-  location: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
+  history: PropTypes.shape({
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    state: PropTypes.object,
+  }),
   isSidebarOpen: PropTypes.bool,
   perms: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
@@ -80,81 +86,6 @@ export default class RelatedRecordBrowser extends Component {
     }
   }
 
-  getRelatedRecordPanelName() {
-    const {
-      relatedRecordType,
-    } = this.props;
-
-    return `relatedRecordBrowser-${relatedRecordType}`;
-  }
-
-  normalizeRelatedCsid() {
-    const {
-      preferredRelatedCsid,
-      relatedCsid,
-      relatedRecordType,
-      setPreferredRelatedCsid,
-    } = this.props;
-
-    if (typeof relatedCsid !== 'undefined') {
-      if (setPreferredRelatedCsid && (preferredRelatedCsid !== relatedCsid)) {
-        setPreferredRelatedCsid(relatedRecordType, relatedCsid);
-      }
-    } else if (preferredRelatedCsid) {
-      const {
-        recordType,
-        vocabulary,
-        csid,
-        history,
-        location,
-      } = this.props;
-
-      const path =
-        [recordType, vocabulary, csid, relatedRecordType, preferredRelatedCsid]
-          .filter(part => !!part)
-          .join('/');
-
-      history.replace({
-        pathname: `/record/${path}`,
-        state: location.state,
-      });
-    }
-  }
-
-  cloneRelatedRecord(relatedRecordCsid) {
-    const {
-      recordType,
-      vocabulary,
-      csid,
-      relatedRecordType,
-      history,
-      location,
-    } = this.props;
-
-    const path =
-      [recordType, vocabulary, csid, relatedRecordType]
-        .filter(part => !!part)
-        .join('/');
-
-    const query = {
-      clone: relatedRecordCsid,
-    };
-
-    const queryString = qs.stringify(query);
-
-    history.replace({
-      pathname: `/record/${path}/new`,
-      search: `?${queryString}`,
-      state: location.state,
-    });
-  }
-
-  closeModal() {
-    this.setState({
-      isSearchToRelateModalOpen: false,
-    });
-  }
-
   handleCreateButtonClick() {
     const {
       history,
@@ -165,10 +96,9 @@ export default class RelatedRecordBrowser extends Component {
       relatedRecordType,
     } = this.props;
 
-    const path =
-      [recordType, vocabulary, csid, relatedRecordType, 'new']
-        .filter(part => !!part)
-        .join('/');
+    const path = [recordType, vocabulary, csid, relatedRecordType, 'new']
+      .filter((part) => !!part)
+      .join('/');
 
     history.replace({
       pathname: `/record/${path}`,
@@ -205,10 +135,9 @@ export default class RelatedRecordBrowser extends Component {
       setPreferredRelatedCsid(relatedRecordType, undefined);
     }
 
-    const path =
-      [recordType, vocabulary, csid, relatedRecordType]
-        .filter(part => !!part)
-        .join('/');
+    const path = [recordType, vocabulary, csid, relatedRecordType]
+      .filter((part) => !!part)
+      .join('/');
 
     history.replace({
       pathname: `/record/${path}`,
@@ -261,10 +190,9 @@ export default class RelatedRecordBrowser extends Component {
         relatedRecordType,
       } = this.props;
 
-      const path =
-        [recordType, vocabulary, csid, relatedRecordType, newRecordCsid]
-          .filter(part => !!part)
-          .join('/');
+      const path = [recordType, vocabulary, csid, relatedRecordType, newRecordCsid]
+        .filter((part) => !!part)
+        .join('/');
 
       history.replace({
         pathname: `/record/${path}`,
@@ -290,6 +218,79 @@ export default class RelatedRecordBrowser extends Component {
     if (isRelatedCsidUnrelated) {
       this.handleRelationEditorClose();
     }
+  }
+
+  getRelatedRecordPanelName() {
+    const {
+      relatedRecordType,
+    } = this.props;
+
+    return `relatedRecordBrowser-${relatedRecordType}`;
+  }
+
+  normalizeRelatedCsid() {
+    const {
+      preferredRelatedCsid,
+      relatedCsid,
+      relatedRecordType,
+      setPreferredRelatedCsid,
+    } = this.props;
+
+    if (typeof relatedCsid !== 'undefined') {
+      if (setPreferredRelatedCsid && (preferredRelatedCsid !== relatedCsid)) {
+        setPreferredRelatedCsid(relatedRecordType, relatedCsid);
+      }
+    } else if (preferredRelatedCsid) {
+      const {
+        recordType,
+        vocabulary,
+        csid,
+        history,
+        location,
+      } = this.props;
+
+      const path = [recordType, vocabulary, csid, relatedRecordType, preferredRelatedCsid]
+        .filter((part) => !!part)
+        .join('/');
+
+      history.replace({
+        pathname: `/record/${path}`,
+        state: location.state,
+      });
+    }
+  }
+
+  cloneRelatedRecord(relatedRecordCsid) {
+    const {
+      recordType,
+      vocabulary,
+      csid,
+      relatedRecordType,
+      history,
+      location,
+    } = this.props;
+
+    const path = [recordType, vocabulary, csid, relatedRecordType]
+      .filter((part) => !!part)
+      .join('/');
+
+    const query = {
+      clone: relatedRecordCsid,
+    };
+
+    const queryString = qs.stringify(query);
+
+    history.replace({
+      pathname: `/record/${path}/new`,
+      search: `?${queryString}`,
+      state: location.state,
+    });
+  }
+
+  closeModal() {
+    this.setState({
+      isSearchToRelateModalOpen: false,
+    });
   }
 
   renderRelationEditor() {
@@ -378,9 +379,9 @@ export default class RelatedRecordBrowser extends Component {
     const isCreatable = canCreate(relatedRecordType, perms);
 
     const isRelatable = (
-      workflowState !== 'locked' &&
-      canRelate(recordType, perms, config) &&
-      canRelate(relatedRecordType, perms, config)
+      workflowState !== 'locked'
+      && canRelate(recordType, perms, config)
+      && canRelate(relatedRecordType, perms, config)
     );
 
     const className = isSidebarOpen ? styles.normal : styles.full;

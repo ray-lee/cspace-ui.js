@@ -46,9 +46,9 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('prefs action creator', function suite() {
-  describe('collapsePanel', function actionSuite() {
-    it('should create a COLLAPSE_PANEL action', function test() {
+describe('prefs action creator', () => {
+  describe('collapsePanel', () => {
+    it('should create a COLLAPSE_PANEL action', () => {
       const recordType = 'collectionobject';
       const name = 'desc';
       const collapsed = true;
@@ -64,8 +64,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setAdminTab', function actionSuite() {
-    it('should create a SET_ADMIN_TAB action', function test() {
+  describe('setAdminTab', () => {
+    it('should create a SET_ADMIN_TAB action', () => {
       const tabName = 'vocabulary';
 
       setAdminTab(tabName).should.deep.equal({
@@ -75,8 +75,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setForm', function actionSuite() {
-    it('should create a SET_FORM action', function test() {
+  describe('setForm', () => {
+    it('should create a SET_FORM action', () => {
       const recordType = 'collectionobject';
       const formName = 'default';
 
@@ -90,8 +90,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setUploadType', function actionSuite() {
-    it('should create a SET_UPLOAD_TYPE action', function test() {
+  describe('setUploadType', () => {
+    it('should create a SET_UPLOAD_TYPE action', () => {
       const uploadType = 'file';
 
       setUploadType(uploadType).should.deep.equal({
@@ -101,8 +101,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setQuickSearchRecordType', function actionSuite() {
-    it('should create a SET_QUICK_SEARCH_RECORD_TYPE action', function test() {
+  describe('setQuickSearchRecordType', () => {
+    it('should create a SET_QUICK_SEARCH_RECORD_TYPE action', () => {
       const value = 'loanin';
 
       setQuickSearchRecordType(value).should.deep.equal({
@@ -112,8 +112,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setQuickSearchVocabulary', function actionSuite() {
-    it('should create a SET_QUICK_SEARCH_VOCABULARY action', function test() {
+  describe('setQuickSearchVocabulary', () => {
+    it('should create a SET_QUICK_SEARCH_VOCABULARY action', () => {
       const value = 'ulan';
 
       setQuickSearchVocabulary(value).should.deep.equal({
@@ -123,8 +123,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setRecordBrowserNavBarItems', function actionSuite() {
-    it('should create a SET_RECORD_BROWSER_NAV_BAR_ITEMS action', function test() {
+  describe('setRecordBrowserNavBarItems', () => {
+    it('should create a SET_RECORD_BROWSER_NAV_BAR_ITEMS action', () => {
       const recordType = 'collectionobject';
       const navBarItems = ['group', 'media'];
 
@@ -138,19 +138,45 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setSearchPageRecordType', function actionSuite() {
-    it('should create a SET_SEARCH_PAGE_RECORD_TYPE action', function test() {
+  describe('setSearchPageRecordType', () => {
+    it('should create a SET_SEARCH_PAGE_RECORD_TYPE action', () => {
       const value = 'loanin';
 
-      setSearchPageRecordType(value).should.deep.equal({
+      const store = mockStore({
+        prefs: Immutable.Map(),
+      });
+
+      store.dispatch(setSearchPageRecordType(value));
+
+      const actions = store.getActions();
+
+      actions[0].should.deep.equal({
         type: SET_SEARCH_PAGE_RECORD_TYPE,
         payload: value,
       });
     });
+
+    it('should not dispatch any action of the record type has not changed', () => {
+      const prevValue = 'foo';
+
+      const store = mockStore({
+        prefs: Immutable.fromJS({
+          searchPage: {
+            recordType: prevValue,
+          },
+        }),
+      });
+
+      store.dispatch(setSearchPageRecordType(prevValue));
+
+      const actions = store.getActions();
+
+      actions.should.have.lengthOf(0);
+    });
   });
 
-  describe('setSearchPageVocabulary', function actionSuite() {
-    it('should create a SET_SEARCH_PAGE_VOCABULARY action', function test() {
+  describe('setSearchPageVocabulary', () => {
+    it('should create a SET_SEARCH_PAGE_VOCABULARY action', () => {
       const value = 'ulan';
 
       setSearchPageVocabulary(value).should.deep.equal({
@@ -160,8 +186,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setSearchResultPagePageSize', function actionSuite() {
-    it('should create a SET_SEARCH_RESULT_PAGE_PAGE_SIZE action', function test() {
+  describe('setSearchResultPagePageSize', () => {
+    it('should create a SET_SEARCH_RESULT_PAGE_PAGE_SIZE action', () => {
       const pageSize = 45;
 
       setSearchResultPagePageSize(pageSize).should.deep.equal({
@@ -171,8 +197,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setSearchToSelectPagePageSize', function actionSuite() {
-    it('should create a SET_SEARCH_TO_SELECT_PAGE_SIZE action', function test() {
+  describe('setSearchToSelectPagePageSize', () => {
+    it('should create a SET_SEARCH_TO_SELECT_PAGE_SIZE action', () => {
       const pageSize = 23;
 
       setSearchToSelectPageSize(pageSize).should.deep.equal({
@@ -182,8 +208,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('setSearchPanelPageSize', function actionSuite() {
-    it('should create a SET_SEARCH_PANEL_PAGE_SIZE action', function test() {
+  describe('setSearchPanelPageSize', () => {
+    it('should create a SET_SEARCH_PANEL_PAGE_SIZE action', () => {
       const recordType = 'collectionobject';
       const name = 'termsUsed';
       const pageSize = 21;
@@ -199,16 +225,16 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('toggleRecordSidebar', function actionSuite() {
-    it('should create a TOGGLE_RECORD_SIDEBAR action', function test() {
+  describe('toggleRecordSidebar', () => {
+    it('should create a TOGGLE_RECORD_SIDEBAR action', () => {
       toggleRecordSidebar().should.deep.equal({
         type: TOGGLE_RECORD_SIDEBAR,
       });
     });
   });
 
-  describe('loadPrefs', function actionSuite() {
-    it('should dispatch a PREFS_LOADED action', function test() {
+  describe('loadPrefs', () => {
+    it('should dispatch a PREFS_LOADED action', () => {
       const username = 'user@collectionspace.org';
 
       const prefs = {
@@ -234,7 +260,7 @@ describe('prefs action creator', function suite() {
       });
     });
 
-    it('should return null prefs if serialized prefs are not valid JSON', function test() {
+    it('should return null prefs if serialized prefs are not valid JSON', () => {
       const username = 'user@collectionspace.org';
 
       window.localStorage.setItem(storageKey, '{invalid json!');
@@ -253,7 +279,7 @@ describe('prefs action creator', function suite() {
       });
     });
 
-    it('should return null prefs if no serialized prefs exist in local storage', function test() {
+    it('should return null prefs if no serialized prefs exist in local storage', () => {
       const username = 'user@collectionspace.org';
 
       window.localStorage.removeItem(storageKey);
@@ -272,7 +298,7 @@ describe('prefs action creator', function suite() {
       });
     });
 
-    it('should return null prefs if there is no username', function test() {
+    it('should return null prefs if there is no username', () => {
       const store = mockStore();
 
       store.dispatch(loadPrefs());
@@ -287,7 +313,7 @@ describe('prefs action creator', function suite() {
       });
     });
 
-    it('should merge user prefs into default prefs, if present', function test() {
+    it('should merge user prefs into default prefs, if present', () => {
       const config = {
         defaultUserPrefs: {
           foo: {
@@ -327,7 +353,7 @@ describe('prefs action creator', function suite() {
       }));
     });
 
-    it('should return default prefs if present and no serialized prefs exist in local storage', function test() {
+    it('should return default prefs if present and no serialized prefs exist in local storage', () => {
       const config = {
         defaultUserPrefs: {
           foo: {
@@ -360,8 +386,8 @@ describe('prefs action creator', function suite() {
     });
   });
 
-  describe('savePrefs', function actionSuite() {
-    it('should save prefs to local storage', function test() {
+  describe('savePrefs', () => {
+    it('should save prefs to local storage', () => {
       const username = 'user@collectionspace.org';
 
       const prefs = {
@@ -386,7 +412,7 @@ describe('prefs action creator', function suite() {
       revivedPrefs[username].should.deep.equal(prefs);
     });
 
-    it('should not save prefs if there is no username', function test() {
+    it('should not save prefs if there is no username', () => {
       const prevStoredPrefs = { foo: 'bar' };
 
       window.localStorage.setItem(storageKey, JSON.stringify(prevStoredPrefs));
@@ -411,7 +437,7 @@ describe('prefs action creator', function suite() {
       revivedPrefs.should.deep.equal(prevStoredPrefs);
     });
 
-    it('should not affect prefs for other users', function test() {
+    it('should not affect prefs for other users', () => {
       const username = 'user@collectionspace.org';
 
       const prefs = {
@@ -445,7 +471,7 @@ describe('prefs action creator', function suite() {
       revivedPrefs[otherUsername].should.deep.equal(otherPrefs);
     });
 
-    it('should overwrite existing prefs that are not valid JSON', function test() {
+    it('should overwrite existing prefs that are not valid JSON', () => {
       const username = 'user@collectionspace.org';
 
       const prefs = {

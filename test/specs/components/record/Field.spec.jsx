@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { render } from 'react-dom';
 import { createRenderer } from 'react-test-renderer/shallow';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
@@ -8,24 +7,28 @@ import { DateInput, StructuredDateInput } from '../../../../src/helpers/configCo
 import { configKey } from '../../../../src/helpers/configHelpers';
 import Field from '../../../../src/components/record/Field';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
 const TestInput = () => <div />;
 
 TestInput.propTypes = {
+  /* eslint-disable react/no-unused-prop-types */
   foo: PropTypes.string,
   bar: PropTypes.string,
   label: PropTypes.node,
   formatValue: PropTypes.func,
   viewType: PropTypes.string,
+  /* eslint-enable react/no-unused-prop-types */
 };
 
 const CompoundTestInput = () => <div />;
 
 CompoundTestInput.propTypes = {
+  // eslint-disable-next-line react/no-unused-prop-types
   renderChildInputLabel: PropTypes.func,
 };
 
@@ -118,9 +121,11 @@ const config = {
                 defaultMessage: 'formatted {value}',
               },
             },
-            readOnly: true,
             view: {
               type: TestInput,
+              props: {
+                readOnly: true,
+              },
             },
           },
         },
@@ -135,17 +140,17 @@ const intl = {
   formatRelative: () => null,
   formatNumber: () => null,
   formatPlural: () => null,
-  formatMessage: message => `formatted ${message.id}`,
+  formatMessage: (message) => `formatted ${message.id}`,
   formatHTMLMessage: () => null,
   now: () => null,
 };
 
-describe('Field', function suite() {
+describe('Field', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
 
-  it('should render an element with type and props specified in config', function test() {
+  it('should render an element with type and props specified in config', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -161,7 +166,7 @@ describe('Field', function suite() {
     result.props.foo.should.equal('fooValue');
   });
 
-  it('should pass props to the base component', function test() {
+  it('should pass props to the base component', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -177,7 +182,7 @@ describe('Field', function suite() {
     result.props.bar.should.equal('123');
   });
 
-  it('should set repeating on the base component if the field is repeating', function test() {
+  it('should set repeating on the base component if the field is repeating', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -211,12 +216,13 @@ describe('Field', function suite() {
     render(
       <IntlProvider locale="en">
         {result.props.label}
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.textContent.should.equal('message for field.color.name');
   });
 
-  it('should set readOnly prop of the label if the field is configured to be read only', function test() {
+  it('should set readOnly prop of the label if the field view is configured to be read only', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -233,7 +239,7 @@ describe('Field', function suite() {
     result.props.label.props.readOnly.should.equal(true);
   });
 
-  it('should set required prop of the label if the field is configured to be required', function test() {
+  it('should set required prop of the label if the field is configured to be required', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -250,7 +256,7 @@ describe('Field', function suite() {
     result.props.label.props.required.should.equal(true);
   });
 
-  it('should set label to null on the base component if no message is found', function test() {
+  it('should set label to null on the base component if no message is found', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -266,7 +272,7 @@ describe('Field', function suite() {
     expect(result.props.label).to.equal(null);
   });
 
-  it('should set formatValue on the base component if it is an accepted prop of the base component and a value message is present', function test() {
+  it('should set formatValue on the base component if it is an accepted prop of the base component and a value message is present', () => {
     const context = {
       config,
       intl,
@@ -307,12 +313,13 @@ describe('Field', function suite() {
     render(
       <IntlProvider locale="en">
         {label}
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.textContent.should.equal('message for field.title.name');
   });
 
-  it('should set viewType on the base component if it is an accepted prop of the base component', function test() {
+  it('should set viewType on the base component if it is an accepted prop of the base component', () => {
     const context = {
       config,
       intl,
@@ -329,7 +336,7 @@ describe('Field', function suite() {
     result.props.viewType.should.equal('foo');
   });
 
-  it('should not pass props to the base component that it does not accept', function test() {
+  it('should not pass props to the base component that it does not accept', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -345,7 +352,7 @@ describe('Field', function suite() {
     result.should.not.have.property('baz');
   });
 
-  it('should render a DateInput as the search view for field whose view is a StructuredDateInput, if no search view is explicitly configured', function test() {
+  it('should render a DateInput as the search view for field whose view is a StructuredDateInput, if no search view is explicitly configured', () => {
     const context = {
       config,
       recordType: 'collectionobject',
@@ -360,7 +367,7 @@ describe('Field', function suite() {
     result.type.should.equal(DateInput);
   });
 
-  it('should render nothing if the record type is not configured', function test() {
+  it('should render nothing if the record type is not configured', () => {
     const context = {
       config,
       recordType: 'oops',
@@ -375,7 +382,7 @@ describe('Field', function suite() {
     expect(result).to.equal(null);
   });
 
-  it('should render nothing if the field is not configured', function test() {
+  it('should render nothing if the field is not configured', () => {
     const context = {
       config,
       recordType: 'collectionobject',

@@ -1,7 +1,7 @@
 import Immutable from 'immutable';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 
 import {
   AUTH_VOCABS_READ_STARTED,
@@ -20,11 +20,20 @@ import {
 
 const mockStore = configureMockStore([thunk]);
 
-describe('authority action creator', function suite() {
-  describe('readAuthVocabs', function actionSuite() {
+describe('authority action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('readAuthVocabs', () => {
     const store = mockStore({
       authority: Immutable.Map(),
-      // user: Immutable.Map(),
     });
 
     const config = {
@@ -49,27 +58,20 @@ describe('authority action creator', function suite() {
       },
     };
 
-    const readAuthorityUrl = /^\/cspace-services\/.*authorities?/;
+    const readAuthorityUrl = /\/cspace-services\/.*authorities?/;
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch AUTH_VOCABS_READ_FULFILLED on success', function test() {
-      moxios.stubRequest(readAuthorityUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch AUTH_VOCABS_READ_FULFILLED on success', () => {
+      worker.use(
+        rest.get(readAuthorityUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       return store.dispatch(readAuthVocabs(config))
         .then(() => {
@@ -81,34 +83,23 @@ describe('authority action creator', function suite() {
             type: AUTH_VOCABS_READ_STARTED,
           });
 
-          actions[1].should.deep.equal({
-            type: AUTH_VOCABS_READ_FULFILLED,
-            payload: [
-              {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-              {
-                status: 200,
-                statusText: undefined,
-                headers: undefined,
-                data: {},
-              },
-            ],
-            meta: {
-              config,
-            },
-          });
+          actions[1].type.should.equal(AUTH_VOCABS_READ_FULFILLED);
+
+          actions[1].payload.should.have.lengthOf(2);
+
+          actions[1].payload[0].status.should.equal(200);
+          actions[1].payload[0].data.should.deep.equal({});
+          actions[1].payload[1].status.should.equal(200);
+          actions[1].payload[1].data.should.deep.equal({});
+
+          actions[1].meta.config.should.deep.equal(config);
         });
     });
 
-    it('should dispatch AUTH_VOCABS_READ_FULFILLED if there are errors, but they are all 403', function test() {
-      moxios.stubRequest(readAuthorityUrl, {
-        status: 403,
-        response: {},
-      });
+    it('should dispatch AUTH_VOCABS_READ_FULFILLED if there are errors, but they are all 403', () => {
+      worker.use(
+        rest.get(readAuthorityUrl, (req, res, ctx) => res(ctx.status(403))),
+      );
 
       return store.dispatch(readAuthVocabs(config))
         .catch(() => {
@@ -126,11 +117,10 @@ describe('authority action creator', function suite() {
         });
     });
 
-    it('should dispatch AUTH_VOCABS_READ_REJECTED on errors other than 403', function test() {
-      moxios.stubRequest(readAuthorityUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch AUTH_VOCABS_READ_REJECTED on errors other than 403', () => {
+      worker.use(
+        rest.get(readAuthorityUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(readAuthVocabs(config))
         .catch(() => {
@@ -149,13 +139,13 @@ describe('authority action creator', function suite() {
     });
   });
 
-  describe('checkForUses', function actionSuite() {
+  describe('checkForUses', () => {
     const recordType = 'person';
     const recordTypeServicePath = 'personauthorities';
     const vocabulary = 'local';
     const vocabularyServicePath = 'urn:cspace:name(person)';
     const csid = '1234';
-    const checkUrl = `/cspace-services/${recordTypeServicePath}/${vocabularyServicePath}/items/${csid}/refObjs?wf_deleted=false&pgSz=1`;
+    const checkUrl = '/cspace-services/:recordTypeServicePath/:vocabularyServicePath/items/:csid/refObjs';
 
     const config = {
       recordTypes: {
@@ -180,42 +170,60 @@ describe('authority action creator', function suite() {
       return store.dispatch(configureCSpace());
     });
 
-    beforeEach(() => {
-      moxios.install();
-    });
-
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should resolve to true if uses are found for the given authority item', function test() {
+    it('should resolve to true if uses are found for the given authority item', () => {
       const store = mockStore();
 
-      moxios.stubRequest(checkUrl, {
-        status: 200,
-        response: {
-          'ns3:authority-ref-doc-list': {
-            totalItems: '2',
-          },
-        },
-      });
+      worker.use(
+        rest.get(checkUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (
+            params.recordTypeServicePath === recordTypeServicePath
+            && params.vocabularyServicePath === vocabularyServicePath
+            && params.csid === csid
+          ) {
+            return res(ctx.json({
+              'ns3:authority-ref-doc-list': {
+                totalItems: '2',
+              },
+            }));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(checkForUses(config, recordType, vocabulary, csid)).then((result) => {
         result.should.equal(true);
       });
     });
 
-    it('should resolve to false if no uses are found for the authority item', function test() {
+    it('should resolve to false if no uses are found for the authority item', () => {
       const store = mockStore();
 
-      moxios.stubRequest(checkUrl, {
-        status: 200,
-        response: {
-          'ns3:authority-ref-doc-list': {
-            totalItems: '0',
-          },
-        },
-      });
+      worker.use(
+        rest.get(checkUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (
+            params.recordTypeServicePath === recordTypeServicePath
+            && params.vocabularyServicePath === vocabularyServicePath
+            && params.csid === csid
+          ) {
+            return res(ctx.json({
+              'ns3:authority-ref-doc-list': {
+                totalItems: '0',
+              },
+            }));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(checkForUses(config, recordType, vocabulary, csid)).then((result) => {
         result.should.equal(false);

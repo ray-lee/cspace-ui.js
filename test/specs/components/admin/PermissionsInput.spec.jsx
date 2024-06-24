@@ -1,10 +1,10 @@
 import React from 'react';
 import { Simulate } from 'react-dom/test-utils';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import PermissionsInput from '../../../../src/components/admin/PermissionsInput';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 
@@ -52,6 +52,7 @@ const config = {
     },
     movement: {
       name: 'movement',
+      lockable: true,
       messages: {
         record: {
           collectionName: {
@@ -145,7 +146,7 @@ const resourceNames = Immutable.List([
   'relations',
 ]);
 
-describe('PermissionsInput', function suite() {
+describe('PermissionsInput', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -158,7 +159,8 @@ describe('PermissionsInput', function suite() {
             resourceNames={resourceNames}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -177,7 +179,8 @@ describe('PermissionsInput', function suite() {
             readPerms={readPerms}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     readPermsConfig.should.equal(config);
   });
@@ -190,7 +193,8 @@ describe('PermissionsInput', function suite() {
             resourceNames={resourceNames}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelectorAll('input[data-name="collectionobject"][type="radio"]').length.should.equal(4);
     this.container.querySelectorAll('input[data-name="group"][type="radio"]').length.should.equal(4);
@@ -205,7 +209,8 @@ describe('PermissionsInput', function suite() {
             resourceNames={resourceNames}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const authoritySection = this.container.querySelectorAll('section')[2];
     const inputs = authoritySection.querySelectorAll('div > label:first-child > input');
@@ -222,7 +227,8 @@ describe('PermissionsInput', function suite() {
             resourceNames={resourceNames}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const procedureSection = this.container.querySelectorAll('section')[1];
     const inputs = procedureSection.querySelectorAll('div > label:first-child > input');
@@ -246,7 +252,8 @@ describe('PermissionsInput', function suite() {
             value={value}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('input[data-name="collectionobject"][value="RL"]').checked
       .should.equal(true);
@@ -269,7 +276,8 @@ describe('PermissionsInput', function suite() {
             value={value}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('input[data-name="group"][value="CRUDL"]').checked
       .should.equal(true);
@@ -286,7 +294,8 @@ describe('PermissionsInput', function suite() {
             value={value}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('input[data-name="collectionobject"][value="RL"]').checked
       .should.equal(true);
@@ -307,7 +316,8 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input[data-name="collectionobject"][value="RL"]');
 
@@ -337,7 +347,8 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input[data-name="collectionobject"][value="CRUDL"]');
 
@@ -352,7 +363,100 @@ describe('PermissionsInput', function suite() {
     ]));
   });
 
-  context('for relations', function relationSuite() {
+  it('should convert delete permission on a lockable record to CRUDL on the lock workflow', function test() {
+    let committedValue = null;
+
+    const handleCommit = (pathArg, valueArg) => {
+      committedValue = valueArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <PermissionsInput
+            resourceNames={resourceNames}
+            onCommit={handleCommit}
+          />
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const input = this.container.querySelector('input[data-name="movement"][value="CRUDL"]');
+
+    input.checked = 'true';
+
+    Simulate.change(input);
+
+    committedValue.should.equal(Immutable.fromJS([
+      { resourceName: 'movements', actionGroup: 'CRUL' },
+      { resourceName: '/movements/*/workflow/delete', actionGroup: 'CRUDL' },
+      { resourceName: '/movements/*/workflow/lock', actionGroup: 'CRUDL' },
+      { resourceName: 'servicegroups', actionGroup: 'RL' },
+    ]));
+  });
+
+  it('should convert write permission on a lockable record to CRUDL on the lock workflow', function test() {
+    let committedValue = null;
+
+    const handleCommit = (pathArg, valueArg) => {
+      committedValue = valueArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <PermissionsInput
+            resourceNames={resourceNames}
+            onCommit={handleCommit}
+          />
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const input = this.container.querySelector('input[data-name="movement"][value="CRUL"]');
+
+    input.checked = 'true';
+
+    Simulate.change(input);
+
+    committedValue.should.equal(Immutable.fromJS([
+      { resourceName: 'movements', actionGroup: 'CRUL' },
+      { resourceName: '/movements/*/workflow/delete', actionGroup: 'RL' },
+      { resourceName: '/movements/*/workflow/lock', actionGroup: 'CRUDL' },
+      { resourceName: 'servicegroups', actionGroup: 'RL' },
+    ]));
+  });
+
+  it('should convert none permission on a lockable record to no permission on the lock workflow', function test() {
+    let committedValue = null;
+
+    const handleCommit = (pathArg, valueArg) => {
+      committedValue = valueArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <PermissionsInput
+            resourceNames={resourceNames}
+            onCommit={handleCommit}
+          />
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const input = this.container.querySelector('input[data-name="movement"][value=""]');
+
+    input.checked = 'true';
+
+    Simulate.change(input);
+
+    committedValue.should.equal(Immutable.fromJS([
+      { resourceName: 'servicegroups', actionGroup: 'RL' },
+    ]));
+  });
+
+  context('for relations', () => {
     it('should set delete permissions on the resource and the delete workflow when delete is selected', function test() {
       let committedValue = null;
 
@@ -368,7 +472,8 @@ describe('PermissionsInput', function suite() {
               onCommit={handleCommit}
             />
           </ConfigProvider>
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       const input = this.container.querySelector('input[data-name="relation"][value="CRUDL"]');
 
@@ -398,7 +503,8 @@ describe('PermissionsInput', function suite() {
               onCommit={handleCommit}
             />
           </ConfigProvider>
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       const input = this.container.querySelector('input[data-name="relation"][value="RL"]');
 
@@ -428,7 +534,8 @@ describe('PermissionsInput', function suite() {
               onCommit={handleCommit}
             />
           </ConfigProvider>
-        </IntlProvider>, this.container);
+        </IntlProvider>, this.container,
+      );
 
       const input = this.container.querySelector('input[data-name="relation"][value=""]');
 
@@ -457,7 +564,8 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input[data-name="person"][value="CRUL"]');
 
@@ -488,7 +596,8 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input[data-name="authrole"][value="CRUL"]');
 
@@ -524,7 +633,8 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input[data-name="group"][value=""]');
 
@@ -552,18 +662,20 @@ describe('PermissionsInput', function suite() {
             onCommit={handleCommit}
           />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const button = this.container.querySelector('button[data-servicetype="procedure"][data-actiongroup="RL"]');
 
     Simulate.click(button);
 
     committedValue
-      .sortBy(perm => perm.get('resourceName'))
+      .sortBy((perm) => perm.get('resourceName'))
       .should.equal(Immutable.fromJS([
         { resourceName: '/groups/*/workflow/delete', actionGroup: 'RL' },
         { resourceName: '/loansin/*/workflow/delete', actionGroup: 'RL' },
         { resourceName: '/movements/*/workflow/delete', actionGroup: 'RL' },
+        { resourceName: '/movements/*/workflow/lock', actionGroup: 'RL' },
         { resourceName: 'groups', actionGroup: 'RL' },
         { resourceName: 'loansin', actionGroup: 'RL' },
         { resourceName: 'movements', actionGroup: 'RL' },

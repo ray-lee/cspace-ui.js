@@ -12,17 +12,24 @@
   align-items: top;
 }
 
-.normal > div {
-  padding-top: 2px;
-  width: 80px;
+.normal > div > span {
+  line-height: 24px;
 }
 
-.normal > div:first-child {
-  width: 220px;
-  margin-right: 10px;
+.normal > *:nth-child(1) {
+  flex: 0 1 auto;
+  width: 240px;
+  margin-right: 4px;
 }
 
-.normal > div:last-child {
+.normal > *:nth-child(2) {
+  flex: 0 1 auto;
+  width: 140px;
+  margin-right: 4px;
+}
+
+.normal > *:nth-child(3) {
+  flex: 1 1 auto;
   padding-top: 0;
   width: 440px;
 }
@@ -31,15 +38,16 @@
 .normal > div > :global(.cspace-input-DropdownInput--common),
 .normal > div > :global(.cspace-input-RepeatingInput--common) {
   display: inline-block;
-  width: 300px;
+  width: 100%;
+  max-width: 280px;
 }
 
 .inline {
   composes: common;
   display: inline;
-  border: 1px solid rgb(220, 220, 220);
-  padding: 0 4px;
-  background: white;
+  /* border: 1px solid rgb(220, 220, 220); */
+  /* padding: 0 4px; */
+  padding: 0;
   white-space: nowrap;
 }
 
@@ -50,4 +58,6 @@
 .inline :global(.cspace-input-Input--common) {
   width: auto;
   border: none;
+  padding: 0;
+  font-style: italic;
 }

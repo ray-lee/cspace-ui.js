@@ -4,13 +4,13 @@ export default (configContext) => {
   const {
     AutocompleteInput,
     CompoundInput,
-    DateInput,
     IDGeneratorInput,
     TextInput,
     OptionPickerInput,
     StructuredDateInput,
     TermPickerInput,
     URLInput,
+    DateInput,
   } = configContext.inputComponents;
 
   const {
@@ -22,8 +22,13 @@ export default (configContext) => {
   } = configContext.config;
 
   const {
+    DATA_TYPE_DATE,
     DATA_TYPE_STRUCTURED_DATE,
   } = configContext.dataTypes;
+
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
 
   return {
     document: {
@@ -46,6 +51,10 @@ export default (configContext) => {
           [config]: {
             cloneable: false,
             messages: defineMessages({
+              inUse: {
+                id: 'field.media_common.identificationNumber.inUse',
+                defaultMessage: 'The identification number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.media_common.identificationNumber.name',
                 defaultMessage: 'Identification number',
@@ -55,6 +64,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'media_common:identificationNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -263,9 +277,6 @@ export default (configContext) => {
                 },
               }),
               repeating: true,
-              searchView: {
-                type: DateInput,
-              },
               view: {
                 type: StructuredDateInput,
               },
@@ -335,6 +346,125 @@ export default (configContext) => {
               type: TextInput,
               props: {
                 multiline: true,
+              },
+            },
+          },
+        },
+        publishToList: {
+          [config]: {
+            view: {
+              type: CompoundInput,
+            },
+          },
+          publishTo: {
+            [config]: {
+              messages: defineMessages({
+                name: {
+                  id: 'field.media_common.publishTo.name',
+                  defaultMessage: 'Publish to',
+                },
+              }),
+              repeating: true,
+              view: {
+                type: TermPickerInput,
+                props: {
+                  source: 'publishto',
+                },
+              },
+            },
+          },
+        },
+        altText: {
+          [config]: {
+            messages: defineMessages({
+              name: {
+                id: 'field.media_common.altText.name',
+                defaultMessage: 'Alt text',
+              },
+            }),
+            view: {
+              type: TextInput,
+              props: {
+                multiline: true,
+              },
+            },
+          },
+        },
+        checksumGroupList: {
+          [config]: {
+            view: {
+              type: CompoundInput,
+            },
+          },
+          checksumGroup: {
+            [config]: {
+              messages: defineMessages({
+                name: {
+                  id: 'field.media_common.checksumGroup.name',
+                  defaultMessage: 'Checksum',
+                },
+              }),
+              repeating: true,
+              view: {
+                type: CompoundInput,
+                props: {
+                  tabular: true,
+                },
+              },
+            },
+            checksumValue: {
+              [config]: {
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.media_common.checksumValue.fullName',
+                    defaultMessage: 'Checksum value',
+                  },
+                  name: {
+                    id: 'field.media_common.checksumValue.name',
+                    defaultMessage: 'Value',
+                  },
+                }),
+                view: {
+                  type: TextInput,
+                },
+              },
+            },
+            checksumType: {
+              [config]: {
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.media_common.checksumType.fullName',
+                    defaultMessage: 'Checksum type',
+                  },
+                  name: {
+                    id: 'field.media_common.checksumType.name',
+                    defaultMessage: 'Type',
+                  },
+                }),
+                view: {
+                  type: TermPickerInput,
+                  props: {
+                    source: 'checksumtypes',
+                  },
+                },
+              },
+            },
+            checksumDate: {
+              [config]: {
+                dataType: DATA_TYPE_DATE,
+                messages: defineMessages({
+                  fullName: {
+                    id: 'field.media_common.checksumDate.fullName',
+                    defaultMessage: 'Checksum date',
+                  },
+                  name: {
+                    id: 'field.media_common.checksumDate.name',
+                    defaultMessage: 'Date',
+                  },
+                }),
+                view: {
+                  type: DateInput,
+                },
               },
             },
           },

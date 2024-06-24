@@ -1,4 +1,4 @@
-import getSession from './cspace';
+import getSession from '../helpers/session';
 import { loadPrefs, savePrefs } from './prefs';
 
 import {
@@ -13,8 +13,8 @@ export const logout = () => (dispatch) => {
 
   dispatch(savePrefs());
 
-  return getSession().logout()
-    .then(response => dispatch({
+  return getSession().logout(false)
+    .then((response) => dispatch({
       type: LOGOUT_FULFILLED,
       payload: response,
     }))

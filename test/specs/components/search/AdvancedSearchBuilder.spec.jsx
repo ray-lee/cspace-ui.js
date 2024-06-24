@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { render } from 'react-dom';
+import { Simulate } from 'react-dom/test-utils';
 import { Provider as StoreProvider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
@@ -10,35 +11,48 @@ import { configKey } from '../../../../src/helpers/configHelpers';
 import AdvancedSearchBuilder from '../../../../src/components/search/AdvancedSearchBuilder';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
 import {
   OP_AND,
   OP_CONTAIN,
+  OP_GROUP,
   OP_OR,
   OP_EQ,
-  OP_LTE,
-  OP_GTE,
+  OP_GT,
   OP_RANGE,
 } from '../../../../src/constants/searchOperators';
 
 chai.use(chaiImmutable);
 chai.should();
 
-const mockStore = configureMockStore();
+const mockStore = configureMockStore([thunk]);
 
 const store = mockStore({
+  optionList: Immutable.Map(),
   prefs: Immutable.Map({
     panels: {},
   }),
 });
 
-const TestInput = props => (
-  <input
-    name={props.name}
-    defaultValue={props.value}
-    onBlur={event => props.onCommit([...props.parentPath, props.name], event.target.value)}
-  />
-);
+const TestInput = (props) => {
+  const {
+    name,
+    parentPath,
+    value,
+    onCommit,
+  } = props;
+
+  return (
+    <input
+      name={name}
+      defaultValue={value}
+      onBlur={
+        (event) => onCommit([...parentPath, name], event.target.value)
+      }
+    />
+  );
+};
 
 TestInput.propTypes = {
   parentPath: PropTypes.arrayOf(PropTypes.string),
@@ -118,12 +132,12 @@ const config = {
   },
 };
 
-describe('AdvancedSearchBuilder', function suite() {
+describe('AdvancedSearchBuilder', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
 
-  it('should render as a Panel', function test() {
+  it('should render as a Panel when inline is false', function test() {
     const condition = Immutable.fromJS({
       op: OP_AND,
       value: [],
@@ -140,87 +154,17 @@ describe('AdvancedSearchBuilder', function suite() {
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    this.container.firstElementChild.className.should.match(/cspace-layout-Panel--common/);
+    this.container.firstElementChild.className.should
+      .match(/cspace-layout-Panel--common/);
   });
 
-  it('should call onConditionCommit when mounted', function test() {
-    let committedCondition = null;
-
-    const handleConditionCommit = (conditionArg) => {
-      committedCondition = conditionArg;
-    };
-
-    render(
-      <IntlProvider locale="en">
-        <ConfigProvider config={config}>
-          <StoreProvider store={store}>
-            <AdvancedSearchBuilder
-              config={config}
-              recordType="collectionobject"
-              onConditionCommit={handleConditionCommit}
-            />
-          </StoreProvider>
-        </ConfigProvider>
-      </IntlProvider>, this.container);
-
-    committedCondition.should
-      .equal(Immutable.fromJS(config.recordTypes.collectionobject.advancedSearch));
-  });
-
-  it('should call onConditionCommit when updated', function test() {
-    let committedCondition = null;
-
-    const handleConditionCommit = (conditionArg) => {
-      committedCondition = conditionArg;
-    };
-
-    render(
-      <IntlProvider locale="en">
-        <ConfigProvider config={config}>
-          <StoreProvider store={store}>
-            <AdvancedSearchBuilder
-              config={config}
-              recordType="collectionobject"
-            />
-          </StoreProvider>
-        </ConfigProvider>
-      </IntlProvider>, this.container);
-
-    render(
-      <IntlProvider locale="en">
-        <ConfigProvider config={config}>
-          <StoreProvider store={store}>
-            <AdvancedSearchBuilder
-              config={config}
-              recordType="collectionobject"
-              onConditionCommit={handleConditionCommit}
-            />
-          </StoreProvider>
-        </ConfigProvider>
-      </IntlProvider>, this.container);
-
-    committedCondition.should
-      .equal(Immutable.fromJS(config.recordTypes.collectionobject.advancedSearch));
-  });
-
-  it('should set the top-level op to the preferred boolean op if it is a different boolean op', function test() {
-    let committedCondition = null;
-
-    const handleConditionCommit = (conditionArg) => {
-      committedCondition = conditionArg;
-    };
-
+  it('should render as a condition input inline is true', function test() {
     const condition = Immutable.fromJS({
       op: OP_AND,
-      value: [
-        {
-          op: OP_EQ,
-          path: 'ns2:collectionobjects_common/objectNumber',
-          value: 'hello',
-        },
-      ],
+      value: [],
     });
 
     render(
@@ -230,75 +174,82 @@ describe('AdvancedSearchBuilder', function suite() {
             <AdvancedSearchBuilder
               condition={condition}
               config={config}
+              inline
               recordType="collectionobject"
-              preferredBooleanOp={OP_OR}
-              onConditionCommit={handleConditionCommit}
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    committedCondition.get('op').should.equal(OP_OR);
+    this.container.firstElementChild.className.should
+      .match(/cspace-ui-BooleanConditionInput--common/);
   });
 
-  it('should merge the condition into the default condition for the record type', function test() {
+  it('should normalize the condition when mounted if onConditionCommit is supplied', function test() {
     let committedCondition = null;
 
     const handleConditionCommit = (conditionArg) => {
       committedCondition = conditionArg;
     };
 
-    const condition = Immutable.fromJS({
-      op: OP_AND,
-      value: [
-        {
-          op: OP_EQ,
-          path: 'ns2:collectionobjects_common/objectNumber',
-          value: 'hello',
-        },
-      ],
-    });
-
     render(
       <IntlProvider locale="en">
         <ConfigProvider config={config}>
           <StoreProvider store={store}>
             <AdvancedSearchBuilder
-              condition={condition}
               config={config}
               recordType="collectionobject"
               onConditionCommit={handleConditionCommit}
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     committedCondition.should
-      .equal(Immutable.fromJS({
-        op: OP_AND,
-        value: [
-          {
-            op: OP_EQ,
-            path: 'ns2:collectionobjects_common/objectNumber',
-            value: 'hello',
-          },
-          {
-            op: OP_CONTAIN,
-            path: 'ns2:collectionobjects_common/objectNumber',
-          },
-          {
-            op: OP_EQ,
-            path: 'ns2:collectionobjects_common/foo',
-          },
-          {
-            op: OP_RANGE,
-            path: 'ns2:collectionobjects_common/bar',
-          },
-        ],
-      }));
+      .equal(Immutable.fromJS(config.recordTypes.collectionobject.advancedSearch));
   });
 
-  it('should merge a non-boolean condition into the child conditions of the default condition, and set the top-level op to the preferred boolean op', function test() {
+  it('should normalize the condition when updated if onConditionCommit is supplied', function test() {
+    let committedCondition = null;
+
+    const handleConditionCommit = (conditionArg) => {
+      committedCondition = conditionArg;
+    };
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <StoreProvider store={store}>
+            <AdvancedSearchBuilder
+              config={config}
+              recordType="collectionobject"
+            />
+          </StoreProvider>
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <StoreProvider store={store}>
+            <AdvancedSearchBuilder
+              config={config}
+              recordType="collectionobject"
+              onConditionCommit={handleConditionCommit}
+            />
+          </StoreProvider>
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    committedCondition.should
+      .equal(Immutable.fromJS(config.recordTypes.collectionobject.advancedSearch));
+  });
+
+  it('should normalize a non-boolean operation by wrapping it with the preferred boolean operation', function test() {
     let committedCondition = null;
 
     const handleConditionCommit = (conditionArg) => {
@@ -318,13 +269,14 @@ describe('AdvancedSearchBuilder', function suite() {
             <AdvancedSearchBuilder
               condition={condition}
               config={config}
-              recordType="collectionobject"
               preferredBooleanOp={OP_AND}
+              recordType="collectionobject"
               onConditionCommit={handleConditionCommit}
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     committedCondition.should
       .equal(Immutable.fromJS({
@@ -335,34 +287,18 @@ describe('AdvancedSearchBuilder', function suite() {
             path: 'ns2:collectionobjects_common/objectNumber',
             value: 'hello',
           },
-          {
-            op: OP_CONTAIN,
-            path: 'ns2:collectionobjects_common/objectNumber',
-          },
-          {
-            op: OP_EQ,
-            path: 'ns2:collectionobjects_common/foo',
-          },
-          {
-            op: OP_RANGE,
-            path: 'ns2:collectionobjects_common/bar',
-          },
         ],
       }));
   });
 
-  it('should merge <= operations into range operations', function test() {
+  it('should normalize an undefined condition to the default condition, and set the top-level boolean operator to the preferred boolean operator', function test() {
     let committedCondition = null;
 
     const handleConditionCommit = (conditionArg) => {
       committedCondition = conditionArg;
     };
 
-    const condition = Immutable.fromJS({
-      op: OP_LTE,
-      path: 'ns2:collectionobjects_common/bar',
-      value: 'abc',
-    });
+    const condition = undefined;
 
     render(
       <IntlProvider locale="en">
@@ -372,15 +308,17 @@ describe('AdvancedSearchBuilder', function suite() {
               condition={condition}
               config={config}
               recordType="collectionobject"
+              preferredBooleanOp={OP_AND}
               onConditionCommit={handleConditionCommit}
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     committedCondition.should
       .equal(Immutable.fromJS({
-        op: OP_OR,
+        op: OP_AND,
         value: [
           {
             op: OP_EQ,
@@ -397,23 +335,16 @@ describe('AdvancedSearchBuilder', function suite() {
           {
             op: OP_RANGE,
             path: 'ns2:collectionobjects_common/bar',
-            value: [undefined, 'abc'],
           },
         ],
       }));
   });
 
-  it('should merge >= operations into range operations', function test() {
-    let committedCondition = null;
-
-    const handleConditionCommit = (conditionArg) => {
-      committedCondition = conditionArg;
-    };
-
+  it('should render a field condition as a FieldConditionInput if onConditionCommit is not supplied', function test() {
     const condition = Immutable.fromJS({
-      op: OP_GTE,
-      path: 'ns2:collectionobjects_common/bar',
-      value: 'abc',
+      op: OP_EQ,
+      path: 'ns2:collectionobjects_common/titleGroupList/titleGroup',
+      value: 'value',
     });
 
     render(
@@ -424,32 +355,92 @@ describe('AdvancedSearchBuilder', function suite() {
               condition={condition}
               config={config}
               recordType="collectionobject"
+              preferredBooleanOp={OP_AND}
+            />
+          </StoreProvider>
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    this.container.querySelector('.cspace-ui-FieldConditionInput--common').should.not.equal(null);
+  });
+
+  it('should render a group condition as a GroupConditionInput if onConditionCommit is not supplied', function test() {
+    const condition = Immutable.fromJS({
+      op: OP_GROUP,
+      path: 'ns2:collectionobjects_common/titleGroupList/titleGroup',
+      value: {
+        op: OP_AND,
+        value: [],
+      },
+    });
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <StoreProvider store={store}>
+            <AdvancedSearchBuilder
+              condition={condition}
+              config={config}
+              recordType="collectionobject"
+              preferredBooleanOp={OP_AND}
+            />
+          </StoreProvider>
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    this.container.querySelector('.cspace-ui-GroupConditionInput--common').should.not.equal(null);
+  });
+
+  it('should call onConditionCommit when a search condition input is committed', function test() {
+    let committedCondition = null;
+
+    const handleConditionCommit = (conditionArg) => {
+      committedCondition = conditionArg;
+    };
+
+    const condition = Immutable.fromJS({
+      op: OP_AND,
+      value: [
+        {
+          op: OP_GT,
+          path: 'ns2:collectionobjects_common/objectNumber',
+        },
+      ],
+    });
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <StoreProvider store={store}>
+            <AdvancedSearchBuilder
+              condition={condition}
+              config={config}
+              preferredBooleanOp={OP_AND}
+              recordType="collectionobject"
               onConditionCommit={handleConditionCommit}
             />
           </StoreProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
+
+    const input = this.container.querySelector('input[name="objectNumber"]');
+
+    input.value = 'new val';
+
+    Simulate.change(input);
+    Simulate.blur(input);
 
     committedCondition.should
       .equal(Immutable.fromJS({
-        op: OP_OR,
+        op: OP_AND,
         value: [
           {
-            op: OP_EQ,
+            op: OP_GT,
             path: 'ns2:collectionobjects_common/objectNumber',
-          },
-          {
-            op: OP_CONTAIN,
-            path: 'ns2:collectionobjects_common/objectNumber',
-          },
-          {
-            op: OP_EQ,
-            path: 'ns2:collectionobjects_common/foo',
-          },
-          {
-            op: OP_RANGE,
-            path: 'ns2:collectionobjects_common/bar',
-            value: ['abc'],
+            value: 'new val',
           },
         ],
       }));

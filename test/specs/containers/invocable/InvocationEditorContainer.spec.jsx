@@ -3,6 +3,7 @@ import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
 import thunk from 'redux-thunk';
+import { findWithType } from 'react-shallow-testutils';
 import InvocationEditor from '../../../../src/components/invocable/InvocationEditor';
 import InvocationEditorContainer from '../../../../src/containers/invocable/InvocationEditorContainer';
 
@@ -14,7 +15,7 @@ import {
   CREATE_NEW_RECORD,
 } from '../../../../src/constants/actionCodes';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
@@ -34,34 +35,29 @@ const store = mockStore({
   }),
 });
 
-const context = {
-  store,
-};
-
-describe('InvocationEditorContainer', function suite() {
-  before(() =>
-    store.dispatch(configureCSpace())
-      .then(() => store.clearActions())
-  );
+describe('InvocationEditorContainer', () => {
+  before(() => store.dispatch(configureCSpace())
+    .then(() => store.clearActions()));
 
   afterEach(() => {
     store.clearActions();
   });
 
-  it('should set props on InvocationEditor', function test() {
+  it('should set props on InvocationEditor', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
-      <InvocationEditorContainer />, context);
+      <InvocationEditorContainer store={store} />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, InvocationEditor);
 
-    result.type.should.equal(InvocationEditor);
-    result.props.should.have.property('paramData', paramData);
-    result.props.should.have.property('createNewRecord').that.is.a('function');
+    editor.props.should.have.property('paramData', paramData);
+    editor.props.should.have.property('createNewRecord').that.is.a('function');
   });
 
-  it('should connect createNewRecord to createNewRecord action creator', function test() {
+  it('should connect createNewRecord to createNewRecord action creator', () => {
     const reportName = 'testReport';
 
     const reportRecordTypeConfig = {
@@ -76,7 +72,7 @@ describe('InvocationEditorContainer', function suite() {
       },
       recordTypes: {
         report: {
-          invocableName: data => data.getIn(['document', 'ns2:reports_common', 'filename']),
+          invocableName: (data) => data.getIn(['document', 'ns2:reports_common', 'filename']),
         },
       },
     };
@@ -93,14 +89,17 @@ describe('InvocationEditorContainer', function suite() {
 
     shallowRenderer.render(
       <InvocationEditorContainer
+        store={store}
         config={config}
         metadata={metadata}
         recordType="report"
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, InvocationEditor);
 
-    return result.props.createNewRecord()
+    return editor.props.createNewRecord()
       .then(() => {
         const action = store.getActions()[0];
         action.should.have.property('type', CREATE_NEW_RECORD);
@@ -111,7 +110,7 @@ describe('InvocationEditorContainer', function suite() {
       });
   });
 
-  it('should connect createNewRecord to a no-op if there is no field config for the invocable', function test() {
+  it('should connect createNewRecord to a no-op if there is no field config for the invocable', () => {
     const reportName = 'testReport';
 
     const config = {
@@ -120,7 +119,7 @@ describe('InvocationEditorContainer', function suite() {
       },
       recordTypes: {
         report: {
-          invocableName: data => data.getIn(['document', 'ns2:reports_common', 'filename']),
+          invocableName: (data) => data.getIn(['document', 'ns2:reports_common', 'filename']),
         },
       },
     };
@@ -137,13 +136,16 @@ describe('InvocationEditorContainer', function suite() {
 
     shallowRenderer.render(
       <InvocationEditorContainer
+        store={store}
         config={config}
         metadata={metadata}
         recordType="report"
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, InvocationEditor);
 
-    expect(result.props.createNewRecord()).to.equal(undefined);
+    expect(editor.props.createNewRecord()).to.equal(undefined);
   });
 });

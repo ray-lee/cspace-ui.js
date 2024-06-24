@@ -112,7 +112,7 @@ export default class SearchField extends Component {
     } = this.props;
 
     if (readOnly) {
-      return (orderNumber > 1 ? <div>/</div> : null);
+      return (orderNumber > 1 ? <div>, </div> : null);
     }
 
     return (
@@ -150,6 +150,8 @@ export default class SearchField extends Component {
         value={value}
         viewType="search"
         onCommit={this.handleCommit}
+        // Do not allow multiline text fields.
+        multiline={false}
         // Do not disable options in menus.
         ignoreDisabledOptions
         // Do not show quick add on autocomplete inputs.

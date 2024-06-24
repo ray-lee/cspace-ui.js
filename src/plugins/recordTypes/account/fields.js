@@ -1,7 +1,8 @@
 import { defineMessages } from 'react-intl';
 import Immutable from 'immutable';
 import { isExistingRecord, isNewRecord } from '../../../helpers/recordDataHelpers';
-import { isValidEmail, isValidPassword } from '../../../helpers/validationHelpers';
+import { isValidPassword } from '../../../helpers/passwordHelpers';
+import { isValidEmail } from '../../../helpers/validationHelpers';
 
 import {
   ERR_INVALID_EMAIL,
@@ -9,8 +10,17 @@ import {
   ERR_PW_NOT_CONFIRMED,
 } from '../../../constants/errorCodes';
 
+const isMetadataImmutable = ({ recordData }) => (
+  recordData.getIn(['ns2:accounts_common', 'metadataProtection']) === 'immutable'
+);
+
+const areRolesImmutable = ({ recordData }) => (
+  recordData.getIn(['ns2:accounts_common', 'rolesProtection']) === 'immutable'
+);
+
 export default (configContext) => {
   const {
+    CheckboxInput,
     CompoundInput,
     OptionPickerInput,
     RolesInput,
@@ -21,6 +31,10 @@ export default (configContext) => {
   const {
     configKey: config,
   } = configContext.configHelpers;
+
+  const {
+    DATA_TYPE_BOOL,
+  } = configContext.dataTypes;
 
   return {
     'ns2:accounts_common': {
@@ -92,6 +106,7 @@ export default (configContext) => {
             props: {
               // Suppress Chrome autofill
               autoComplete: 'cspace-name',
+              readOnly: isMetadataImmutable,
             },
           },
         },
@@ -127,6 +142,26 @@ export default (configContext) => {
             props: {
               // Suppress Chrome autofill
               autoComplete: 'cspace-email',
+              readOnly: isMetadataImmutable,
+            },
+          },
+        },
+      },
+      requireSSO: {
+        [config]: {
+          cloneable: false,
+          dataType: DATA_TYPE_BOOL,
+          defaultValue: false,
+          messages: defineMessages({
+            name: {
+              id: 'field.accounts_common.requireSSO.name',
+              defaultMessage: 'Require single sign-on (if available)',
+            },
+          }),
+          view: {
+            type: CheckboxInput,
+            props: {
+              readOnly: isMetadataImmutable,
             },
           },
         },
@@ -145,7 +180,10 @@ export default (configContext) => {
               defaultMessage: 'Password',
             },
           }),
-          required: ({ recordData }) => isNewRecord(recordData),
+          required: ({ recordData }) => (
+            isNewRecord(recordData)
+            && recordData.getIn(['ns2:accounts_common', 'requireSSO']) === false
+          ),
           validate: ({ data, fieldDescriptor }) => {
             if (data && !isValidPassword(data)) {
               return {
@@ -160,6 +198,7 @@ export default (configContext) => {
             type: PasswordInput,
             props: {
               autoComplete: 'new-password',
+              readOnly: isMetadataImmutable,
             },
           },
         },
@@ -173,11 +212,15 @@ export default (configContext) => {
               defaultMessage: 'Confirm password',
             },
           }),
-          required: ({ recordData }) => isNewRecord(recordData),
+          required: ({ recordData }) => (
+            isNewRecord(recordData)
+            && recordData.getIn(['ns2:accounts_common', 'requireSSO']) === false
+          ),
           view: {
             type: PasswordInput,
             props: {
               autoComplete: 'new-password',
+              readOnly: isMetadataImmutable,
             },
           },
         },
@@ -195,6 +238,7 @@ export default (configContext) => {
           view: {
             type: OptionPickerInput,
             props: {
+              readOnly: isMetadataImmutable,
               source: 'accountStatuses',
             },
           },
@@ -219,7 +263,6 @@ export default (configContext) => {
               defaultMessage: 'User ID',
             },
           }),
-          readOnly: true,
           view: {
             type: TextInput,
             props: {
@@ -245,6 +288,9 @@ export default (configContext) => {
             }),
             view: {
               type: RolesInput,
+              props: {
+                readOnly: areRolesImmutable,
+              },
             },
           },
         },

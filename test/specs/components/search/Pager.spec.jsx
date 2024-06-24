@@ -1,10 +1,11 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { IntlProvider } from 'react-intl';
 import configureMockStore from 'redux-mock-store';
 import { Simulate } from 'react-dom/test-utils';
 import { Provider as StoreProvider } from 'react-redux';
+import Immutable from 'immutable';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import Pager from '../../../../src/components/search/Pager';
 
 chai.should();
@@ -12,13 +13,13 @@ chai.should();
 const mockStore = configureMockStore();
 
 const store = mockStore({
-  optionList: {
+  optionList: Immutable.Map({
     searchResultPagePageSizes: [
       { value: '10' },
       { value: '20' },
       { value: '40' },
     ],
-  },
+  }),
 });
 
 const getPages = (container) => {
@@ -32,7 +33,7 @@ const getPages = (container) => {
   return pages;
 };
 
-describe('Pager', function suite() {
+describe('Pager', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -43,7 +44,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={0} lastPage={9} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -54,7 +56,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={10} lastPage={19} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '9', '10', '11', '12', '13', '...', '20']);
@@ -64,7 +67,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={10} lastPage={19} windowSize={3} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '10', '11', '12', '...', '20']);
@@ -76,7 +80,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={0} lastPage={19} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '2', '3', '4', '5', '...', '20']);
@@ -86,7 +91,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={3} lastPage={19} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '2', '3', '4', '5', '6', '...', '20']);
@@ -96,7 +102,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={19} lastPage={19} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '16', '17', '18', '19', '20']);
@@ -106,7 +113,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={16} lastPage={19} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '15', '16', '17', '18', '19', '20']);
@@ -118,7 +126,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={10} lastPage={47} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '9', '10', '11', '12', '13', '...', '48']);
@@ -130,7 +139,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={33} lastPage={99} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '32', '33', '34', '35', '36', '...', '100']);
@@ -142,7 +152,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={8} lastPage={24} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '7', '8', '9', '10', '11', '...', '25']);
@@ -154,7 +165,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={4} lastPage={24} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '2', '3', '4', '5', '6', '7', '...', '25']);
@@ -166,7 +178,8 @@ describe('Pager', function suite() {
         <StoreProvider store={store}>
           <Pager currentPage={20} lastPage={24} windowSize={5} pageSize={10} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '19', '20', '21', '22', '23', '24', '25']);
@@ -190,7 +203,8 @@ describe('Pager', function suite() {
             onPageChange={handlePageChange}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '9', '10', '11', '12', '13', '...', '20']);
@@ -221,7 +235,8 @@ describe('Pager', function suite() {
             onPageChange={handlePageChange}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '9', '10', '11', '12', '13', '...', '20']);
@@ -251,7 +266,8 @@ describe('Pager', function suite() {
             onPageChange={handlePageChange}
           />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     getPages(this.container).should
       .deep.equal(['1', '...', '9', '10', '11', '12', '13', '...', '20']);

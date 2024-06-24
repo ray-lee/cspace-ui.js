@@ -3,14 +3,14 @@ To publish package to npmjs.com, use instructions here: https://docs.npmjs.com/c
 # cspace-ui
 
 [![npm package](https://img.shields.io/npm/v/cspace-ui.svg)](https://www.npmjs.com/package/cspace-ui)
-[![build status](https://travis-ci.org/collectionspace/cspace-ui.js.svg?branch=master)](https://travis-ci.org/collectionspace/cspace-ui.js)
-[![coverage status](https://coveralls.io/repos/github/collectionspace/cspace-ui.js/badge.svg?branch=master)](https://coveralls.io/github/collectionspace/cspace-ui.js?branch=master)
+[![continuous integration](https://github.com/collectionspace/cspace-ui.js/actions/workflows/ci-js.yml/badge.svg?branch=master&event=push)](https://github.com/collectionspace/cspace-ui.js/actions/workflows/ci-js.yml)
+[![codecov](https://codecov.io/gh/collectionspace/cspace-ui.js/branch/master/graph/badge.svg?token=rQ8jLRZlXs)](https://app.codecov.io/gh/collectionspace/cspace-ui.js)
 
 The CollectionSpace user interface for web browsers.
 
 Release 5.0 or later of the CollectionSpace server is required. This application is not compatible with releases 4.5 and earlier.
 
-Release 5.1 or later of the CollectionSpace server is recommended. See the [release notes](https://github.com/collectionspace/cspace-ui.js/tree/master/RELEASE_NOTES.md) to use this application with earlier releases.
+Release 8.0 or later of the CollectionSpace server is recommended. See the [release notes](https://github.com/collectionspace/cspace-ui.js/tree/master/RELEASE_NOTES.md) to use this application with earlier releases.
 
 ## Installation
 
@@ -20,7 +20,7 @@ The CollectionSpace UI is a JavaScript application that runs in a web browser. S
 
 ### For CollectionSpace Developers
 
-[Node.js](https://nodejs.org/) 8 and npm 5 are required to build the application.
+[Node.js](https://nodejs.org/) 20 and npm 10 are recommended to build the application. A minimum of Node.js 18 and npm 9 are required.
 
 To download and install the source code of the application for development:
 
@@ -30,8 +30,27 @@ $ cd cspace-ui.js
 $ npm install
 ```
 
+To run the application in development, using a remote back-end CollectionSpace server:
+
+```
+$ npm run devserver --back-end=https://core.dev.collectionspace.org
+```
+
+Then open a browser to http://localhost:8080.
+
+Alternatively, to run the application in development, using the UI configuration in index.html:
+
+```
+$ npm run devserver
+```
+
+By default, the configuration in index.html uses the CollectionSpace services API located at
+http://localhost:8180. To run the application against CollectionSpace services located on a
+different host, edit index.html, and change the `serverUrl` configuration property. Note that the
+specified server must be configured to allow CORS requests from http://localhost:8080.
+
 See the [developer documentation](https://github.com/collectionspace/cspace-ui.js/tree/master/docs/developer) for instructions on building, testing, and running the source code.
 
 ## About CollectionSpace
 
-[CollectionSpace](http://www.collectionspace.org/) is a free, open-source collections management application for museums, historical societies, natural science collections, and more.
+[CollectionSpace](http://www.collectionspace.org/) is a community-supported collections management application for museums, historical societies, natural science collections, and more.

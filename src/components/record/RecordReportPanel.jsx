@@ -1,5 +1,3 @@
-/* global window */
-
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Immutable from 'immutable';
@@ -21,20 +19,58 @@ const messages = defineMessages({
 const getSearchDescriptor = (config, recordType) => {
   const objectName = get(config, ['recordTypes', recordType, 'serviceConfig', 'objectName']);
 
+  let searchParams;
+
+  if (recordType === 'group') {
+    searchParams = {
+      as: {
+        op: 'or',
+        value: [
+          {
+            op: 'eq',
+            path: 'ns2:reports_common/supportsGroup',
+            value: true,
+          },
+          {
+            op: 'and',
+            value: [
+              {
+                op: 'eq',
+                path: 'ns2:reports_common/forDocTypes/forDocType',
+                value: objectName,
+              },
+              {
+                op: 'eq',
+                path: 'ns2:reports_common/supportsSingleDoc',
+                value: true,
+              },
+            ],
+          },
+        ],
+      },
+    };
+  } else {
+    searchParams = {
+      doctype: objectName,
+      mode: 'single',
+    };
+  }
+
   return Immutable.fromJS({
     recordType: 'report',
     searchQuery: {
       p: 0,
-      size: 5,
-      doctype: objectName,
-      mode: (recordType === 'group' ? ['single', 'group'] : 'single'),
+      size: config.defaultSearchPanelSize || 5,
+      ...searchParams,
     },
   });
 };
 
 const propTypes = {
   color: PropTypes.string,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
   isRecordModified: PropTypes.bool,
   perms: PropTypes.instanceOf(Immutable.Map),
@@ -42,6 +78,8 @@ const propTypes = {
   recordType: PropTypes.string,
   openReport: PropTypes.func,
 };
+
+const invocationType = 'reportinvocation';
 
 export default class RecordReportPanel extends Component {
   constructor(props) {
@@ -63,7 +101,8 @@ export default class RecordReportPanel extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       recordType,
     } = this.props;
@@ -145,11 +184,29 @@ export default class RecordReportPanel extends Component {
       return null;
     }
 
-    if (!canList('report', perms)) {
+    if (!canList(invocationType, perms)) {
       return null;
     }
 
-    const canRun = canCreate('report', perms);
+    const canRun = canCreate(invocationType, perms);
+
+    let getAllowedModes;
+
+    if (recordType === 'group') {
+      // If we're on a group record, limit the modes that can be used to run the report:
+      // - group mode is allowed
+      // - single mode is only allowed if the report is registered to run on group records
+
+      getAllowedModes = (supportedRecordTypes) => {
+        const allowedModes = ['group'];
+
+        if (supportedRecordTypes && supportedRecordTypes.includes(recordType)) {
+          allowedModes.push('single');
+        }
+
+        return allowedModes;
+      };
+    }
 
     return (
       <div>
@@ -167,7 +224,7 @@ export default class RecordReportPanel extends Component {
           onSearchDescriptorChange={this.handleSearchDescriptorChange}
         />
         <InvocationModalContainer
-          allowedModes={recordType === 'group' ? ['group', 'single'] : undefined}
+          allowedModes={getAllowedModes}
           config={config}
           csid={selectedItem && selectedItem.get('csid')}
           initialInvocationDescriptor={Immutable.Map({

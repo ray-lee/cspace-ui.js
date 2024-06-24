@@ -1,9 +1,9 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import { IntlProvider } from 'react-intl';
 
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
 import NavBar from '../../../../src/components/navigation/NavBar';
 
@@ -11,7 +11,7 @@ chai.should();
 
 const expectedClassName = 'cspace-ui-NavBar--common';
 
-describe('NavBar', function suite() {
+describe('NavBar', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -22,7 +22,8 @@ describe('NavBar', function suite() {
         <Router>
           <NavBar />
         </Router>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('NAV');
   });
@@ -33,7 +34,8 @@ describe('NavBar', function suite() {
         <Router>
           <NavBar />
         </Router>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.className.should.equal(expectedClassName);
   });

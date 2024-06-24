@@ -7,6 +7,7 @@ const template = (configContext) => {
 
   const {
     Col,
+    Cols,
     Panel,
     Row,
   } = configContext.layoutComponents;
@@ -26,7 +27,6 @@ const template = (configContext) => {
         <Row>
           <Col>
             <Field name="objectNumber" />
-            <Field name="numberOfObjects" />
 
             <Field name="otherNumberList">
               <Field name="otherNumber">
@@ -39,7 +39,17 @@ const template = (configContext) => {
               <Field name="responsibleDepartment" />
             </Field>
 
-            <Field name="collection" />
+            <Row>
+              <Field name="collection" />
+
+              <Col>
+                <Field name="namedCollections">
+                  <Field name="namedCollection" />
+                </Field>
+              </Col>
+            </Row>
+
+            <Field name="descriptionLevel" />
             <Field name="recordStatus" />
 
             <Field name="publishToList">
@@ -65,6 +75,19 @@ const template = (configContext) => {
             <Field name="computedCurrentLocation" />
           </Col>
         </Row>
+
+        <Field name="annotationGroupList" subpath="ns2:collectionobjects_annotation">
+          <Field name="annotationGroup">
+            <Panel>
+              <Row>
+                <Field name="annotationType" />
+                <Field name="annotationDate" />
+                <Field name="annotationAuthor" />
+              </Row>
+              <Field name="annotationNote" />
+            </Panel>
+          </Field>
+        </Field>
 
         <Field name="titleGroupList">
           <Field name="titleGroup">
@@ -92,6 +115,7 @@ const template = (configContext) => {
 
         <Field name="objectNameList">
           <Field name="objectNameGroup">
+            <Field name="objectNameControlled" />
             <Field name="objectName" />
             <Field name="objectNameCurrency" />
             <Field name="objectNameLevel" />
@@ -101,6 +125,17 @@ const template = (configContext) => {
             <Field name="objectNameNote" />
           </Field>
         </Field>
+
+        <Field name="objectCountGroupList">
+          <Field name="objectCountGroup">
+            <Field name="objectCount" />
+            <Field name="objectCountType" />
+            <Field name="objectCountCountedBy" />
+            <Field name="objectCountDate" />
+            <Field name="objectCountNote" />
+          </Field>
+        </Field>
+
       </Panel>
 
       <Panel name="desc" collapsible collapsed>
@@ -136,11 +171,16 @@ const template = (configContext) => {
             <Field name="colors">
               <Field name="color" />
             </Field>
+
+            <Field name="apparelSizes">
+              <Field name="apparelSize" />
+            </Field>
           </Col>
         </Row>
 
         <Field name="materialGroupList">
           <Field name="materialGroup">
+            <Field name="materialControlled" />
             <Field name="material" />
             <Field name="materialComponent" />
             <Field name="materialComponentNote" />
@@ -233,6 +273,10 @@ const template = (configContext) => {
                 </Field>
               </Field>
 
+              <Field name="contentEvents">
+                <Field name="contentEvent" />
+              </Field>
+
               <Field name="contentOtherGroupList">
                 <Field name="contentOtherGroup">
                   <Field name="contentOther" />
@@ -307,6 +351,10 @@ const template = (configContext) => {
               <Field name="objectProductionDateGroup" />
             </Field>
 
+            <Field name="objectProductionEras">
+              <Field name="objectProductionEra" />
+            </Field>
+
             <Field name="techniqueGroupList">
               <Field name="techniqueGroup">
                 <Field name="technique" />
@@ -315,7 +363,7 @@ const template = (configContext) => {
             </Field>
 
             <Field name="objectProductionPlaceGroupList">
-              <Field name="objectProductionPlaceGroup" >
+              <Field name="objectProductionPlaceGroup">
                 <Field name="objectProductionPlace" />
                 <Field name="objectProductionPlaceRole" />
               </Field>
@@ -428,6 +476,10 @@ const template = (configContext) => {
                 <Field name="assocEventNameType" />
               </InputTable>
 
+              <Field name="assocEvents">
+                <Field name="assocEvent" />
+              </Field>
+
               <Field name="assocEventOrganizations">
                 <Field name="assocEventOrganization" />
               </Field>
@@ -530,13 +582,19 @@ const template = (configContext) => {
       <Panel name="collect" collapsible collapsed>
         <Row>
           <Col>
+            <Field name="fieldCollectionSites">
+              <Field name="fieldCollectionSite" />
+            </Field>
+
             <Field name="fieldCollectionDateGroup" />
 
             <Field name="fieldCollectionMethods">
               <Field name="fieldCollectionMethod" />
             </Field>
 
-            <Field name="fieldCollectionPlace" />
+            <Field name="fieldCollectionPlaces">
+              <Field name="fieldCollectionPlace" />
+            </Field>
 
             <Field name="fieldCollectionSources">
               <Field name="fieldCollectionSource" />
@@ -560,6 +618,77 @@ const template = (configContext) => {
         </Row>
       </Panel>
 
+      <Panel name="rights" collapsible collapsed>
+        <Field name="rightsGroupList">
+          <Field name="rightsGroup">
+            <Panel>
+              <Row>
+                <Field name="rightType" />
+
+                <Row>
+                  <Field name="rightBeginDate" />
+                  <Field name="rightEndDate" />
+                </Row>
+              </Row>
+
+              <Field name="rightHolderGroupList">
+                <Field name="rightHolderGroup">
+                  <Field name="rightHolder" />
+                  <Field name="rightHolderContact" />
+                </Field>
+              </Field>
+
+              <Row>
+                <Field name="rightJurisdiction" />
+                <Field name="standardizedRightStatement" />
+              </Row>
+
+              <Field name="rightStatement" />
+              <Field name="rightNote" />
+            </Panel>
+          </Field>
+        </Field>
+      </Panel>
+
+      <Panel name="rightsin" collapsible collapsed>
+        <Field name="rightsInGroupList">
+          <Field name="rightsInGroup">
+            <Panel>
+              <Row>
+                <Field name="rightInTypes">
+                  <Field name="rightInType" />
+                </Field>
+
+                <Row>
+                  <Field name="rightInBeginDate" />
+                  <Field name="rightInEndDate" />
+                </Row>
+              </Row>
+
+              <Row>
+                <Field name="agreementSent" />
+                <Field name="agreementReceived" />
+                <Field name="agreementSigned" />
+              </Row>
+
+              <Cols>
+                <Col>
+                  <Field name="rightInRestrictions">
+                    <Field name="rightInRestriction" />
+                  </Field>
+                </Col>
+
+                <Col>
+                  <Field name="rightReproductionStatement" />
+                </Col>
+              </Cols>
+
+              <Field name="rightInNote" />
+            </Panel>
+          </Field>
+        </Field>
+      </Panel>
+
       <Panel name="hierarchy" collapsible collapsed>
         <Field name="relation-list-item" subpath="rel:relations-common-list" />
       </Panel>
@@ -567,7 +696,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.collectionobject.default.name',

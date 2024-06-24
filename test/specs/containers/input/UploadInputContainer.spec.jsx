@@ -1,6 +1,7 @@
 import React from 'react';
 import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
+import { findWithType } from 'react-shallow-testutils';
 import Immutable from 'immutable';
 import thunk from 'redux-thunk';
 import { components as inputComponents } from 'cspace-input';
@@ -15,7 +16,7 @@ chai.should();
 const { UploadInput } = inputComponents;
 const mockStore = configureMockStore([thunk]);
 
-describe('UploadInputContainer', function suite() {
+describe('UploadInputContainer', () => {
   const uploadType = 'file';
 
   const store = mockStore({
@@ -24,17 +25,13 @@ describe('UploadInputContainer', function suite() {
     }),
   });
 
-  const context = {
-    store,
-  };
-
   const intl = {
     formatDate: () => null,
     formatTime: () => null,
     formatRelative: () => null,
     formatNumber: () => null,
     formatPlural: () => null,
-    formatMessage: message => `formatted ${message.id}`,
+    formatMessage: (message) => `formatted ${message.id}`,
     formatHTMLMessage: () => null,
     now: () => null,
   };
@@ -43,33 +40,35 @@ describe('UploadInputContainer', function suite() {
     store.clearActions();
   });
 
-  it('should set props on UploadInput', function test() {
+  it('should set props on UploadInput', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedUploadInput
+        store={store}
         intl={intl}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, UploadInput);
 
-    result.type.should.equal(UploadInput);
-    result.props.type.should.equal(uploadType);
-    result.props.onTypeChanged.should.be.a('function');
-    result.props.typeInputLabel.should.be.a('string');
-    result.props.fileOptionLabel.should.be.a('string');
-    result.props.urlOptionLabel.should.be.a('string');
-    result.props.fileInputLabel.should.be.a('string');
-    result.props.fileChooseButtonLabel.should.be.a('string');
-    result.props.urlInputLabel.should.be.a('string');
-    result.props.formatFileInfo.should.be.a('function');
+    input.props.type.should.equal(uploadType);
+    input.props.onTypeChanged.should.be.a('function');
+    input.props.typeInputLabel.should.be.a('string');
+    input.props.fileOptionLabel.should.be.a('string');
+    input.props.urlOptionLabel.should.be.a('string');
+    input.props.fileInputLabel.should.be.a('string');
+    input.props.fileChooseButtonLabel.should.be.a('string');
+    input.props.urlInputLabel.should.be.a('string');
+    input.props.formatFileInfo.should.be.a('function');
   });
 
-  it('should use intl to format the file info', function test() {
+  it('should use intl to format the file info', () => {
     let formattedValues = null;
 
     intl.formatMessage = (messageArg, valuesArg) => {
-      formattedValues = Object.assign({}, valuesArg);
+      formattedValues = { ...valuesArg };
 
       return `formatted ${messageArg.id}`;
     };
@@ -78,16 +77,19 @@ describe('UploadInputContainer', function suite() {
 
     shallowRenderer.render(
       <ConnectedUploadInput
+        store={store}
         intl={intl}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, UploadInput);
 
     const fileName = 'foo.jpg';
     const fileType = 'image/jpeg';
     const fileSize = 1024;
 
-    result.props.formatFileInfo(fileName, fileType, fileSize).should
+    input.props.formatFileInfo(fileName, fileType, fileSize).should
       .equal('formatted UploadInputContainer.fileInfo');
 
     formattedValues.should.deep.equal({
@@ -97,18 +99,21 @@ describe('UploadInputContainer', function suite() {
     });
   });
 
-  it('should connect onTypeChanged to setUploadType action creator', function test() {
+  it('should connect onTypeChanged to setUploadType action creator', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <ConnectedUploadInput
+        store={store}
         intl={intl}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const input = findWithType(result, UploadInput);
     const newType = 'url';
 
-    result.props.onTypeChanged(newType);
+    input.props.onTypeChanged(newType);
 
     const actions = store.getActions();
 

@@ -3,11 +3,13 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import mockHistory from '../../../helpers/mockHistory';
 import SearchPage from '../../../../src/components/pages/SearchPage';
 import { ConnectedSearchPage } from '../../../../src/containers/pages/SearchPageContainer';
 
 import {
+  ADD_OPTION_LISTS,
   CLEAR_SEARCH_PAGE,
   SET_SEARCH_PAGE_ADVANCED,
   SET_SEARCH_PAGE_KEYWORD,
@@ -19,8 +21,8 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('SearchPageContainer', function suite() {
-  it('should set props on SearchPage', function test() {
+describe('SearchPageContainer', () => {
+  it('should set props on SearchPage', () => {
     const store = mockStore({
       searchPage: Immutable.Map({
         keyword: 'foo',
@@ -44,29 +46,26 @@ describe('SearchPageContainer', function suite() {
 
     const shallowRenderer = createRenderer();
 
-    const context = {
-      store,
-    };
-
     shallowRenderer.render(
-      <ConnectedSearchPage />, context);
+      <ConnectedSearchPage store={store} />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.type.should.equal(SearchPage);
-    result.props.should.have.property('keywordValue', 'foo');
-    result.props.should.have.property('recordTypeValue', 'person');
-    result.props.should.have.property('vocabularyValue', 'local');
-    result.props.should.have.property('getAuthorityVocabCsid').that.is.a('function');
-    result.props.should.have.property('onAdvancedSearchConditionCommit').that.is.a('function');
-    result.props.should.have.property('onClearButtonClick').that.is.a('function');
-    result.props.should.have.property('onKeywordCommit').that.is.a('function');
-    result.props.should.have.property('onRecordTypeCommit').that.is.a('function');
-    result.props.should.have.property('onVocabularyCommit').that.is.a('function');
-    result.props.should.have.property('onSearch').that.is.a('function');
+    searchPage.props.should.have.property('keywordValue', 'foo');
+    searchPage.props.should.have.property('recordTypeValue', 'person');
+    searchPage.props.should.have.property('vocabularyValue', 'local');
+    searchPage.props.should.have.property('getAuthorityVocabCsid').that.is.a('function');
+    searchPage.props.should.have.property('onAdvancedSearchConditionCommit').that.is.a('function');
+    searchPage.props.should.have.property('onClearButtonClick').that.is.a('function');
+    searchPage.props.should.have.property('onKeywordCommit').that.is.a('function');
+    searchPage.props.should.have.property('onRecordTypeCommit').that.is.a('function');
+    searchPage.props.should.have.property('onVocabularyCommit').that.is.a('function');
+    searchPage.props.should.have.property('initiateSearch').that.is.a('function');
   });
 
-  it('should connect getAuthorityVocabCsid to getAuthorityVocabCsid selector', function test() {
+  it('should connect getAuthorityVocabCsid to getAuthorityVocabCsid selector', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -95,20 +94,73 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
+
+    const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
+
+    searchPage.props.getAuthorityVocabCsid('concept', 'material').should.equal('1234');
+  });
+
+  it('should connect buildRecordFieldOptionLists to buildRecordFieldOptionLists action creator', () => {
+    const store = mockStore({
+      optionList: Immutable.Map(),
+      searchPage: Immutable.fromJS({
+        keyword: 'hello world',
+      }),
+      prefs: Immutable.fromJS({
+        searchPage: {
+          recordType: 'concept',
+          vocabulary: {
+            concept: 'material',
+          },
+        },
+      }),
+      user: Immutable.fromJS({
+        perms: {
+          concept: {
+            data: 'CRUDL',
+          },
+        },
+      }),
+      authority: Immutable.fromJS({
+        concept: {
+          material: {
+            csid: '1234',
+          },
+        },
+      }),
+    });
 
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.getAuthorityVocabCsid('concept', 'material').should.equal('1234');
+    searchPage.props.buildRecordFieldOptionLists({
+      recordTypes: {
+        collectionobject: {
+          fields: {},
+        },
+      },
+    }, 'collectionobject');
+
+    const action = store.getActions()[0];
+
+    action.should.deep.equal({
+      type: ADD_OPTION_LISTS,
+      payload: {
+        _field_collectionobject: [],
+        _fieldgroup_collectionobject: [],
+      },
+    });
   });
 
-  it('should connect onAdvancedSearchConditionCommit to setSearchPageAdvanced action creator', function test() {
+  it('should connect onAdvancedSearchConditionCommit to setSearchPageAdvanced action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -130,22 +182,19 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
     const condition = Immutable.fromJS({
       op: 'and',
       value: [],
     });
 
-    result.props.onAdvancedSearchConditionCommit(condition);
+    searchPage.props.onAdvancedSearchConditionCommit(condition);
 
     const action = store.getActions()[0];
 
@@ -153,7 +202,7 @@ describe('SearchPageContainer', function suite() {
     action.should.have.deep.property('payload', condition);
   });
 
-  it('should connect onKeywordCommit to setSearchPageKeyword action creator', function test() {
+  it('should connect onKeywordCommit to setSearchPageKeyword action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -175,17 +224,14 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.onKeywordCommit('new keyword');
+    searchPage.props.onKeywordCommit('new keyword');
 
     const action = store.getActions()[0];
 
@@ -193,7 +239,7 @@ describe('SearchPageContainer', function suite() {
     action.should.have.deep.property('payload', 'new keyword');
   });
 
-  it('should connect onRecordTypeCommit to setSearchPageRecordType action creator', function test() {
+  it('should connect onRecordTypeCommit to setSearchPageRecordType action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -215,17 +261,14 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.onRecordTypeCommit('person');
+    searchPage.props.onRecordTypeCommit('person');
 
     const action = store.getActions()[0];
 
@@ -233,7 +276,7 @@ describe('SearchPageContainer', function suite() {
     action.should.have.deep.property('payload', 'person');
   });
 
-  it('should connect onVocabularyCommit to setSearchPageVocabulary action creator', function test() {
+  it('should connect onVocabularyCommit to setSearchPageVocabulary action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -255,17 +298,14 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.onVocabularyCommit('ulan');
+    searchPage.props.onVocabularyCommit('ulan');
 
     const action = store.getActions()[0];
 
@@ -273,7 +313,7 @@ describe('SearchPageContainer', function suite() {
     action.should.have.deep.property('payload', 'ulan');
   });
 
-  it('should connect onSearch to initiateSearch action creator', function test() {
+  it('should connect initiateSearch to initiateSearch action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -294,10 +334,6 @@ describe('SearchPageContainer', function suite() {
         },
       }),
     });
-
-    const context = {
-      store,
-    };
 
     let pushedLocation = null;
 
@@ -309,19 +345,32 @@ describe('SearchPageContainer', function suite() {
 
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage history={history} />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} history={history} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.onSearch();
+    searchPage.props.initiateSearch({}, history.push);
 
     pushedLocation.should.deep.equal({
       pathname: '/list/concept/material',
       search: '?kw=hello%20world',
+      state: {
+        originSearchPage: {
+          searchDescriptor: {
+            recordType: 'concept',
+            vocabulary: 'material',
+            searchQuery: {
+              as: undefined,
+              kw: 'hello world',
+            },
+          },
+        },
+      },
     });
   });
 
-  it('should connect onClearButtonClick to clearSearchPage action creator', function test() {
+  it('should connect onClearButtonClick to clearSearchPage action creator', () => {
     const store = mockStore({
       searchPage: Immutable.fromJS({
         keyword: 'hello world',
@@ -343,17 +392,14 @@ describe('SearchPageContainer', function suite() {
       }),
     });
 
-    const context = {
-      store,
-    };
-
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedSearchPage />, context);
+    shallowRenderer.render(<ConnectedSearchPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
+    const searchPage = findWithType(result, SearchPage);
 
-    result.props.onClearButtonClick();
+    searchPage.props.onClearButtonClick();
 
     const action = store.getActions()[0];
 

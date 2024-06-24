@@ -23,6 +23,10 @@ export default (configContext) => {
     extensions,
   } = configContext.config;
 
+  const {
+    validateNotInUse,
+  } = configContext.validationHelpers;
+
   return {
     document: {
       [config]: {
@@ -44,6 +48,10 @@ export default (configContext) => {
           [config]: {
             cloneable: false,
             messages: defineMessages({
+              inUse: {
+                id: 'field.loansout_common.loanOutNumber.inUse',
+                defaultMessage: 'The loan out number {value} is in use by another record.',
+              },
               name: {
                 id: 'field.loansout_common.loanOutNumber.name',
                 defaultMessage: 'Loan out number',
@@ -53,6 +61,11 @@ export default (configContext) => {
             searchView: {
               type: TextInput,
             },
+            validate: (validationContext) => validateNotInUse({
+              configContext,
+              validationContext,
+              fieldName: 'loansout_common:loanOutNumber',
+            }),
             view: {
               type: IDGeneratorInput,
               props: {
@@ -80,13 +93,13 @@ export default (configContext) => {
         lendersAuthorizer: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.lendersAuthorizer.name',
-                defaultMessage: 'Authorizer',
-              },
               fullName: {
                 id: 'field.loansout_common.lendersAuthorizer.fullName',
                 defaultMessage: 'Lender authorizer',
+              },
+              name: {
+                id: 'field.loansout_common.lendersAuthorizer.name',
+                defaultMessage: 'Authorizer',
               },
             }),
             view: {
@@ -100,13 +113,13 @@ export default (configContext) => {
         lendersContact: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.lendersContact.name',
-                defaultMessage: 'Contact',
-              },
               fullName: {
                 id: 'field.loansout_common.lendersContact.fullName',
                 defaultMessage: 'Lender contact',
+              },
+              name: {
+                id: 'field.loansout_common.lendersContact.name',
+                defaultMessage: 'Contact',
               },
             }),
             view: {
@@ -121,13 +134,13 @@ export default (configContext) => {
           [config]: {
             dataType: DATA_TYPE_DATE,
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.lendersAuthorizationDate.name',
-                defaultMessage: 'Authorization date',
-              },
               fullName: {
                 id: 'field.loansout_common.lendersAuthorizationDate.fullName',
                 defaultMessage: 'Lender authorization date',
+              },
+              name: {
+                id: 'field.loansout_common.lendersAuthorizationDate.name',
+                defaultMessage: 'Authorization date',
               },
             }),
             view: {
@@ -138,13 +151,13 @@ export default (configContext) => {
         borrower: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.borrower.name',
-                defaultMessage: 'Name',
-              },
               fullName: {
                 id: 'field.loansout_common.borrower.fullName',
                 defaultMessage: 'Borrower name',
+              },
+              name: {
+                id: 'field.loansout_common.borrower.name',
+                defaultMessage: 'Name',
               },
             }),
             view: {
@@ -158,13 +171,13 @@ export default (configContext) => {
         borrowersContact: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.borrowersContact.name',
-                defaultMessage: 'Contact',
-              },
               fullName: {
                 id: 'field.loansout_common.borrowersContact.fullName',
                 defaultMessage: 'Borrower contact',
+              },
+              name: {
+                id: 'field.loansout_common.borrowersContact.name',
+                defaultMessage: 'Contact',
               },
             }),
             view: {
@@ -178,13 +191,13 @@ export default (configContext) => {
         borrowersAuthorizer: {
           [config]: {
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.borrowersAuthorizer.name',
-                defaultMessage: 'Authorizer',
-              },
               fullName: {
                 id: 'field.loansout_common.borrowersAuthorizer.fullName',
                 defaultMessage: 'Borrower authorizer',
+              },
+              name: {
+                id: 'field.loansout_common.borrowersAuthorizer.name',
+                defaultMessage: 'Authorizer',
               },
             }),
             view: {
@@ -199,13 +212,13 @@ export default (configContext) => {
           [config]: {
             dataType: DATA_TYPE_DATE,
             messages: defineMessages({
-              name: {
-                id: 'field.loansout_common.borrowersAuthorizationDate.name',
-                defaultMessage: 'Authorization date',
-              },
               fullName: {
                 id: 'field.loansout_common.borrowersAuthorizationDate.fullName',
                 defaultMessage: 'Borrower authorization date',
+              },
+              name: {
+                id: 'field.loansout_common.borrowersAuthorizationDate.name',
+                defaultMessage: 'Authorization date',
               },
             }),
             view: {
@@ -262,21 +275,18 @@ export default (configContext) => {
               repeating: true,
               view: {
                 type: CompoundInput,
-                props: {
-                  tabular: true,
-                },
               },
             },
             loanGroup: {
               [config]: {
                 messages: defineMessages({
-                  name: {
-                    id: 'field.loansout_common.loanGroup.name',
-                    defaultMessage: 'Group',
-                  },
                   fullName: {
                     id: 'field.loansout_common.loanGroup.fullName',
                     defaultMessage: 'Loan status group',
+                  },
+                  name: {
+                    id: 'field.loansout_common.loanGroup.name',
+                    defaultMessage: 'Group',
                   },
                 }),
                 view: {
@@ -290,13 +300,13 @@ export default (configContext) => {
             loanIndividual: {
               [config]: {
                 messages: defineMessages({
-                  name: {
-                    id: 'field.loansout_common.loanIndividual.name',
-                    defaultMessage: 'Individual',
-                  },
                   fullName: {
                     id: 'field.loansout_common.loanIndividual.fullName',
                     defaultMessage: 'Loan status individual',
+                  },
+                  name: {
+                    id: 'field.loansout_common.loanIndividual.name',
+                    defaultMessage: 'Individual',
                   },
                 }),
                 view: {
@@ -310,13 +320,13 @@ export default (configContext) => {
             loanStatus: {
               [config]: {
                 messages: defineMessages({
-                  name: {
-                    id: 'field.loansout_common.loanStatus.name',
-                    defaultMessage: 'Status',
-                  },
                   fullName: {
                     id: 'field.loansout_common.loanStatus.fullName',
                     defaultMessage: 'Loan status',
+                  },
+                  name: {
+                    id: 'field.loansout_common.loanStatus.name',
+                    defaultMessage: 'Status',
                   },
                 }),
                 view: {
@@ -331,13 +341,13 @@ export default (configContext) => {
               [config]: {
                 dataType: DATA_TYPE_DATE,
                 messages: defineMessages({
-                  name: {
-                    id: 'field.loansout_common.loanStatusDate.name',
-                    defaultMessage: 'Date',
-                  },
                   fullName: {
                     id: 'field.loansout_common.loanStatusDate.fullName',
                     defaultMessage: 'Loan status date',
+                  },
+                  name: {
+                    id: 'field.loansout_common.loanStatusDate.name',
+                    defaultMessage: 'Date',
                   },
                 }),
                 view: {
@@ -348,6 +358,10 @@ export default (configContext) => {
             loanStatusNote: {
               [config]: {
                 messages: defineMessages({
+                  fullName: {
+                    id: 'field.loansout_common.loanStatusNote.fullName',
+                    defaultMessage: 'Loan status note',
+                  },
                   name: {
                     id: 'field.loansout_common.loanStatusNote.name',
                     defaultMessage: 'Note',
@@ -355,6 +369,10 @@ export default (configContext) => {
                 }),
                 view: {
                   type: TextInput,
+                  props: {
+                    height: 23,
+                    multiline: true,
+                  },
                 },
               },
             },
@@ -399,6 +417,19 @@ export default (configContext) => {
             }),
             view: {
               type: DateInput,
+            },
+          },
+        },
+        creditLine: {
+          [config]: {
+            messages: defineMessages({
+              name: {
+                id: 'field.loansout_common.creditLine.name',
+                defaultMessage: 'Credit line',
+              },
+            }),
+            view: {
+              type: TextInput,
             },
           },
         },

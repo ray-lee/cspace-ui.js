@@ -9,7 +9,6 @@ const template = (configContext) => {
     Col,
     Cols,
     Panel,
-    Row,
   } = configContext.layoutComponents;
 
   const {
@@ -24,10 +23,18 @@ const template = (configContext) => {
   return (
     <Field name="document">
       <Panel name="media" collapsible>
-        <Row>
-          <Field name="identificationNumber" />
-          <Field name="title" />
-        </Row>
+        <Cols>
+          <Col>
+            <Field name="identificationNumber" />
+            <Field name="title" />
+          </Col>
+
+          <Col>
+            <Field name="publishToList">
+              <Field name="publishTo" />
+            </Field>
+          </Col>
+        </Cols>
 
         <Panel name="file" collapsible>
           <Subrecord name="blob" showDetachButton />
@@ -36,6 +43,14 @@ const template = (configContext) => {
         <Field name="externalUrl" />
 
         {extensions.dimension.form}
+
+        <Field name="checksumGroupList">
+          <Field name="checksumGroup">
+            <Field name="checksumValue" />
+            <Field name="checksumType" />
+            <Field name="checksumDate" />
+          </Field>
+        </Field>
 
         <Cols>
           <Col>
@@ -77,12 +92,13 @@ const template = (configContext) => {
         </Cols>
 
         <Field name="description" />
+        <Field name="altText" />
       </Panel>
     </Field>
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.media.default.name',

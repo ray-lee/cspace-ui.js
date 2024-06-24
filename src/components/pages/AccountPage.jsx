@@ -14,9 +14,15 @@ import AccountSearchBar from '../admin/AccountSearchBar';
 import styles from '../../../styles/cspace-ui/AdminTab.css';
 
 const propTypes = {
-  history: PropTypes.object,
-  location: PropTypes.object,
-  match: PropTypes.object,
+  history: PropTypes.shape({
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    search: PropTypes.string,
+  }),
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   filterDelay: PropTypes.number,
   userId: PropTypes.string,
@@ -28,7 +34,9 @@ const defaultProps = {
 };
 
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
 };
 
 const recordType = 'account';
@@ -68,60 +76,6 @@ export default class AccountPage extends Component {
     if (setAdminTab) {
       setAdminTab(recordType);
     }
-  }
-
-  checkRecordDeletable(data) {
-    const {
-      userId,
-    } = this.props;
-
-    const recordUserId = data.getIn(['ns2:accounts_common', 'userId']);
-
-    return (userId !== recordUserId);
-  }
-
-  cloneRecord() {
-    const {
-      history,
-      match,
-    } = this.props;
-
-    const {
-      csid,
-    } = match.params;
-
-    const query = {
-      clone: csid,
-    };
-
-    const queryString = qs.stringify(query);
-
-    history.replace({
-      pathname: `/admin/${recordType}/new`,
-      search: `?${queryString}`,
-    });
-  }
-
-  filter(value) {
-    const {
-      searchDescriptor,
-    } = this.state;
-
-    const searchQuery = searchDescriptor.get('searchQuery');
-
-    let updatedSearchQuery;
-
-    if (value) {
-      updatedSearchQuery = searchQuery.set('sn', value);
-    } else {
-      updatedSearchQuery = searchQuery.delete('sn');
-    }
-
-    updatedSearchQuery = updatedSearchQuery.set('p', 0);
-
-    this.setState({
-      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
-    });
   }
 
   handleCreateButtonClick() {
@@ -209,6 +163,60 @@ export default class AccountPage extends Component {
   handleSearchDescriptorChange(searchDescriptor) {
     this.setState({
       searchDescriptor,
+    });
+  }
+
+  checkRecordDeletable(data) {
+    const {
+      userId,
+    } = this.props;
+
+    const recordUserId = data.getIn(['ns2:accounts_common', 'userId']);
+
+    return (userId !== recordUserId);
+  }
+
+  cloneRecord() {
+    const {
+      history,
+      match,
+    } = this.props;
+
+    const {
+      csid,
+    } = match.params;
+
+    const query = {
+      clone: csid,
+    };
+
+    const queryString = qs.stringify(query);
+
+    history.replace({
+      pathname: `/admin/${recordType}/new`,
+      search: `?${queryString}`,
+    });
+  }
+
+  filter(value) {
+    const {
+      searchDescriptor,
+    } = this.state;
+
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    let updatedSearchQuery;
+
+    if (value) {
+      updatedSearchQuery = searchQuery.set('sn', value);
+    } else {
+      updatedSearchQuery = searchQuery.delete('sn');
+    }
+
+    updatedSearchQuery = updatedSearchQuery.set('p', 0);
+
+    this.setState({
+      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
     });
   }
 

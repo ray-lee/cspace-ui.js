@@ -8,14 +8,15 @@ import Immutable from 'immutable';
 import qs from 'qs';
 import CheckboxInput from 'cspace-input/lib/components/CheckboxInput';
 import ErrorPage from './ErrorPage';
+import ExportButton from '../search/ExportButton';
 import RelateButton from '../record/RelateButton';
 import Pager from '../search/Pager';
 import SearchResultSidebar from '../search/SearchResultSidebar';
 import SearchResultSummary from '../search/SearchResultSummary';
 import SearchResultTitleBar from '../search/SearchResultTitleBar';
 import SelectBar from '../search/SelectBar';
+import ExportModalContainer from '../../containers/search/ExportModalContainer';
 import WatchedSearchResultTableContainer from '../../containers/search/WatchedSearchResultTableContainer';
-import SearchResultSidebarToggleButtonContainer from '../../containers/search/SearchResultSidebarToggleButtonContainer';
 import SearchToRelateModalContainer from '../../containers/search/SearchToRelateModalContainer';
 import { canRelate } from '../../helpers/permissionHelpers';
 import { getListType } from '../../helpers/searchHelpers';
@@ -30,10 +31,6 @@ import {
 
 import styles from '../../../styles/cspace-ui/SearchResultPage.css';
 import pageBodyStyles from '../../../styles/cspace-ui/PageBody.css';
-import sidebarToggleBarStyles from '../../../styles/cspace-ui/SidebarToggleBar.css';
-
-// FIXME: Make default page size configurable
-const defaultPageSize = 20;
 
 // const stopPropagation = (event) => {
 //   event.stopPropagation();
@@ -49,9 +46,19 @@ const messages = defineMessages({
 
 const propTypes = {
   isSidebarOpen: PropTypes.bool,
-  history: PropTypes.object,
-  location: PropTypes.object,
-  match: PropTypes.object,
+  history: PropTypes.shape({
+    push: PropTypes.func,
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    pathname: PropTypes.string,
+    search: PropTypes.string,
+    state: PropTypes.object,
+  }),
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
+  openExport: PropTypes.func,
   perms: PropTypes.instanceOf(Immutable.Map),
   preferredPageSize: PropTypes.number,
   search: PropTypes.func,
@@ -59,6 +66,8 @@ const propTypes = {
   setPreferredPageSize: PropTypes.func,
   setSearchPageAdvanced: PropTypes.func,
   setSearchPageKeyword: PropTypes.func,
+  setSearchPageRecordType: PropTypes.func,
+  setSearchPageVocabulary: PropTypes.func,
   setAllItemsSelected: PropTypes.func,
   onItemSelectChange: PropTypes.func,
 };
@@ -68,7 +77,9 @@ const defaultProps = {
 };
 
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
 };
 
 export default class SearchResultPage extends Component {
@@ -79,6 +90,8 @@ export default class SearchResultPage extends Component {
     this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
     this.handleCheckboxCommit = this.handleCheckboxCommit.bind(this);
     this.handleEditSearchLinkClick = this.handleEditSearchLinkClick.bind(this);
+    this.handleExportButtonClick = this.handleExportButtonClick.bind(this);
+    this.handleExportOpened = this.handleExportOpened.bind(this);
     this.handleModalCancelButtonClick = this.handleModalCancelButtonClick.bind(this);
     this.handleModalCloseButtonClick = this.handleModalCloseButtonClick.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -92,6 +105,7 @@ export default class SearchResultPage extends Component {
     this.search = this.search.bind(this);
 
     this.state = {
+      isExportModalOpen: false,
       isSearchToRelateModalOpen: false,
     };
   }
@@ -134,12 +148,12 @@ export default class SearchResultPage extends Component {
     const { params: prevParams } = prevMatch;
 
     if (
-      perms !== prevPerms ||
-      params.recordType !== prevParams.recordType ||
-      params.vocabulary !== prevParams.vocabulary ||
-      params.csid !== prevParams.csid ||
-      params.subresource !== prevParams.subresource ||
-      location.search !== prevLocation.search
+      perms !== prevPerms
+      || params.recordType !== prevParams.recordType
+      || params.vocabulary !== prevParams.vocabulary
+      || params.csid !== prevParams.csid
+      || params.subresource !== prevParams.subresource
+      || location.search !== prevLocation.search
     ) {
       if (!this.normalizeQuery()) {
         const {
@@ -158,6 +172,197 @@ export default class SearchResultPage extends Component {
 
         this.search();
       }
+    }
+  }
+
+  handleCheckboxClick(event) {
+    // DRYD-252: Elaborate workaround for Firefox. When a checkbox is a child of an a, clicking on
+    // the checkbox navigates to the link. So we have to handle the checkbox click, and prevent the
+    // default. This prevents the navigation, but also prevents the checkbox state from changing.
+    // So we also have to manually commit the change. The Firefox bug has been open for 17 years
+    // now. https://bugzilla.mozilla.org/show_bug.cgi?id=62151
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const checkbox = event.currentTarget.querySelector('input[type="checkbox"]');
+    const index = checkbox.dataset.name;
+
+    window.setTimeout(() => {
+      this.handleCheckboxCommit([index], !checkbox.checked);
+    }, 0);
+  }
+
+  handleCheckboxCommit(path, value) {
+    const index = parseInt(path[0], 10);
+    const selected = value;
+
+    const {
+      onItemSelectChange,
+    } = this.props;
+
+    const {
+      config,
+    } = this.context;
+
+    if (onItemSelectChange) {
+      const searchDescriptor = this.getSearchDescriptor();
+      const listType = this.getListType(searchDescriptor);
+
+      onItemSelectChange(
+        config, SEARCH_RESULT_PAGE_SEARCH_NAME, searchDescriptor, listType, index, selected,
+      );
+    }
+  }
+
+  handleEditSearchLinkClick() {
+    // Transfer the search descriptor from this search to the search page. If this search
+    // originated from the search page, the original descriptor will be in the location state.
+    // Otherwise, build it from the URL params. If present, the search descriptor from the
+    // originating search page will be more complete than one constructed from the URL; for
+    // example, it will contain fields that are blank, which will have been removed from the
+    // URL, to reduce the size.
+
+    const {
+      location,
+      setSearchPageAdvanced,
+      setSearchPageKeyword,
+      setSearchPageRecordType,
+      setSearchPageVocabulary,
+    } = this.props;
+
+    const origin = get(location.state, 'originSearchPage');
+
+    const searchDescriptor = origin
+      ? Immutable.fromJS(origin.searchDescriptor)
+      : this.getSearchDescriptor();
+
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    if (setSearchPageRecordType) {
+      setSearchPageRecordType(searchDescriptor.get('recordType'));
+    }
+
+    if (setSearchPageVocabulary) {
+      setSearchPageVocabulary(searchDescriptor.get('vocabulary'));
+    }
+
+    if (setSearchPageKeyword) {
+      setSearchPageKeyword(searchQuery.get('kw'));
+    }
+
+    if (setSearchPageAdvanced) {
+      setSearchPageAdvanced(searchQuery.get('as'));
+    }
+  }
+
+  handleExportButtonClick() {
+    this.setState({
+      isExportModalOpen: true,
+    });
+  }
+
+  handleExportOpened() {
+    this.closeModal();
+  }
+
+  handleModalCancelButtonClick() {
+    this.closeModal();
+  }
+
+  handleModalCloseButtonClick() {
+    this.closeModal();
+  }
+
+  handlePageChange(pageNum) {
+    const {
+      history,
+      location,
+    } = this.props;
+
+    if (history) {
+      const {
+        search,
+      } = location;
+
+      const query = qs.parse(search.substring(1));
+
+      query.p = (pageNum + 1).toString();
+
+      const queryString = qs.stringify(query);
+
+      history.push({
+        pathname: location.pathname,
+        search: `?${queryString}`,
+        state: location.state,
+      });
+    }
+  }
+
+  handlePageSizeChange(pageSize) {
+    const {
+      history,
+      location,
+      setPreferredPageSize,
+    } = this.props;
+
+    if (setPreferredPageSize) {
+      setPreferredPageSize(pageSize);
+    }
+
+    if (history) {
+      const {
+        search,
+      } = location;
+
+      const query = qs.parse(search.substring(1));
+
+      query.p = '1';
+      query.size = pageSize.toString();
+
+      const queryString = qs.stringify(query);
+
+      history.push({
+        pathname: location.pathname,
+        search: `?${queryString}`,
+        state: location.state,
+      });
+    }
+  }
+
+  handleRelateButtonClick() {
+    this.setState({
+      isSearchToRelateModalOpen: true,
+      selectionValidationError: this.validateSelectedItemsRelatable(),
+    });
+  }
+
+  handleRelationsCreated() {
+    this.closeModal();
+  }
+
+  handleSortChange(sort) {
+    const {
+      history,
+      location,
+    } = this.props;
+
+    if (history) {
+      const {
+        search,
+      } = location;
+
+      const query = qs.parse(search.substring(1));
+
+      query.sort = sort;
+
+      const queryString = qs.stringify(query);
+
+      history.push({
+        pathname: location.pathname,
+        search: `?${queryString}`,
+        state: location.state,
+      });
     }
   }
 
@@ -189,10 +394,11 @@ export default class SearchResultPage extends Component {
 
     const query = qs.parse(search.substring(1));
 
-    const searchQuery = Object.assign({}, query, {
+    const searchQuery = {
+      ...query,
       p: parseInt(query.p, 10) - 1,
       size: parseInt(query.size, 10),
-    });
+    };
 
     const advancedSearchCondition = query.as;
 
@@ -236,11 +442,32 @@ export default class SearchResultPage extends Component {
 
     const titleColumnName = getFirstColumnName(config, recordType);
 
-    return selectedItems.valueSeq().map(item => ({
+    return selectedItems.valueSeq().map((item) => ({
       csid: item.get('csid'),
       recordType: itemRecordType || getRecordTypeNameByServiceObjectName(config, item.get('docType')),
       title: item.get(titleColumnName),
     })).toJS();
+  }
+
+  isResultExportable(searchDescriptor) {
+    const {
+      config,
+    } = this.context;
+
+    const recordType = searchDescriptor.get('recordType');
+    const subresource = searchDescriptor.get('subresource');
+
+    const serviceType = get(config, ['recordTypes', recordType, 'serviceConfig', 'serviceType']);
+
+    return (
+      subresource !== 'terms'
+      && subresource !== 'refs'
+      && (
+        serviceType === 'procedure'
+        || serviceType === 'object'
+        || serviceType === 'authority'
+      )
+    );
   }
 
   isResultRelatable(searchDescriptor) {
@@ -254,23 +481,29 @@ export default class SearchResultPage extends Component {
     const serviceType = get(config, ['recordTypes', recordType, 'serviceConfig', 'serviceType']);
 
     return (
-      subresource !== 'terms' && (
-        serviceType === 'procedure' ||
-        serviceType === 'object' ||
-        recordType === 'procedure' ||
-        recordType === 'object'
+      subresource !== 'terms'
+      && (
+        serviceType === 'procedure'
+        || serviceType === 'object'
+        || recordType === 'procedure'
+        || recordType === 'object'
       )
     );
   }
 
   closeModal() {
     this.setState({
+      isExportModalOpen: false,
       isSearchToRelateModalOpen: false,
       selectionValidationError: undefined,
     });
   }
 
   normalizeQuery() {
+    const {
+      config,
+    } = this.context;
+
     const {
       history,
       location,
@@ -288,8 +521,8 @@ export default class SearchResultPage extends Component {
 
       const pageSize = parseInt(query.size, 10);
 
-      if (isNaN(pageSize) || pageSize < 1) {
-        const normalizedPageSize = preferredPageSize || defaultPageSize;
+      if (Number.isNaN(pageSize) || pageSize < 1) {
+        const normalizedPageSize = preferredPageSize || config.defaultSearchPageSize || 20;
 
         normalizedQueryParams.size = normalizedPageSize.toString();
       } else if (pageSize > 2500) {
@@ -301,19 +534,20 @@ export default class SearchResultPage extends Component {
 
       const pageNum = parseInt(query.p, 10);
 
-      if (isNaN(pageNum) || pageNum < 1) {
+      if (Number.isNaN(pageNum) || pageNum < 1) {
         normalizedQueryParams.p = '1';
       } else if (pageNum.toString() !== query.p) {
         normalizedQueryParams.p = pageNum.toString();
       }
 
       if (Object.keys(normalizedQueryParams).length > 0) {
-        const newQuery = Object.assign({}, query, normalizedQueryParams);
+        const newQuery = { ...query, ...normalizedQueryParams };
         const queryString = qs.stringify(newQuery);
 
         history.replace({
           pathname: location.pathname,
           search: `?${queryString}`,
+          state: location.state,
         });
 
         return true;
@@ -321,6 +555,29 @@ export default class SearchResultPage extends Component {
     }
 
     return false;
+  }
+
+  search() {
+    const {
+      search,
+    } = this.props;
+
+    const {
+      config,
+    } = this.context;
+
+    const searchDescriptor = this.getSearchDescriptor();
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    // Don't send the query if the provided page size and/or number are invalid.
+    // The search will be repeated with a valid descriptor once normalizeQuery
+    // has set them to the defaults.
+
+    if (!Number.isNaN(searchQuery.get('p')) && !Number.isNaN(searchQuery.get('size')) && search) {
+      const listType = this.getListType(searchDescriptor);
+
+      search(config, SEARCH_RESULT_PAGE_SEARCH_NAME, searchDescriptor, listType);
+    }
   }
 
   validateSelectedItemsRelatable() {
@@ -372,187 +629,6 @@ export default class SearchResultPage extends Component {
     return undefined;
   }
 
-  handleCheckboxClick(event) {
-    // DRYD-252: Elaborate workaround for Firefox. When a checkbox is a child of an a, clicking on
-    // the checkbox navigates to the link. So we have to handle the checkbox click, and prevent the
-    // default. This prevents the navigation, but also prevents the checkbox state from changing.
-    // So we also have to manually commit the change. The Firefox bug has been open for 17 years
-    // now. https://bugzilla.mozilla.org/show_bug.cgi?id=62151
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    const checkbox = event.currentTarget.querySelector('input[type="checkbox"]');
-    const index = checkbox.dataset.name;
-
-    window.setTimeout(() => {
-      this.handleCheckboxCommit([index], !checkbox.checked);
-    }, 0);
-  }
-
-  handleCheckboxCommit(path, value) {
-    const index = parseInt(path[0], 10);
-    const selected = value;
-
-    const {
-      onItemSelectChange,
-    } = this.props;
-
-    const {
-      config,
-    } = this.context;
-
-    if (onItemSelectChange) {
-      const searchDescriptor = this.getSearchDescriptor();
-      const listType = this.getListType(searchDescriptor);
-
-      onItemSelectChange(
-        config, SEARCH_RESULT_PAGE_SEARCH_NAME, searchDescriptor, listType, index, selected);
-    }
-  }
-
-  handleEditSearchLinkClick() {
-    // Transfer this search descriptor's search criteria to advanced search.
-
-    const {
-      setSearchPageAdvanced,
-      setSearchPageKeyword,
-    } = this.props;
-
-    if (setSearchPageKeyword || setSearchPageAdvanced) {
-      const searchDescriptor = this.getSearchDescriptor();
-      const searchQuery = searchDescriptor.get('searchQuery');
-
-      if (setSearchPageKeyword) {
-        setSearchPageKeyword(searchQuery.get('kw'));
-      }
-
-      if (setSearchPageAdvanced) {
-        setSearchPageAdvanced(searchQuery.get('as'));
-      }
-    }
-  }
-
-  handleModalCancelButtonClick() {
-    this.closeModal();
-  }
-
-  handleModalCloseButtonClick() {
-    this.closeModal();
-  }
-
-  handlePageChange(pageNum) {
-    const {
-      history,
-      location,
-    } = this.props;
-
-    if (history) {
-      const {
-        search,
-      } = location;
-
-      const query = qs.parse(search.substring(1));
-
-      query.p = (pageNum + 1).toString();
-
-      const queryString = qs.stringify(query);
-
-      history.push({
-        pathname: location.pathname,
-        search: `?${queryString}`,
-      });
-    }
-  }
-
-  handlePageSizeChange(pageSize) {
-    const {
-      history,
-      location,
-      setPreferredPageSize,
-    } = this.props;
-
-    if (setPreferredPageSize) {
-      setPreferredPageSize(pageSize);
-    }
-
-    if (history) {
-      const {
-        search,
-      } = location;
-
-      const query = qs.parse(search.substring(1));
-
-      query.p = '1';
-      query.size = pageSize.toString();
-
-      const queryString = qs.stringify(query);
-
-      history.push({
-        pathname: location.pathname,
-        search: `?${queryString}`,
-      });
-    }
-  }
-
-  handleRelateButtonClick() {
-    this.setState({
-      isSearchToRelateModalOpen: true,
-      selectionValidationError: this.validateSelectedItemsRelatable(),
-    });
-  }
-
-  handleRelationsCreated() {
-    this.closeModal();
-  }
-
-  handleSortChange(sort) {
-    const {
-      history,
-      location,
-    } = this.props;
-
-    if (history) {
-      const {
-        search,
-      } = location;
-
-      const query = qs.parse(search.substring(1));
-
-      query.sort = sort;
-
-      const queryString = qs.stringify(query);
-
-      history.push({
-        pathname: location.pathname,
-        search: `?${queryString}`,
-      });
-    }
-  }
-
-  search() {
-    const {
-      search,
-    } = this.props;
-
-    const {
-      config,
-    } = this.context;
-
-    const searchDescriptor = this.getSearchDescriptor();
-    const searchQuery = searchDescriptor.get('searchQuery');
-
-    // Don't send the query if the provided page size and/or number are invalid.
-    // The search will be repeated with a valid descriptor once normalizeQuery
-    // has set them to the defaults.
-
-    if (!isNaN(searchQuery.get('p')) && !isNaN(searchQuery.get('size')) && search) {
-      const listType = this.getListType(searchDescriptor);
-
-      search(config, SEARCH_RESULT_PAGE_SEARCH_NAME, searchDescriptor, listType);
-    }
-  }
-
   renderCheckbox({ rowData, rowIndex }) {
     const {
       selectedItems,
@@ -566,7 +642,6 @@ export default class SearchResultPage extends Component {
         embedded
         name={`${rowIndex}`}
         value={selected}
-
         // DRYD-252: Elaborate workaround for Firefox, part II. Use this onClick instead of the
         // onCommit and onClick below.
         onClick={this.handleCheckboxClick}
@@ -609,9 +684,21 @@ export default class SearchResultPage extends Component {
         );
       }
 
+      let exportButton;
+
+      if (this.isResultExportable(searchDescriptor)) {
+        exportButton = (
+          <ExportButton
+            disabled={selectedCount < 1}
+            key="export"
+            onClick={this.handleExportButtonClick}
+          />
+        );
+      }
+
       selectBar = (
         <SelectBar
-          buttons={[relateButton]}
+          buttons={[relateButton, exportButton]}
           config={config}
           listType={listType}
           searchDescriptor={searchDescriptor}
@@ -655,7 +742,11 @@ export default class SearchResultPage extends Component {
       const totalItems = parseInt(list.get('totalItems'), 10);
       const pageNum = parseInt(list.get('pageNum'), 10);
       const pageSize = parseInt(list.get('pageSize'), 10);
-      const lastPage = Math.max(0, isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1);
+
+      const lastPage = Math.max(
+        0,
+        Number.isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1,
+      );
 
       return (
         <footer>
@@ -675,6 +766,7 @@ export default class SearchResultPage extends Component {
 
   render() {
     const {
+      location,
       history,
       isSidebarOpen,
       selectedItems,
@@ -685,12 +777,12 @@ export default class SearchResultPage extends Component {
     } = this.context;
 
     const {
+      isExportModalOpen,
       isSearchToRelateModalOpen,
       selectionValidationError,
     } = this.state;
 
     const searchDescriptor = this.getSearchDescriptor();
-    const advancedSearchCondition = searchDescriptor.getIn(['searchQuery', 'as']);
 
     const listType = this.getListType(searchDescriptor);
 
@@ -699,7 +791,9 @@ export default class SearchResultPage extends Component {
     const csid = searchDescriptor.get('csid');
     const subresource = searchDescriptor.get('subresource');
 
-    const validation = validateLocation(config, { recordType, vocabulary, csid, subresource });
+    const validation = validateLocation(config, {
+      recordType, vocabulary, csid, subresource,
+    });
 
     if (validation.error) {
       return (
@@ -707,11 +801,9 @@ export default class SearchResultPage extends Component {
       );
     }
 
-    const isResultRelatable = this.isResultRelatable(searchDescriptor);
-
     let searchToRelateModal;
 
-    if (isResultRelatable) {
+    if (this.isResultRelatable(searchDescriptor)) {
       searchToRelateModal = (
         <SearchToRelateModalContainer
           allowedServiceTypes={['object', 'procedure']}
@@ -727,6 +819,23 @@ export default class SearchResultPage extends Component {
       );
     }
 
+    let exportModal;
+
+    if (this.isResultExportable(searchDescriptor)) {
+      exportModal = (
+        <ExportModalContainer
+          config={config}
+          isOpen={isExportModalOpen}
+          recordType={recordType}
+          vocabulary={vocabulary}
+          selectedItems={selectedItems}
+          onCancelButtonClick={this.handleModalCancelButtonClick}
+          onCloseButtonClick={this.handleModalCloseButtonClick}
+          onExportOpened={this.handleExportOpened}
+        />
+      );
+    }
+
     return (
       <div className={styles.common}>
         <SearchResultTitleBar
@@ -735,21 +844,11 @@ export default class SearchResultPage extends Component {
           searchName={SEARCH_RESULT_PAGE_SEARCH_NAME}
           updateDocumentTitle
         />
-
-        <div
-          className={
-            advancedSearchCondition
-              ? sidebarToggleBarStyles.advanced
-              : sidebarToggleBarStyles.normal
-          }
-        >
-          <SearchResultSidebarToggleButtonContainer />
-        </div>
-
         <div className={isSidebarOpen ? pageBodyStyles.common : pageBodyStyles.full}>
           <WatchedSearchResultTableContainer
             config={config}
             history={history}
+            linkState={{ originSearchPage: get(location, ['state', 'originSearchPage']) }}
             listType={listType}
             searchName={SEARCH_RESULT_PAGE_SEARCH_NAME}
             searchDescriptor={searchDescriptor}
@@ -772,6 +871,7 @@ export default class SearchResultPage extends Component {
         </div>
 
         {searchToRelateModal}
+        {exportModal}
       </div>
     );
   }

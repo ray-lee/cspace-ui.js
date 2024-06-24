@@ -1,16 +1,16 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { findRenderedComponentWithType } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
 import { baseComponents as inputComponents } from 'cspace-input';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import CheckboxInput from '../../../../src/components/record/CheckboxInput';
 
 chai.should();
 
 const { CheckboxInput: BaseCheckboxInput } = inputComponents;
 
-describe('CheckboxInput', function suite() {
+describe('CheckboxInput', () => {
   beforeEach(function before() {
     this.container = createTestContainer(this);
   });
@@ -19,7 +19,8 @@ describe('CheckboxInput', function suite() {
     const resultTree = render(
       <IntlProvider locale="en">
         <CheckboxInput />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     findRenderedComponentWithType(resultTree, BaseCheckboxInput).should.not.equal(null);
   });
@@ -28,7 +29,8 @@ describe('CheckboxInput', function suite() {
     const resultTree = render(
       <IntlProvider locale="en">
         <CheckboxInput />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const checkboxInput = findRenderedComponentWithType(resultTree, BaseCheckboxInput);
 
@@ -41,7 +43,8 @@ describe('CheckboxInput', function suite() {
     const resultTree = render(
       <IntlProvider locale="en">
         <CheckboxInput viewType="search" />
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const checkboxInput = findRenderedComponentWithType(resultTree, BaseCheckboxInput);
 

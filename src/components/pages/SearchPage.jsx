@@ -27,26 +27,42 @@ const messages = defineMessages({
 });
 
 const propTypes = {
+  // FIXME: Why is config both a prop and in context?
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   recordTypeValue: PropTypes.string,
   vocabularyValue: PropTypes.string,
   keywordValue: PropTypes.string,
-  advancedSearchCondition: PropTypes.object,
-  history: PropTypes.object,
-  location: PropTypes.object,
-  match: PropTypes.object,
+  advancedSearchCondition: PropTypes.instanceOf(Immutable.Map),
+  history: PropTypes.shape({
+    push: PropTypes.func,
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    pathname: PropTypes.string,
+  }),
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   preferredAdvancedSearchBooleanOp: PropTypes.string,
   getAuthorityVocabCsid: PropTypes.func,
+  buildRecordFieldOptionLists: PropTypes.func,
+  clearSearchPage: PropTypes.func,
+  deleteOptionList: PropTypes.func,
+  initiateSearch: PropTypes.func,
   onAdvancedSearchConditionCommit: PropTypes.func,
   onClearButtonClick: PropTypes.func,
   onKeywordCommit: PropTypes.func,
   onRecordTypeCommit: PropTypes.func,
   onVocabularyCommit: PropTypes.func,
-  onSearch: PropTypes.func,
 };
 
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
 };
 
 export default class SearchPage extends Component {
@@ -54,6 +70,7 @@ export default class SearchPage extends Component {
     super();
 
     this.handleRecordTypeCommit = this.handleRecordTypeCommit.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
     this.handleVocabularyCommit = this.handleVocabularyCommit.bind(this);
     this.handleTitleBarDocked = this.handleTitleBarDocked.bind(this);
 
@@ -69,12 +86,16 @@ export default class SearchPage extends Component {
   componentDidUpdate(prevProps) {
     let historyChanged = false;
 
-    const { params } = this.props.match;
+    const {
+      match,
+    } = this.props;
+
+    const { params } = match;
     const { params: prevParams } = prevProps.match;
 
     if (
-      params.recordType !== prevParams.recordType ||
-      params.vocabulary !== prevParams.vocabulary
+      params.recordType !== prevParams.recordType
+      || params.vocabulary !== prevParams.vocabulary
     ) {
       historyChanged = this.normalizePath();
     }
@@ -111,10 +132,75 @@ export default class SearchPage extends Component {
     }
   }
 
+  componentWillUnmount() {
+    const {
+      clearSearchPage,
+    } = this.props;
+
+    if (clearSearchPage) {
+      clearSearchPage();
+    }
+  }
+
+  handleRecordTypeCommit(value) {
+    const {
+      history,
+      onRecordTypeCommit,
+    } = this.props;
+
+    if (onRecordTypeCommit) {
+      onRecordTypeCommit(value);
+    }
+
+    history.replace({
+      pathname: `/search/${value}`,
+    });
+  }
+
+  handleSearch() {
+    const {
+      config,
+      history,
+      initiateSearch,
+    } = this.props;
+
+    if (initiateSearch) {
+      initiateSearch(config, history.push);
+    }
+  }
+
+  handleTitleBarDocked(height) {
+    this.setState({
+      headerDockPosition: height,
+    });
+  }
+
+  handleVocabularyCommit(value) {
+    const {
+      history,
+      onVocabularyCommit,
+    } = this.props;
+
+    if (onVocabularyCommit) {
+      onVocabularyCommit(value);
+    }
+
+    const searchDescriptor = this.getSearchDescriptor();
+    const recordType = searchDescriptor.get('recordType');
+
+    history.replace({
+      pathname: `/search/${recordType}/${value}`,
+    });
+  }
+
   getSearchDescriptor() {
     const {
+      match,
+    } = this.props;
+
+    const {
       params,
-    } = this.props.match;
+    } = match;
 
     const searchDescriptor = {};
 
@@ -173,45 +259,6 @@ export default class SearchPage extends Component {
     return false;
   }
 
-  handleRecordTypeCommit(value) {
-    const {
-      history,
-      onRecordTypeCommit,
-    } = this.props;
-
-    if (onRecordTypeCommit) {
-      onRecordTypeCommit(value);
-    }
-
-    history.replace({
-      pathname: `/search/${value}`,
-    });
-  }
-
-  handleTitleBarDocked(height) {
-    this.setState({
-      headerDockPosition: height,
-    });
-  }
-
-  handleVocabularyCommit(value) {
-    const {
-      history,
-      onVocabularyCommit,
-    } = this.props;
-
-    if (onVocabularyCommit) {
-      onVocabularyCommit(value);
-    }
-
-    const searchDescriptor = this.getSearchDescriptor();
-    const recordType = searchDescriptor.get('recordType');
-
-    history.replace({
-      pathname: `/search/${recordType}/${value}`,
-    });
-  }
-
   render() {
     const {
       advancedSearchCondition,
@@ -219,10 +266,11 @@ export default class SearchPage extends Component {
       perms,
       preferredAdvancedSearchBooleanOp,
       getAuthorityVocabCsid,
+      buildRecordFieldOptionLists,
+      deleteOptionList,
       onAdvancedSearchConditionCommit,
       onClearButtonClick,
       onKeywordCommit,
-      onSearch,
     } = this.props;
 
     const {
@@ -267,12 +315,14 @@ export default class SearchPage extends Component {
             preferredAdvancedSearchBooleanOp={preferredAdvancedSearchBooleanOp}
             showButtons
             getAuthorityVocabCsid={getAuthorityVocabCsid}
+            buildRecordFieldOptionLists={buildRecordFieldOptionLists}
+            deleteOptionList={deleteOptionList}
             onAdvancedSearchConditionCommit={onAdvancedSearchConditionCommit}
             onClearButtonClick={onClearButtonClick}
             onKeywordCommit={onKeywordCommit}
             onRecordTypeCommit={this.handleRecordTypeCommit}
             onVocabularyCommit={this.handleVocabularyCommit}
-            onSearch={onSearch}
+            onSearch={this.handleSearch}
           />
         </div>
       </div>

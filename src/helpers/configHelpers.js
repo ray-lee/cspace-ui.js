@@ -22,16 +22,8 @@ import {
 } from '../constants/dataTypes';
 
 import {
-  thumbnailImage,
-} from './blobHelpers';
-
-import {
-  formatWorkflowStateIcon,
-} from './formatHelpers';
-
-import {
   NS_PREFIX,
-} from './recordDataHelpers';
+} from '../constants/xmlNames';
 
 import {
   isCsid,
@@ -39,13 +31,43 @@ import {
 } from './csidHelpers';
 
 const onlyDigitsPattern = /^\d+$/;
-const isNotNumeric = string => !onlyDigitsPattern.test(string);
+const isNotNumeric = (string) => !onlyDigitsPattern.test(string);
 
 export const configKey = '[config]';
 export const mergeKey = '[merge]';
 
-export const dataPathToFieldDescriptorPath = dataPath =>
-  dataPath.filter(isNotNumeric);
+export const dataPathToFieldDescriptorPath = (dataPath) => dataPath.filter(isNotNumeric);
+
+export const initializeExtensionFieldParents = (fieldDescriptor) => {
+  if (fieldDescriptor) {
+    Object.keys(fieldDescriptor).filter((key) => key !== configKey).forEach((key) => {
+      const childFieldDescriptor = fieldDescriptor[key];
+      const isExtensionField = get(childFieldDescriptor, [configKey, 'extensionName']);
+
+      if (isExtensionField) {
+        // Make a copy of this field descriptor and its configuration, so that different
+        // configuration can be applied to each use of the extension (really wishing I'd made the
+        // config an Immutable, so explicit copy wouldn't be necessary).
+
+        // Set the extension parent config in the extension field's config.
+
+        const childFieldDescriptorCopy = {
+          ...childFieldDescriptor,
+          [configKey]: {
+            ...childFieldDescriptor[configKey],
+            extensionParentConfig:
+            fieldDescriptor[configKey],
+          },
+        };
+
+        // eslint-disable-next-line no-param-reassign
+        fieldDescriptor[key] = childFieldDescriptorCopy;
+      } else {
+        initializeExtensionFieldParents(childFieldDescriptor);
+      }
+    });
+  }
+};
 
 /*
  * Initialize the extension configurations in a configuration object. This function mutates the
@@ -64,40 +86,13 @@ export const initializeExtensions = (config) => {
       if (fields) {
         Object.values(fields).forEach((fieldDescriptor) => {
           set(fieldDescriptor, [configKey, 'extensionName'], extensionName);
+          initializeExtensionFieldParents(fieldDescriptor);
         });
       }
     });
   }
 
   return config;
-};
-
-export const initializeExtensionFieldParents = (fieldDescriptor) => {
-  if (fieldDescriptor) {
-    Object.keys(fieldDescriptor).filter(key => key !== configKey).forEach((key) => {
-      const childFieldDescriptor = fieldDescriptor[key];
-      const isExtensionField = get(childFieldDescriptor, [configKey, 'extensionName']);
-
-      if (isExtensionField) {
-        // Make a copy of this field descriptor and its configuration, so that different
-        // configuration can be applied to each use of the extension (really wishing I'd made the
-        // config an Immutable, so explicit copy wouldn't be necessary).
-
-        // Set the extension parent config in the extension field's config.
-
-        const childFieldDescriptorCopy = Object.assign({}, childFieldDescriptor, {
-          [configKey]: Object.assign({}, childFieldDescriptor[configKey], {
-            extensionParentConfig: fieldDescriptor[configKey],
-          }),
-        });
-
-        // eslint-disable-next-line no-param-reassign
-        fieldDescriptor[key] = childFieldDescriptorCopy;
-      } else {
-        initializeExtensionFieldParents(childFieldDescriptor);
-      }
-    });
-  }
 };
 
 /*
@@ -149,6 +144,8 @@ export const initializeRecordTypes = (config) => {
  * argument configuration.
  *
  * - Delete any record type or vocabulary that is disabled
+ * - Set the disableAltTerms property of each vocabulary to the top-level disableAltTerms property
+ *   if it is undefined
  */
 export const finalizeRecordTypes = (config) => {
   const { recordTypes } = config;
@@ -168,6 +165,8 @@ export const finalizeRecordTypes = (config) => {
 
             if (vocabulary.disabled) {
               delete vocabularies[vocabularyName];
+            } else if (typeof vocabulary.disableAltTerms === 'undefined') {
+              vocabulary.disableAltTerms = config.disableAltTerms;
             }
           });
         }
@@ -225,9 +224,7 @@ export const applyPlugins = (targetConfig, plugins, configContext = {}) => {
 };
 
 export const mergeStrategy = {
-  override: srcValue => Object.assign({}, srcValue, {
-    [mergeKey]: 'override',
-  }),
+  override: (srcValue) => ({ ...srcValue, [mergeKey]: 'override' }),
 };
 
 const configMerger = (objValue, srcValue, key) => {
@@ -247,7 +244,7 @@ const configMerger = (objValue, srcValue, key) => {
   }
 
   if (srcValue && typeof srcValue === 'object' && srcValue[mergeKey] === 'override') {
-    const srcValueCopy = Object.assign({}, srcValue);
+    const srcValueCopy = { ...srcValue };
 
     delete srcValueCopy[mergeKey];
 
@@ -272,8 +269,7 @@ export const mergeConfig = (targetConfig, sourceConfig, configContext = {}) => {
   return mergedConfig;
 };
 
-export const initConfig = (config, configContext) =>
-  mergeConfig({}, config, configContext);
+export const initConfig = (config, configContext) => mergeConfig({}, config, configContext);
 
 export const getRecordTypeConfigByServiceDocumentName = (config, documentName) => {
   if (!documentName) {
@@ -382,9 +378,9 @@ export const getVocabularyConfigByShortID = (recordTypeConfig, shortID) => {
         const { servicePath } = vocabularyConfig.serviceConfig;
 
         if (
-          servicePath &&
-          servicePath.indexOf('urn:cspace:name(') === 0 &&
-          servicePath.lastIndexOf(')') === servicePath.length - 1
+          servicePath
+          && servicePath.indexOf('urn:cspace:name(') === 0
+          && servicePath.lastIndexOf(')') === servicePath.length - 1
         ) {
           const vocabularyShortID = servicePath.substring(16, servicePath.length - 1);
 
@@ -428,7 +424,9 @@ export const getDefaultValue = (fieldDescriptor) => {
       // If an object is supplied as a default value, convert it to an immutable map.
 
       return Immutable.fromJS(defaultValue);
-    } else if (typeof defaultValue === 'undefined' && dataType === DATA_TYPE_BOOL) {
+    }
+
+    if (typeof defaultValue === 'undefined' && dataType === DATA_TYPE_BOOL) {
       // If no default value is configured for a boolean field, consider it to be false.
 
       return false;
@@ -452,7 +450,7 @@ export const getDefaults = (fieldDescriptor, currentPath = []) => {
     });
   }
 
-  const childKeys = Object.keys(fieldDescriptor).filter(key => key !== configKey);
+  const childKeys = Object.keys(fieldDescriptor).filter((key) => key !== configKey);
 
   childKeys.forEach((childKey) => {
     const childPath = currentPath.concat(childKey);
@@ -480,7 +478,7 @@ export const getStickyFields = (fieldDescriptor, currentPath = []) => {
   }
 
   return Object.keys(fieldDescriptor)
-    .filter(key => key !== configKey)
+    .filter((key) => key !== configKey)
     .reduce((results, childKey) => {
       const childPath = currentPath.concat(childKey);
       const childfieldDescriptor = fieldDescriptor[childKey];
@@ -488,6 +486,12 @@ export const getStickyFields = (fieldDescriptor, currentPath = []) => {
 
       return results.concat(childResults);
     }, []);
+};
+
+export const isAutocompleteField = (fieldDescriptor) => {
+  const viewType = get(fieldDescriptor, [configKey, 'view', 'type']);
+
+  return (JSON.stringify(viewType) === '"AutocompleteInput"');
 };
 
 export const isFieldCloneable = (fieldDescriptor, computeContext) => {
@@ -504,6 +508,39 @@ export const isFieldCloneable = (fieldDescriptor, computeContext) => {
   return true;
 };
 
+export const isFieldViewReadOnly = (computeContext) => {
+  const {
+    fieldDescriptor,
+    isSearch,
+  } = computeContext;
+
+  let readOnly;
+
+  const fieldConfig = get(fieldDescriptor, configKey);
+
+  if (fieldConfig) {
+    const viewConfig = isSearch
+      ? fieldConfig.searchView || fieldConfig.view
+      : fieldConfig.view;
+
+    readOnly = get(viewConfig, ['props', 'readOnly']);
+
+    if (typeof readOnly === 'function') {
+      const callComputeContext = { ...computeContext };
+
+      // Don't include the data property of the compute context when calling the function, since it
+      // doesn't really make sense to have the read only state of a field depend on the value in the
+      // field.
+
+      delete callComputeContext.data;
+
+      readOnly = readOnly(callComputeContext);
+    }
+  }
+
+  return !!readOnly;
+};
+
 export const isFieldRepeating = (fieldDescriptor) => {
   const config = fieldDescriptor[configKey];
 
@@ -514,21 +551,21 @@ export const isFieldRepeating = (fieldDescriptor) => {
   return false;
 };
 
-export const isFieldRequired = (validationContext) => {
-  const { fieldDescriptor } = validationContext;
+export const isFieldRequired = (computeContext) => {
+  const { fieldDescriptor } = computeContext;
 
   let required = get(fieldDescriptor, [configKey, 'required']);
 
   if (typeof required === 'function') {
-    const requiredContext = Object.assign({}, validationContext);
+    const callComputeContext = { ...computeContext };
 
-    // Don't include the data property of the validation context in the required context, since it
+    // Don't include the data property of the compute context when calling the function, since it
     // doesn't really make sense to have the required state of a field depend on the value in the
     // field.
 
-    delete requiredContext.data;
+    delete callComputeContext.data;
 
-    required = required(requiredContext);
+    required = required(callComputeContext);
   }
 
   return !!required;
@@ -589,14 +626,11 @@ export const getFieldComputer = (fieldDescriptor) => {
   return computer;
 };
 
-export const getRequiredMessage = fieldDescriptor =>
-  get(fieldDescriptor, [configKey, 'messages', 'required']);
+export const getRequiredMessage = (fieldDescriptor) => get(fieldDescriptor, [configKey, 'messages', 'required']);
 
-export const isAuthority = recordTypeConfig =>
-  get(recordTypeConfig, ['serviceConfig', 'serviceType']) === 'authority';
+export const isAuthority = (recordTypeConfig) => get(recordTypeConfig, ['serviceConfig', 'serviceType']) === 'authority';
 
-export const isUtility = recordTypeConfig =>
-  get(recordTypeConfig, ['serviceConfig', 'serviceType']) === 'utility';
+export const isUtility = (recordTypeConfig) => get(recordTypeConfig, ['serviceConfig', 'serviceType']) === 'utility';
 
 export const validateLocation = (config, location) => {
   const {
@@ -677,8 +711,8 @@ export const validateLocation = (config, location) => {
     const relatedServiceType = get(config, ['recordTypes', relatedRecordType, 'serviceConfig', 'serviceType']);
 
     if (
-      (serviceType !== 'procedure' && serviceType !== 'object') ||
-      (relatedServiceType !== 'procedure' && relatedServiceType !== 'object')
+      (serviceType !== 'procedure' && serviceType !== 'object')
+      || (relatedServiceType !== 'procedure' && relatedServiceType !== 'object')
     ) {
       return {
         error: {
@@ -792,10 +826,8 @@ export const findFieldConfigInPart = (recordTypeConfig, partName, fieldName) => 
 };
 
 const findFieldsWithSource = (fieldDescriptor, shortId) => {
-  const fieldsWithSource = flatMap(Object.keys(fieldDescriptor).filter(key => key !== configKey),
-    childFieldName =>
-      findFieldsWithSource(fieldDescriptor[childFieldName], shortId)
-    );
+  const fieldsWithSource = flatMap(Object.keys(fieldDescriptor).filter((key) => key !== configKey),
+    (childFieldName) => findFieldsWithSource(fieldDescriptor[childFieldName], shortId));
 
   const fieldConfig = fieldDescriptor[configKey];
   const source = get(fieldConfig, ['view', 'props', 'source']);
@@ -837,11 +869,19 @@ export const getFirstColumnName = (config, recordType, columnSetName = 'default'
   }
 
   const orderedColumnNames = Object.keys(columnConfig)
-    .filter(name => (
-      !columnConfig[name].disabled
-      && columnConfig[name].formatValue !== formatWorkflowStateIcon
-      && columnConfig[name].formatValue !== thumbnailImage
-    ))
+    .filter((name) => {
+      const {
+        disabled,
+        width,
+      } = columnConfig[name];
+
+      return (
+        !disabled
+        // FIXME: This is a hack to filter out thumbnail/icon columns, so that the first text column
+        // is returned.
+        && (typeof width === 'undefined' || width >= 100)
+      );
+    })
     .sort((nameA, nameB) => {
       const orderA = columnConfig[nameA].order;
       const orderB = columnConfig[nameB].order;
@@ -850,4 +890,16 @@ export const getFirstColumnName = (config, recordType, columnSetName = 'default'
     });
 
   return orderedColumnNames[0];
+};
+
+export const getRecordFieldOptionListName = (recordType, rootPath) => {
+  const atPath = rootPath ? `@${rootPath}` : '';
+
+  return `_field_${recordType}${atPath}`;
+};
+
+export const getRecordGroupOptionListName = (recordType, rootPath) => {
+  const atPath = rootPath ? `@${rootPath}` : '';
+
+  return `_fieldgroup_${recordType}${atPath}`;
 };

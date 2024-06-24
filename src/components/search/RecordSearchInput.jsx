@@ -23,7 +23,9 @@ const messages = defineMessages({
 });
 
 const propTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
   openSearchModal: PropTypes.func,
 };
 
@@ -33,6 +35,16 @@ export default class RecordSearchInput extends Component {
 
     this.formatValue = this.formatValue.bind(this);
     this.handleChooseButtonClick = this.handleChooseButtonClick.bind(this);
+  }
+
+  handleChooseButtonClick() {
+    const {
+      openSearchModal,
+    } = this.props;
+
+    if (openSearchModal) {
+      openSearchModal();
+    }
   }
 
   formatValue(value) {
@@ -61,16 +73,6 @@ export default class RecordSearchInput extends Component {
     }
 
     return value;
-  }
-
-  handleChooseButtonClick() {
-    const {
-      openSearchModal,
-    } = this.props;
-
-    if (openSearchModal) {
-      openSearchModal();
-    }
   }
 
   render() {

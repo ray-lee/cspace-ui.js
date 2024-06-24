@@ -3,6 +3,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
+import { findWithType } from 'react-shallow-testutils';
 import RecordPage from '../../../../src/components/pages/RecordPage';
 import { ConnectedRecordPage } from '../../../../src/containers/pages/RecordPageContainer';
 
@@ -10,8 +11,8 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('RecordPageContainer', function suite() {
-  it('should set props on RecordPage', function test() {
+describe('RecordPageContainer', () => {
+  it('should set props on RecordPage', () => {
     const recordType = 'group';
     const csid = '3f702416-1897-43ce-a9f5';
 
@@ -48,20 +49,18 @@ describe('RecordPageContainer', function suite() {
 
     const shallowRenderer = createRenderer();
 
-    const context = {
-      store,
-    };
-
     shallowRenderer.render(
       <ConnectedRecordPage
+        store={store}
         config={config}
         match={match}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const page = findWithType(result, RecordPage);
 
-    result.type.should.equal(RecordPage);
-
-    result.props.should.have.property('error', error);
+    page.type.should.equal(RecordPage);
+    page.props.should.have.property('error', error);
   });
 });

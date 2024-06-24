@@ -1,5 +1,95 @@
+/* global window */
+
 import Immutable from 'immutable';
 import get from 'lodash/get';
+import upperFirst from 'lodash/upperFirst';
+import qs from 'qs';
+import { getFieldDataType, isAutocompleteField, configKey } from './configHelpers';
+import { DATA_TYPE_STRUCTURED_DATE } from '../constants/dataTypes';
+
+export const VIEWER_WINDOW_NAME = undefined;
+
+export const storageKey = 'cspace-ui-invocation';
+
+const prepareIncludeFields = (config, recordType, includeFields) => {
+  if (includeFields) {
+    return {
+      field: includeFields.filter((field) => !!field).flatMap((field) => {
+        const fieldSegments = field.split('/');
+
+        const fieldDescriptor = get(
+          config,
+          ['recordTypes', recordType, 'fields', 'document', ...fieldSegments],
+        );
+
+        const fieldDataType = fieldDescriptor && getFieldDataType(fieldDescriptor);
+
+        const [schema, ...path] = fieldSegments;
+        const partName = schema.substring(schema.indexOf(':') + 1);
+        const fieldSpec = `${partName}:${path.join('/')}`;
+
+        if (fieldDataType === DATA_TYPE_STRUCTURED_DATE) {
+          // TODO: Do this for export only? Currently don't know at this point if this is an export.
+          // Will need an additional arg.
+
+          // For struct date groups, append dateDisplayDate to the field path, and specify the
+          // group name as the name. This causes exports to use the group name as the column name,
+          // but the display date as the value, which is expected by the converter tool.
+
+          return {
+            '@name': fieldSegments[fieldSegments.length - 1],
+            '.': `${fieldSpec}/dateDisplayDate`,
+          };
+        }
+
+        if (isAutocompleteField(fieldDescriptor)) {
+          // TODO: Do this for export only. Currently don't know at this point if this is an export.
+          // Will need an additional arg.
+
+          // For authority-controlled fields, if values can be sourced from multiple authorities,
+          // create a separate column for each authority. This is expected by the converter tool.
+
+          const fieldName = path[path.length - 1];
+          const sourceSpec = get(fieldDescriptor, [configKey, 'view', 'props', 'source']);
+          const sources = sourceSpec.split(',');
+
+          return sources
+            .map((source) => {
+              const [authority, vocabulary] = source.split('/');
+
+              const authorityConfig = get(config, ['recordTypes', authority]);
+
+              if (authorityConfig) {
+                const authorityServicePath = get(authorityConfig, ['serviceConfig', 'servicePath']);
+
+                const vocabularyServicePath = get(
+                  authorityConfig,
+                  ['vocabularies', vocabulary, 'serviceConfig', 'servicePath'],
+                );
+
+                if (vocabularyServicePath) {
+                  const match = vocabularyServicePath.match(/urn:cspace:name\((.*?)\)/);
+                  const vocabularyShortId = match ? match[1] : '';
+
+                  return {
+                    '@name': `${fieldName}${upperFirst(authority)}${upperFirst(vocabulary)}`,
+                    '.': `${fieldSpec}[contains(., ':${authorityServicePath}:name(${vocabularyShortId}):')]`,
+                  };
+                }
+              }
+
+              return null;
+            })
+            .filter((item) => !!item);
+        }
+
+        return fieldSpec;
+      }),
+    };
+  }
+
+  return undefined;
+};
 
 const prepareParams = (params) => {
   if (params) {
@@ -9,7 +99,7 @@ const prepareParams = (params) => {
       const value = params[key];
 
       if (Array.isArray(value)) {
-        value.forEach(v => paramPairs.push({ key, value: v }));
+        value.forEach((v) => paramPairs.push({ key, value: v }));
       } else {
         paramPairs.push({ key, value });
       }
@@ -25,6 +115,7 @@ const prepareParams = (params) => {
 
 export const createInvocationData = (config, invocationDescriptor, params) => {
   const {
+    includeFields,
     mode,
     outputMIME,
     recordType: invocationRecordType,
@@ -34,6 +125,7 @@ export const createInvocationData = (config, invocationDescriptor, params) => {
   const invocationContext = {
     mode,
     outputMIME,
+    includeFields: prepareIncludeFields(config, invocationRecordType, includeFields),
     params: prepareParams(params),
     docType: get(config, ['recordTypes', invocationRecordType, 'serviceConfig', 'objectName']),
   };
@@ -71,4 +163,74 @@ export const normalizeInvocationDescriptor = (invocationDescriptor, invocationMe
   }
 
   return normalizedInvocationDescriptor;
+};
+
+export const getReportViewerPath = (config, reportCsid, invocationDescriptor, reportParams) => {
+  const {
+    basename,
+  } = config;
+
+  const reportParamsJson = reportParams && JSON.stringify(reportParams);
+
+  const queryParams = {
+    mode: invocationDescriptor.get('mode'),
+    csid: invocationDescriptor.get('csid'),
+    outputMIME: invocationDescriptor.get('outputMIME'),
+    recordType: invocationDescriptor.get('recordType'),
+    params: reportParamsJson,
+  };
+
+  return `${basename || ''}/report/${reportCsid}?${qs.stringify(queryParams, { arrayFormat: 'brackets' })}`;
+};
+
+// export const getExportViewerPath = (config, invocationDescriptor) => {
+//   const {
+//     basename,
+//   } = config;
+
+//   const csid = invocationDescriptor.get('csid');
+//   const includeFields = invocationDescriptor.get('includeFields');
+
+//   const queryParams = {
+//     mode: invocationDescriptor.get('mode'),
+//     csid: Immutable.List.isList(csid) ? csid.toJS() : csid,
+//     outputMIME: invocationDescriptor.get('outputMIME'),
+//     recordType: invocationDescriptor.get('recordType'),
+//     vocabulary: invocationDescriptor.get('vocabulary'),
+//     includeFields: Immutable.List.isList(includeFields) ? includeFields.toJS() : includeFields,
+//   };
+
+//   return `${basename || ''}/export?${qs.stringify(queryParams, { arrayFormat: 'brackets' })}`;
+// };
+
+export const getExportViewerPath = (config) => {
+  const {
+    basename,
+  } = config;
+
+  return `${basename || ''}/export`;
+};
+
+export const storeInvocationDescriptor = (invocationDescriptor) => {
+  window.localStorage.setItem(storageKey, JSON.stringify(invocationDescriptor.toJS()));
+};
+
+export const loadInvocationDescriptor = (deleteAfterLoad) => {
+  const serializedInvocationDescriptor = window.localStorage.getItem(storageKey);
+
+  let invocationDescriptor = null;
+
+  if (serializedInvocationDescriptor) {
+    try {
+      invocationDescriptor = Immutable.fromJS(JSON.parse(serializedInvocationDescriptor));
+    } catch (error) {
+      invocationDescriptor = null;
+    }
+  }
+
+  if (deleteAfterLoad) {
+    window.localStorage.removeItem(storageKey);
+  }
+
+  return invocationDescriptor;
 };

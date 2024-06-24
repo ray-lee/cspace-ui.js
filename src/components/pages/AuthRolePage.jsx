@@ -14,9 +14,15 @@ import AuthRoleSearchBar from '../admin/AuthRoleSearchBar';
 import styles from '../../../styles/cspace-ui/AdminTab.css';
 
 const propTypes = {
-  history: PropTypes.object,
-  location: PropTypes.object,
-  match: PropTypes.object,
+  history: PropTypes.shape({
+    replace: PropTypes.func,
+  }),
+  location: PropTypes.shape({
+    search: PropTypes.string,
+  }),
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   filterDelay: PropTypes.number,
   setAdminTab: PropTypes.func,
@@ -27,7 +33,9 @@ const defaultProps = {
 };
 
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
 };
 
 const recordType = 'authrole';
@@ -66,50 +74,6 @@ export default class AuthRolePage extends Component {
     if (setAdminTab) {
       setAdminTab(recordType);
     }
-  }
-
-  cloneRecord() {
-    const {
-      history,
-      match,
-    } = this.props;
-
-    const {
-      csid,
-    } = match.params;
-
-    const query = {
-      clone: csid,
-    };
-
-    const queryString = qs.stringify(query);
-
-    history.replace({
-      pathname: `/admin/${recordType}/new`,
-      search: `?${queryString}`,
-    });
-  }
-
-  filter(value) {
-    const {
-      searchDescriptor,
-    } = this.state;
-
-    const searchQuery = searchDescriptor.get('searchQuery');
-
-    let updatedSearchQuery;
-
-    if (value) {
-      updatedSearchQuery = searchQuery.set('dn', value);
-    } else {
-      updatedSearchQuery = searchQuery.delete('dn');
-    }
-
-    updatedSearchQuery = updatedSearchQuery.set('p', 0);
-
-    this.setState({
-      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
-    });
   }
 
   handleCreateButtonClick() {
@@ -197,6 +161,50 @@ export default class AuthRolePage extends Component {
   handleSearchDescriptorChange(searchDescriptor) {
     this.setState({
       searchDescriptor,
+    });
+  }
+
+  cloneRecord() {
+    const {
+      history,
+      match,
+    } = this.props;
+
+    const {
+      csid,
+    } = match.params;
+
+    const query = {
+      clone: csid,
+    };
+
+    const queryString = qs.stringify(query);
+
+    history.replace({
+      pathname: `/admin/${recordType}/new`,
+      search: `?${queryString}`,
+    });
+  }
+
+  filter(value) {
+    const {
+      searchDescriptor,
+    } = this.state;
+
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    let updatedSearchQuery;
+
+    if (value) {
+      updatedSearchQuery = searchQuery.set('dn', value);
+    } else {
+      updatedSearchQuery = searchQuery.delete('dn');
+    }
+
+    updatedSearchQuery = updatedSearchQuery.set('p', 0);
+
+    this.setState({
+      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
     });
   }
 

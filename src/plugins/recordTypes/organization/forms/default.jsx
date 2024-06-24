@@ -62,13 +62,11 @@ const template = (configContext) => {
             <Field name="foundingDateGroup" />
             <Field name="foundingPlace" />
             <Field name="dissolutionDateGroup" />
-
-            <Field name="contactNames">
-              <Field name="contactName" />
-            </Field>
           </Col>
 
           <Col>
+            <Field name="nameNote" />
+
             <Field name="groups">
               <Field name="group" />
             </Field>
@@ -82,6 +80,16 @@ const template = (configContext) => {
             </Field>
           </Col>
         </Cols>
+
+        <Field name="contactGroupList">
+          <Field name="contactGroup">
+            <Field name="contactName" />
+            <Field name="contactRole" />
+            <Field name="contactDateGroup" />
+            <Field name="contactEndDateGroup" />
+            <Field name="contactStatus" />
+          </Field>
+        </Field>
       </Panel>
 
       <Subrecord name="contact" />
@@ -93,7 +101,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.organization.default.name',

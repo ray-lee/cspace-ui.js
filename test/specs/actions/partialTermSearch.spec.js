@@ -1,7 +1,7 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
 import Immutable from 'immutable';
+import { setupWorker, rest } from 'msw';
 
 import {
   ADD_TERM_STARTED,
@@ -25,14 +25,24 @@ import {
 
 chai.should();
 
-describe('partialTermSearch action creator', function suite() {
-  describe('addTerm', function actionSuite() {
+describe('partialTermSearch action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('addTerm', () => {
     const mockStore = configureMockStore([thunk]);
     const recordType = 'person';
     const servicePath = 'personauthorities';
     const vocabulary = 'local';
     const vocabularyServicePath = 'urn:cspace:name(person)';
-    const termAddUrl = `/cspace-services/${servicePath}/${vocabularyServicePath}/items`;
+    const termAddUrl = `/cspace-services/${servicePath}/:vocabulary/items`;
     const termReadUrl = '/cspace-services/new/url/csid';
     const displayName = 'abc';
     const partialTerm = '^abc';
@@ -73,32 +83,31 @@ describe('partialTermSearch action creator', function suite() {
       user: Immutable.Map(),
     });
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch ADD_TERM_FULFILLED on success', function test() {
-      moxios.stubRequest(termAddUrl, {
-        status: 201,
-        headers: {
-          location: termReadUrl,
-        },
-      });
+    it('should dispatch ADD_TERM_FULFILLED on success', () => {
+      worker.use(
+        rest.post(termAddUrl, (req, res, ctx) => {
+          const { params } = req;
 
-      moxios.stubRequest(termReadUrl, {
-        status: 200,
-        response: {},
-      });
+          if (params.vocabulary === vocabularyServicePath) {
+            return res(
+              ctx.status(201),
+              ctx.set('location', termReadUrl),
+            );
+          }
+
+          return res(ctx.status(400));
+        }),
+
+        rest.get(termReadUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       return store.dispatch(addTerm(recordTypeConfig, vocabulary, displayName, partialTerm))
         .then(() => {
@@ -116,54 +125,55 @@ describe('partialTermSearch action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: ADD_TERM_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              displayName,
-              partialTerm,
-              recordType,
-              vocabulary,
+          actions[1].type.should.equal(ADD_TERM_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            displayName,
+            partialTerm,
+            recordType,
+            vocabulary,
+          });
+        });
+    });
+
+    it('should clone the primary record data if clone is true', () => {
+      let requestPayload = null;
+
+      worker.use(
+        rest.post(termAddUrl, async (req, res, ctx) => {
+          const { params } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            requestPayload = await req.json();
+
+            return res(
+              ctx.status(201),
+              ctx.set('location', termReadUrl),
+            );
+          }
+
+          return res(ctx.status(400));
+        }),
+
+        rest.get(termReadUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
+
+      return store.dispatch(addTerm(recordTypeConfig, vocabulary, displayName, partialTerm, true))
+        .then(() => {
+          requestPayload.should.deep.equal({
+            document: {
+              foo: 'bar',
             },
           });
         });
     });
 
-    it('should clone the primary record data if clone is true', function test() {
-      moxios.stubRequest(termAddUrl, {
-        status: 201,
-        headers: {
-          location: termReadUrl,
-        },
-      });
-
-      moxios.stubRequest(termReadUrl, {
-        status: 200,
-        response: {},
-      });
-
-      return store.dispatch(addTerm(recordTypeConfig, vocabulary, displayName, partialTerm, true))
-        .then(() => {
-          const termAddRequest = moxios.requests.first();
-
-          termAddRequest.config.data.should.equal(JSON.stringify({
-            document: {
-              foo: 'bar',
-            },
-          }));
-        });
-    });
-
-    it('should dispatch ADD_TERM_REJECTED on error', function test() {
-      moxios.stubRequest(termAddUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch ADD_TERM_REJECTED on error', () => {
+      worker.use(
+        rest.post(termAddUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(addTerm(recordTypeConfig, vocabulary, displayName, partialTerm))
         .then(() => {
@@ -193,14 +203,14 @@ describe('partialTermSearch action creator', function suite() {
     });
   });
 
-  describe('findMatchingTerms', function actionSuite() {
+  describe('findMatchingTerms', () => {
     const mockStore = configureMockStore([thunk]);
     const recordType = 'person';
     const servicePath = 'personauthorities';
     const vocabulary = 'person';
     const vocabularyServicePath = 'urn:cspace:name(person)';
     const partialTerm = 'abc';
-    const termSearchUrl = `/cspace-services/${servicePath}/${vocabularyServicePath}/items?pt=${partialTerm}&wf_deleted=false`;
+    const termSearchUrl = `/cspace-services/${servicePath}/:vocabulary/items`;
 
     const recordTypeConfig = {
       name: recordType,
@@ -220,28 +230,36 @@ describe('partialTermSearch action creator', function suite() {
       user: Immutable.Map(),
     });
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch PARTIAL_TERM_SEARCH_FULFILLED on success', function test() {
-      moxios.stubRequest(termSearchUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch PARTIAL_TERM_SEARCH_FULFILLED on success', () => {
+      worker.use(
+        rest.get(termSearchUrl, (req, res, ctx) => {
+          const { params, url } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            const { searchParams } = url;
+
+            if (
+              searchParams.get('pt') === partialTerm
+              && searchParams.get('wf_deleted') === 'false'
+            ) {
+              return res(ctx.json({}));
+            }
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(
-        findMatchingTerms(recordTypeConfig, vocabulary, partialTerm)
+        findMatchingTerms(recordTypeConfig, vocabulary, partialTerm),
       )
         .then(() => {
           const actions = store.getActions();
@@ -257,31 +275,25 @@ describe('partialTermSearch action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: PARTIAL_TERM_SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              partialTerm,
-              recordType,
-              vocabulary,
-            },
+          actions[1].type.should.equal(PARTIAL_TERM_SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            partialTerm,
+            recordType,
+            vocabulary,
           });
         });
     });
 
-    it('should dispatch PARTIAL_TERM_SEARCH_REJECTED on error', function test() {
-      moxios.stubRequest(termSearchUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch PARTIAL_TERM_SEARCH_REJECTED on error', () => {
+      worker.use(
+        rest.get(termSearchUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(
-        findMatchingTerms(recordTypeConfig, vocabulary, partialTerm)
+        findMatchingTerms(recordTypeConfig, vocabulary, partialTerm),
       )
         .then(() => {
           const actions = store.getActions();
@@ -307,19 +319,19 @@ describe('partialTermSearch action creator', function suite() {
         });
     });
 
-    it('should dispatch no action if the vocabulary does not have a service path', function test() {
+    it('should dispatch no action if the vocabulary does not have a service path', () => {
       const invalidVocabulary = `${vocabulary}abcd`;
 
       store.dispatch(
-        findMatchingTerms(recordTypeConfig, invalidVocabulary, partialTerm)
+        findMatchingTerms(recordTypeConfig, invalidVocabulary, partialTerm),
       );
 
       store.getActions().should.have.lengthOf(0);
     });
   });
 
-  describe('clearMatchedTerms', function actionSuite() {
-    it('should create a CLEAR_PARTIAL_TERM_SEARCH_RESULTS action', function test() {
+  describe('clearMatchedTerms', () => {
+    it('should create a CLEAR_PARTIAL_TERM_SEARCH_RESULTS action', () => {
       clearMatchedTerms().should.deep.equal({
         type: CLEAR_PARTIAL_TERM_SEARCH_RESULTS,
       });

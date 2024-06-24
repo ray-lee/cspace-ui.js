@@ -1,5 +1,7 @@
 import Immutable from 'immutable';
 import chaiImmutable from 'chai-immutable';
+import { OP_AND, OP_EQ } from '../../../src/constants/searchOperators';
+import { clearAdvancedSearchConditionValues } from '../../../src/helpers/searchHelpers';
 
 import {
   PREFS_LOADED,
@@ -28,6 +30,7 @@ import reducer, {
   getAdvancedSearchBooleanOp,
   getForm,
   getRecordBrowserNavBarItems,
+  getSearchCondition,
   getSearchPageRecordType,
   getSearchPageVocabulary,
   getQuickSearchRecordType,
@@ -46,12 +49,12 @@ import reducer, {
 chai.use(chaiImmutable);
 chai.should();
 
-describe('prefs reducer', function suite() {
-  it('should have empty immutable initial state', function test() {
+describe('prefs reducer', () => {
+  it('should have empty immutable initial state', () => {
     reducer(undefined, {}).should.equal(Immutable.Map({}));
   });
 
-  it('should handle COLLAPSE_PANEL', function test() {
+  it('should handle COLLAPSE_PANEL', () => {
     const recordType = 'collectionobject';
     const panelName = 'desc';
     const collapsed = true;
@@ -78,7 +81,7 @@ describe('prefs reducer', function suite() {
     isPanelCollapsed(state, recordType, panelName).should.equal(collapsed);
   });
 
-  it('should handle SET_ADMIN_TAB', function test() {
+  it('should handle SET_ADMIN_TAB', () => {
     const tabName = 'account';
 
     const state = reducer(undefined, {
@@ -93,7 +96,7 @@ describe('prefs reducer', function suite() {
     getAdminTab(state).should.equal(tabName);
   });
 
-  it('should handle SET_TOOL_TAB', function test() {
+  it('should handle SET_TOOL_TAB', () => {
     const tabName = 'report';
 
     const state = reducer(undefined, {
@@ -108,7 +111,7 @@ describe('prefs reducer', function suite() {
     getToolTab(state).should.equal(tabName);
   });
 
-  it('should handle SET_FORM', function test() {
+  it('should handle SET_FORM', () => {
     const recordType = 'collectionobject';
     const formName = 'default';
 
@@ -129,7 +132,7 @@ describe('prefs reducer', function suite() {
     getForm(state, recordType).should.equal(formName);
   });
 
-  it('should handle SET_RECORD_BROWSER_NAV_BAR_ITEMS', function test() {
+  it('should handle SET_RECORD_BROWSER_NAV_BAR_ITEMS', () => {
     const recordType = 'collectionobject';
     const navBarItems = Immutable.List(['group', 'media']);
 
@@ -150,41 +153,107 @@ describe('prefs reducer', function suite() {
     getRecordBrowserNavBarItems(state, recordType).should.equal(navBarItems);
   });
 
-  it('should handle SET_SEARCH_PAGE_ADVANCED', function test() {
-    const op = 'and';
+  it('should handle SET_SEARCH_PAGE_ADVANCED', () => {
+    const op = OP_AND;
+    const recordType = 'conditioncheck';
 
-    const state = reducer(Immutable.Map(), {
+    const condition = Immutable.fromJS({
+      op,
+      value: [
+        {
+          op: OP_EQ,
+          path: 'ns2:conditionchecks_common/foo',
+          value: 'some value',
+        },
+      ],
+    });
+
+    let state;
+
+    state = reducer(Immutable.Map(), {
       type: SET_SEARCH_PAGE_ADVANCED,
-      payload: Immutable.fromJS({
-        op,
-      }),
+      payload: condition,
+      meta: {
+        recordType,
+      },
     });
 
     state.should.equal(Immutable.fromJS({
       advancedSearchBooleanOp: op,
+      searchCond: {
+        [recordType]: clearAdvancedSearchConditionValues(condition),
+      },
     }));
 
     getAdvancedSearchBooleanOp(state).should.equal(op);
+
+    getSearchCondition(state, recordType).should
+      .equal(clearAdvancedSearchConditionValues(condition));
+
+    // Should do nothing if recordType is not supplied.
+
+    state = reducer(Immutable.Map(), {
+      type: SET_SEARCH_PAGE_ADVANCED,
+      payload: condition,
+      meta: {
+        recordType: undefined,
+      },
+    });
+
+    state.should.equal(Immutable.Map());
   });
 
-  it('should handle SET_SEARCH_TO_SELECT_ADVANCED', function test() {
-    const op = 'and';
+  it('should handle SET_SEARCH_TO_SELECT_ADVANCED', () => {
+    const op = OP_AND;
+    const recordType = 'intake';
 
-    const state = reducer(Immutable.Map(), {
+    const condition = Immutable.fromJS({
+      op,
+      value: [
+        {
+          op: OP_EQ,
+          path: 'ns2:intakes_common/bar',
+          value: 'search it',
+        },
+      ],
+    });
+
+    let state;
+
+    state = reducer(Immutable.Map(), {
       type: SET_SEARCH_TO_SELECT_ADVANCED,
-      payload: Immutable.fromJS({
-        op,
-      }),
+      payload: condition,
+      meta: {
+        recordType,
+      },
     });
 
     state.should.equal(Immutable.fromJS({
       advancedSearchBooleanOp: op,
+      searchCond: {
+        [recordType]: clearAdvancedSearchConditionValues(condition),
+      },
     }));
 
     getAdvancedSearchBooleanOp(state).should.equal(op);
+
+    getSearchCondition(state, recordType).should
+      .equal(clearAdvancedSearchConditionValues(condition));
+
+    // Should do nothing if recordType is not supplied.
+
+    state = reducer(Immutable.Map(), {
+      type: SET_SEARCH_TO_SELECT_ADVANCED,
+      payload: condition,
+      meta: {
+        recordType: undefined,
+      },
+    });
+
+    state.should.equal(Immutable.Map());
   });
 
-  it('should handle SET_SEARCH_PAGE_RECORD_TYPE', function test() {
+  it('should handle SET_SEARCH_PAGE_RECORD_TYPE', () => {
     const recordType = 'loanin';
 
     const state = reducer(Immutable.Map(), {
@@ -201,7 +270,7 @@ describe('prefs reducer', function suite() {
     getSearchPageRecordType(state).should.equal(recordType);
   });
 
-  it('should handle SET_SEARCH_PAGE_VOCABULARY', function test() {
+  it('should handle SET_SEARCH_PAGE_VOCABULARY', () => {
     const recordType = 'person';
     const vocabulary = 'ulan';
 
@@ -226,7 +295,7 @@ describe('prefs reducer', function suite() {
     getSearchPageVocabulary(state, recordType).should.equal(vocabulary);
   });
 
-  it('should handle SET_QUICK_SEARCH_RECORD_TYPE', function test() {
+  it('should handle SET_QUICK_SEARCH_RECORD_TYPE', () => {
     const recordType = 'loanin';
 
     const state = reducer(Immutable.Map(), {
@@ -243,7 +312,7 @@ describe('prefs reducer', function suite() {
     getQuickSearchRecordType(state).should.equal(recordType);
   });
 
-  it('should handle SET_QUICK_SEARCH_VOCABULARY', function test() {
+  it('should handle SET_QUICK_SEARCH_VOCABULARY', () => {
     const recordType = 'person';
     const vocabulary = 'ulan';
 
@@ -268,7 +337,7 @@ describe('prefs reducer', function suite() {
     getQuickSearchVocabulary(state, recordType).should.equal(vocabulary);
   });
 
-  it('should handle SET_SEARCH_RESULT_PAGE_PAGE_SIZE', function test() {
+  it('should handle SET_SEARCH_RESULT_PAGE_PAGE_SIZE', () => {
     const pageSize = 14;
 
     const state = reducer(undefined, {
@@ -283,7 +352,7 @@ describe('prefs reducer', function suite() {
     getSearchResultPagePageSize(state).should.equal(pageSize);
   });
 
-  it('should handle SET_SEARCH_PANEL_PAGE_SIZE', function test() {
+  it('should handle SET_SEARCH_PANEL_PAGE_SIZE', () => {
     const recordType = 'collectionobject';
     const panelName = 'desc';
     const pageSize = 35;
@@ -310,7 +379,7 @@ describe('prefs reducer', function suite() {
     getSearchPanelPageSize(state, recordType, panelName).should.equal(pageSize);
   });
 
-  it('should handle SET_SEARCH_TO_SELECT_PAGE_SIZE', function test() {
+  it('should handle SET_SEARCH_TO_SELECT_PAGE_SIZE', () => {
     const pageSize = 19;
 
     const state = reducer(undefined, {
@@ -325,7 +394,7 @@ describe('prefs reducer', function suite() {
     getSearchToSelectPageSize(state).should.equal(pageSize);
   });
 
-  it('should handle SET_UPLOAD_TYPE', function test() {
+  it('should handle SET_UPLOAD_TYPE', () => {
     const uploadType = 'file';
 
     const state = reducer(undefined, {
@@ -340,7 +409,7 @@ describe('prefs reducer', function suite() {
     getUploadType(state).should.equal(uploadType);
   });
 
-  it('should handle PREFS_LOADED', function test() {
+  it('should handle PREFS_LOADED', () => {
     const prefs = Immutable.fromJS({
       panels: {
         collectionobject: {
@@ -359,7 +428,7 @@ describe('prefs reducer', function suite() {
     state.should.deep.equal(prefs);
   });
 
-  it('should handle TOGGLE_RECORD_SIDEBAR', function test() {
+  it('should handle TOGGLE_RECORD_SIDEBAR', () => {
     let state;
 
     state = reducer(undefined, {
@@ -389,7 +458,7 @@ describe('prefs reducer', function suite() {
     isRecordSidebarOpen(state).should.equal(false);
   });
 
-  it('should handle TOGGLE_SEARCH_RESULT_SIDEBAR', function test() {
+  it('should handle TOGGLE_SEARCH_RESULT_SIDEBAR', () => {
     let state;
 
     state = reducer(undefined, {
@@ -419,7 +488,7 @@ describe('prefs reducer', function suite() {
     isSearchResultSidebarOpen(state).should.equal(false);
   });
 
-  it('should handle SET_STICKY_FIELDS', function test() {
+  it('should handle SET_STICKY_FIELDS', () => {
     const recordType = 'media';
 
     const stickyFields = Immutable.fromJS({

@@ -1,10 +1,11 @@
 /* global window */
 
 import Immutable from 'immutable';
+import chaiAsPromised from 'chai-as-promised';
 import chaiImmutable from 'chai-immutable';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 import qs from 'qs';
 
 import {
@@ -24,9 +25,12 @@ import {
   STATUS_ERROR,
 } from '../../../src/constants/notificationStatusCodes';
 
-const assert = chai.assert;
-const expect = chai.expect;
+const {
+  assert,
+  expect,
+} = chai;
 
+chai.use(chaiAsPromised);
 chai.use(chaiImmutable);
 chai.should();
 
@@ -43,43 +47,53 @@ const config = {
       },
     },
     report: {
-      invocableName: data =>
-        data.getIn(['document', 'ns2:reports_common', 'filename']),
+      invocableName: (data) => data.getIn(['document', 'ns2:reports_common', 'filename']),
     },
   },
 };
 
 const mockStore = configureMockStore([thunk]);
 
-describe('report action creator', function suite() {
-  describe('invoke', function actionSuite() {
+describe('report action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('invoke', () => {
     const store = mockStore({
       user: Immutable.Map(),
     });
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should invoke a report in single mode', function test() {
-      moxios.stubRequest(/./, {
-        status: 200,
-        response: {},
-      });
-
+    it('should invoke a report in single mode', () => {
       const reportCsid = 'abcd';
       const recordCsid = '1234';
       const recordType = 'group';
+
+      const invokeUrl = `/cspace-services/reports/${reportCsid}/invoke`;
+
+      let requestPayload = null;
+
+      worker.use(
+        rest.post(invokeUrl, async (req, res, ctx) => {
+          requestPayload = await req.json();
+
+          return res(ctx.json({}));
+        }),
+      );
 
       const invocationDescriptor = Immutable.Map({
         recordType,
@@ -90,13 +104,7 @@ describe('report action creator', function suite() {
 
       return store.dispatch(invoke(config, reportCsid, invocationDescriptor))
         .then(() => {
-          const request = moxios.requests.mostRecent();
-
-          request.url.should.equal(`/cspace-services/reports/${reportCsid}`);
-
-          const data = JSON.parse(request.config.data);
-
-          data.should.deep.equal({
+          requestPayload.should.deep.equal({
             'ns2:invocationContext': {
               '@xmlns:ns2': 'http://collectionspace.org/services/common/invocable',
               docType: 'Group',
@@ -108,15 +116,22 @@ describe('report action creator', function suite() {
         });
     });
 
-    it('should invoke a report in list mode', function test() {
-      moxios.stubRequest(/./, {
-        status: 200,
-        response: {},
-      });
-
+    it('should invoke a report in list mode', () => {
       const reportCsid = 'abcd';
       const recordCsid = '1234';
       const recordType = 'group';
+
+      const invokeUrl = `/cspace-services/reports/${reportCsid}/invoke`;
+
+      let requestPayload = null;
+
+      worker.use(
+        rest.post(invokeUrl, async (req, res, ctx) => {
+          requestPayload = await req.json();
+
+          return res(ctx.json({}));
+        }),
+      );
 
       const invocationDescriptor = Immutable.Map({
         recordType,
@@ -128,13 +143,7 @@ describe('report action creator', function suite() {
 
       return store.dispatch(invoke(config, reportCsid, invocationDescriptor))
         .then(() => {
-          const request = moxios.requests.mostRecent();
-
-          request.url.should.equal(`/cspace-services/reports/${reportCsid}`);
-
-          const data = JSON.parse(request.config.data);
-
-          data.should.deep.equal({
+          requestPayload.should.deep.equal({
             'ns2:invocationContext': {
               '@xmlns:ns2': 'http://collectionspace.org/services/common/invocable',
               docType: 'Group',
@@ -149,14 +158,21 @@ describe('report action creator', function suite() {
         });
     });
 
-    it('should invoke a report in nocontext mode', function test() {
-      moxios.stubRequest(/./, {
-        status: 200,
-        response: {},
-      });
-
+    it('should invoke a report in nocontext mode', () => {
       const reportCsid = 'abcd';
       const recordType = 'group';
+
+      const invokeUrl = `/cspace-services/reports/${reportCsid}/invoke`;
+
+      let requestPayload = null;
+
+      worker.use(
+        rest.post(invokeUrl, async (req, res, ctx) => {
+          requestPayload = await req.json();
+
+          return res(ctx.json({}));
+        }),
+      );
 
       const invocationDescriptor = Immutable.Map({
         recordType,
@@ -165,13 +181,7 @@ describe('report action creator', function suite() {
 
       return store.dispatch(invoke(config, reportCsid, invocationDescriptor))
         .then(() => {
-          const request = moxios.requests.mostRecent();
-
-          request.url.should.equal(`/cspace-services/reports/${reportCsid}`);
-
-          const data = JSON.parse(request.config.data);
-
-          data.should.deep.equal({
+          requestPayload.should.deep.equal({
             'ns2:invocationContext': {
               '@xmlns:ns2': 'http://collectionspace.org/services/common/invocable',
               docType: 'Group',
@@ -181,24 +191,23 @@ describe('report action creator', function suite() {
         });
     });
 
-    it('should dispatch SHOW_NOTIFICATION with STATUS_ERROR when an invocation fails', function test() {
-      moxios.wait(() => {
-        moxios.requests.mostRecent().respondWith({
-          status: 400,
-          response: {},
-        });
-      });
-
+    it('should dispatch SHOW_NOTIFICATION with STATUS_ERROR when an invocation fails', () => {
       const reportCsid = 'abcd';
       const recordType = 'group';
+
+      const invokeUrl = `/cspace-services/reports/${reportCsid}/invoke`;
+
+      worker.use(
+        rest.post(invokeUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       const invocationDescriptor = Immutable.Map({
         recordType,
         mode: 'nocontext',
       });
 
-      return store.dispatch(invoke(config, reportCsid, invocationDescriptor))
-        .catch(() => {
+      return store.dispatch(invoke(config, reportCsid, invocationDescriptor)).should.eventually
+        .be.rejected.then(() => {
           const actions = store.getActions();
 
           actions[0].type.should.equal(SHOW_NOTIFICATION);
@@ -207,7 +216,7 @@ describe('report action creator', function suite() {
     });
   });
 
-  describe('openReport', function actionSuite() {
+  describe('openReport', () => {
     const params = {
       foo: 'abc',
       bar: 'def',
@@ -227,19 +236,14 @@ describe('report action creator', function suite() {
       user: Immutable.Map(),
     });
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
     });
 
-    it('should open a window with the URL of the report', function test() {
+    it('should open a window with the URL of the report', () => {
       const reportCsid = 'abcd';
       const recordCsid = '1234';
       const recordType = 'group';
@@ -279,7 +283,7 @@ describe('report action creator', function suite() {
         });
     });
 
-    it('should include parameters', function test() {
+    it('should include parameters', () => {
       const reportCsid = 'abcd';
       const recordCsid = '1234';
       const recordType = 'group';
@@ -321,7 +325,7 @@ describe('report action creator', function suite() {
         });
     });
 
-    it('should not call window.open if parameter validation fails', function test() {
+    it('should not call window.open if parameter validation fails', () => {
       const invalidDataStore = mockStore({
         prefs: Immutable.Map(),
         record: Immutable.fromJS({

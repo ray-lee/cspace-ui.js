@@ -17,6 +17,10 @@ export default (configContext) => {
 
   return {
     'ns2:collectionspace_core': {
+      [config]: {
+        // The fields in this schema do not appear on any forms, but they should be searchable.
+        searchDisabled: false,
+      },
       createdAt: {
         [config]: {
           dataType: DATA_TYPE_DATETIME,
@@ -26,6 +30,7 @@ export default (configContext) => {
               defaultMessage: 'Created time',
             },
           }),
+          searchDisabled: false,
           searchView: {
             type: DateInput,
           },
@@ -39,6 +44,13 @@ export default (configContext) => {
       },
       createdBy: {
         [config]: {
+          messages: defineMessages({
+            name: {
+              id: 'field.ext.core.createdBy.name',
+              defaultMessage: 'Created by',
+            },
+          }),
+          searchDisabled: false,
           view: {
             type: TextInput,
           },
@@ -53,6 +65,7 @@ export default (configContext) => {
               defaultMessage: 'Last updated time',
             },
           }),
+          searchDisabled: false,
           searchView: {
             type: DateInput,
           },
@@ -72,8 +85,26 @@ export default (configContext) => {
               defaultMessage: 'Last updated by',
             },
           }),
+          searchDisabled: false,
           view: {
             type: TextInput,
+          },
+        },
+      },
+      uri: {
+        [config]: {
+          messages: defineMessages({
+            name: {
+              id: 'field.ext.core.uri.name',
+              defaultMessage: 'URI',
+            },
+          }),
+          searchDisabled: false,
+          view: {
+            type: TextInput,
+            props: {
+              readOnly: true,
+            },
           },
         },
       },

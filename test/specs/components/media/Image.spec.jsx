@@ -1,15 +1,16 @@
 /* global window, Blob */
 
 import React from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { unmountComponentAtNode } from 'react-dom';
 import Image from '../../../../src/components/media/Image';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
-describe('Image', function suite() {
+describe('Image', () => {
   const readImage = () => Promise.resolve({
     status: 200,
     data: new Blob(),
@@ -46,11 +47,13 @@ describe('Image', function suite() {
     const readImage404 = () => {
       readImageCalledCount += 1;
 
-      return Promise.reject({
-        response: {
-          status: 404,
-        },
-      });
+      const error = new Error();
+
+      error.response = {
+        status: 404,
+      };
+
+      return Promise.reject(error);
     };
 
     render(
@@ -59,7 +62,8 @@ describe('Image', function suite() {
         readImage={readImage404}
         retryLimit={retryLimit}
         retry
-      />, this.container);
+      />, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
 
@@ -73,11 +77,13 @@ describe('Image', function suite() {
   });
 
   it('should render a div when there is an error reading the image', function test() {
-    const readImage500 = () => Promise.reject({
-      response: {
-        status: 500,
-      },
-    });
+    const error = new Error();
+
+    error.response = {
+      status: 500,
+    };
+
+    const readImage500 = () => Promise.reject(error);
 
     render(<Image src="blobs/1234/content" readImage={readImage500} />, this.container);
 
@@ -97,7 +103,8 @@ describe('Image', function suite() {
       <Image
         src="blobs/1234/content"
         readImage={readImage}
-      />, this.container);
+      />, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
 
@@ -112,7 +119,8 @@ describe('Image', function suite() {
           <Image
             src="blobs/5678/content"
             readImage={readImage}
-          />, this.container);
+          />, this.container,
+        );
 
         this.container.firstElementChild.nodeName.should.equal('DIV');
 
@@ -126,7 +134,8 @@ describe('Image', function suite() {
       <Image
         src="blobs/1234/content"
         readImage={readImage}
-      />, this.container);
+      />, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
 
@@ -151,11 +160,13 @@ describe('Image', function suite() {
     const readImage404 = () => {
       readImageCalledCount += 1;
 
-      return Promise.reject({
-        response: {
-          status: 404,
-        },
-      });
+      const error = new Error();
+
+      error.response = {
+        status: 404,
+      };
+
+      return Promise.reject(error);
     };
 
     render(
@@ -164,7 +175,8 @@ describe('Image', function suite() {
         readImage={readImage404}
         retryLimit={retryLimit}
         retry
-      />, this.container);
+      />, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
 

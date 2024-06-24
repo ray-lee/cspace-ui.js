@@ -3,6 +3,7 @@ import configureMockStore from 'redux-mock-store';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
 import thunk from 'redux-thunk';
+import { findWithType } from 'react-shallow-testutils';
 import RelationEditor from '../../../../src/components/record/RelationEditor';
 import RelationEditorContainer from '../../../../src/containers/record/RelationEditorContainer';
 
@@ -16,7 +17,7 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('RelationEditorContainer', function suite() {
+describe('RelationEditorContainer', () => {
   const subject = {
     csid: '1234',
     recordType: 'collectionobject',
@@ -51,10 +52,6 @@ describe('RelationEditorContainer', function suite() {
     record: Immutable.Map(),
   });
 
-  const context = {
-    store,
-  };
-
   const config = {
   };
 
@@ -62,43 +59,48 @@ describe('RelationEditorContainer', function suite() {
     store.clearActions();
   });
 
-  it('should set props on RelationEditor', function test() {
+  it('should set props on RelationEditor', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <RelationEditorContainer
+        store={store}
         subject={subject}
         object={object}
         predicate={predicate}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, RelationEditor);
 
-    result.type.should.equal(RelationEditor);
-    result.props.should.have.property('findResult').that.equals(findResult);
-    result.props.should.have.property('createRelation').that.is.a('function');
-    result.props.should.have.property('findRelation').that.is.a('function');
-    result.props.should.have.property('onUnmount').that.is.a('function');
+    editor.props.should.have.property('findResult').that.equals(findResult);
+    editor.props.should.have.property('createRelation').that.is.a('function');
+    editor.props.should.have.property('findRelation').that.is.a('function');
+    editor.props.should.have.property('onUnmount').that.is.a('function');
   });
 
-  it('should connect createRelation to createBidirectional action creator', function test() {
+  it('should connect createRelation to createBidirectional action creator', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <RelationEditorContainer
+        store={store}
         subject={subject}
         object={object}
         predicate={predicate}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, RelationEditor);
 
     // The call to createRelation will fail because we haven't stubbed out everything it needs,
     // but there's enough to verify that the readRecord createBidirectional creator gets called,
     // and dispatches RELATION_SAVE_STARTED.
 
     try {
-      result.props.createRelation(subject, object, predicate);
+      editor.props.createRelation(subject, object, predicate);
     } catch (error) {
       const action = store.getActions()[0];
 
@@ -109,7 +111,7 @@ describe('RelationEditorContainer', function suite() {
     }
   });
 
-  it('should connect findRelation to find action creator', function test() {
+  it('should connect findRelation to find action creator', () => {
     const newObject = {
       csid: '8888',
       recordType: 'group',
@@ -119,19 +121,22 @@ describe('RelationEditorContainer', function suite() {
 
     shallowRenderer.render(
       <RelationEditorContainer
+        store={store}
         subject={subject}
         object={newObject}
         predicate={predicate}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, RelationEditor);
 
     // The call to findRelation will fail because we haven't stubbed out everything it needs,
     // but there's enough to verify that the find action creator gets called, and
     // dispatches RELATION_FIND_STARTED.
 
     try {
-      result.props.findRelation(config, subject, newObject, predicate);
+      editor.props.findRelation(config, subject, newObject, predicate);
     } catch (error) {
       const action = store.getActions()[0];
 
@@ -142,19 +147,22 @@ describe('RelationEditorContainer', function suite() {
     }
   });
 
-  it('should connect onUnmount to clearState action creator', function test() {
+  it('should connect onUnmount to clearState action creator', () => {
     const shallowRenderer = createRenderer();
 
     shallowRenderer.render(
       <RelationEditorContainer
+        store={store}
         subject={subject}
         object={object}
         predicate={predicate}
-      />, context);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
+    const editor = findWithType(result, RelationEditor);
 
-    result.props.onUnmount();
+    editor.props.onUnmount();
 
     const action = store.getActions()[0];
 

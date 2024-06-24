@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { defineMessages, injectIntl, intlShape, FormattedMessage } from 'react-intl';
+import {
+  defineMessages, injectIntl, intlShape, FormattedMessage,
+} from 'react-intl';
 import Immutable from 'immutable';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
@@ -46,7 +48,10 @@ const propTypes = {
   acceptButtonLabel: PropTypes.node,
   allowedRecordTypes: PropTypes.arrayOf(PropTypes.string),
   allowedServiceTypes: PropTypes.arrayOf(PropTypes.string),
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+    recordTypes: PropTypes.object,
+  }),
   intl: intlShape,
   isOpen: PropTypes.bool,
   keywordValue: PropTypes.string,
@@ -54,7 +59,7 @@ const propTypes = {
   defaultVocabularyValue: PropTypes.string,
   recordTypeValue: PropTypes.string,
   vocabularyValue: PropTypes.string,
-  advancedSearchCondition: PropTypes.object,
+  advancedSearchCondition: PropTypes.instanceOf(Immutable.Map),
   preferredAdvancedSearchBooleanOp: PropTypes.string,
   preferredPageSize: PropTypes.number,
   perms: PropTypes.instanceOf(Immutable.Map),
@@ -62,6 +67,8 @@ const propTypes = {
   singleSelect: PropTypes.bool,
   titleMessage: PropTypes.objectOf(PropTypes.string),
   getAuthorityVocabCsid: PropTypes.func,
+  buildRecordFieldOptionLists: PropTypes.func,
+  deleteOptionList: PropTypes.func,
   onAdvancedSearchConditionCommit: PropTypes.func,
   onKeywordCommit: PropTypes.func,
   onRecordTypeCommit: PropTypes.func,
@@ -115,7 +122,8 @@ export class BaseSearchToSelectModal extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       isOpen,
     } = this.props;
@@ -214,111 +222,21 @@ export class BaseSearchToSelectModal extends Component {
       } = prevState;
 
       if (
-        recordTypeValue !== prevRecordTypeValue ||
-        vocabularyValue !== prevVocabularyValue ||
-        !isEqual(advancedSearchCondition, prevAdvancedSearchCondition) ||
-        preferredPageSize !== prevPreferredPageSize ||
-        pageNum !== prevPageNum ||
-        sort !== prevSort
+        recordTypeValue !== prevRecordTypeValue
+        || vocabularyValue !== prevVocabularyValue
+        || !isEqual(advancedSearchCondition, prevAdvancedSearchCondition)
+        || preferredPageSize !== prevPreferredPageSize
+        || pageNum !== prevPageNum
+        || sort !== prevSort
       ) {
         this.search();
       }
     } else if (recordTypeValue !== prevRecordTypeValue) {
-      const serviceType =
-        get(config, ['recordTypes', recordTypeValue, 'serviceConfig', 'serviceType']);
+      const serviceType = get(config, ['recordTypes', recordTypeValue, 'serviceConfig', 'serviceType']);
 
       if (serviceType === 'authority') {
         onVocabularyCommit(defaultVocabularyValue);
       }
-    }
-  }
-
-  getSearchDescriptor() {
-    const {
-      config,
-      recordTypeValue: recordType,
-      vocabularyValue: vocabulary,
-      keywordValue: keyword,
-      advancedSearchCondition,
-      preferredPageSize,
-      customizeSearchDescriptor,
-    } = this.props;
-
-    const {
-      pageNum,
-      sort,
-    } = this.state;
-
-    const pageSize = preferredPageSize || defaultPageSize;
-
-    const searchQuery = {
-      p: pageNum,
-      size: pageSize,
-    };
-
-    if (sort) {
-      searchQuery.sort = sort;
-    }
-
-    const kw = keyword ? keyword.trim() : '';
-
-    if (kw) {
-      searchQuery.kw = kw;
-    }
-
-    const fields = get(config, ['recordTypes', recordType, 'fields']);
-    const condition = normalizeCondition(fields, advancedSearchCondition);
-
-    if (condition) {
-      searchQuery.as = condition;
-    }
-
-    const searchDescriptor = Immutable.fromJS({
-      recordType,
-      vocabulary,
-      searchQuery,
-    });
-
-    if (customizeSearchDescriptor) {
-      return customizeSearchDescriptor(searchDescriptor);
-    }
-
-    return searchDescriptor;
-  }
-
-  setItemSelected(index, selected) {
-    const {
-      config,
-      singleSelect,
-      setAllItemsSelected,
-      onItemSelectChange,
-    } = this.props;
-
-    if (onItemSelectChange) {
-      const searchDescriptor = this.getSearchDescriptor();
-
-      if (singleSelect && selected) {
-        setAllItemsSelected(config, searchName, searchDescriptor, listType, false);
-      }
-
-      onItemSelectChange(config, searchName, searchDescriptor, listType, index, selected);
-    }
-  }
-
-  search() {
-    const {
-      config,
-      search,
-    } = this.props;
-
-    if (search) {
-      const searchDescriptor = this.getSearchDescriptor();
-
-      search(config, searchName, searchDescriptor);
-
-      this.setState({
-        isSearchInitiated: true,
-      });
     }
   }
 
@@ -417,7 +335,7 @@ export class BaseSearchToSelectModal extends Component {
 
     let normalizedPageSize;
 
-    if (isNaN(pageSize) || pageSize < 1) {
+    if (Number.isNaN(pageSize) || pageSize < 1) {
       normalizedPageSize = 0;
     } else if (pageSize > 2500) {
       normalizedPageSize = 2500;
@@ -438,6 +356,95 @@ export class BaseSearchToSelectModal extends Component {
     this.setState({
       sort,
     });
+  }
+
+  getSearchDescriptor() {
+    const {
+      config,
+      recordTypeValue: recordType,
+      vocabularyValue: vocabulary,
+      keywordValue: keyword,
+      advancedSearchCondition,
+      preferredPageSize,
+      customizeSearchDescriptor,
+    } = this.props;
+
+    const {
+      pageNum,
+      sort,
+    } = this.state;
+
+    const pageSize = preferredPageSize || defaultPageSize;
+
+    const searchQuery = {
+      p: pageNum,
+      size: pageSize,
+    };
+
+    if (sort) {
+      searchQuery.sort = sort;
+    }
+
+    const kw = keyword ? keyword.trim() : '';
+
+    if (kw) {
+      searchQuery.kw = kw;
+    }
+
+    const fields = get(config, ['recordTypes', recordType, 'fields']);
+    const condition = normalizeCondition(fields, advancedSearchCondition);
+
+    if (condition) {
+      searchQuery.as = condition;
+    }
+
+    const searchDescriptor = Immutable.fromJS({
+      recordType,
+      vocabulary,
+      searchQuery,
+    });
+
+    if (customizeSearchDescriptor) {
+      return customizeSearchDescriptor(searchDescriptor);
+    }
+
+    return searchDescriptor;
+  }
+
+  setItemSelected(index, selected) {
+    const {
+      config,
+      singleSelect,
+      setAllItemsSelected,
+      onItemSelectChange,
+    } = this.props;
+
+    if (onItemSelectChange) {
+      const searchDescriptor = this.getSearchDescriptor();
+
+      if (singleSelect && selected) {
+        setAllItemsSelected(config, searchName, searchDescriptor, listType, false);
+      }
+
+      onItemSelectChange(config, searchName, searchDescriptor, listType, index, selected);
+    }
+  }
+
+  search() {
+    const {
+      config,
+      search,
+    } = this.props;
+
+    if (search) {
+      const searchDescriptor = this.getSearchDescriptor();
+
+      search(config, searchName, searchDescriptor);
+
+      this.setState({
+        isSearchInitiated: true,
+      });
+    }
   }
 
   renderCheckbox({ rowData, rowIndex }) {
@@ -482,6 +489,8 @@ export class BaseSearchToSelectModal extends Component {
       preferredAdvancedSearchBooleanOp,
       advancedSearchCondition,
       getAuthorityVocabCsid,
+      buildRecordFieldOptionLists,
+      deleteOptionList,
       onAdvancedSearchConditionCommit,
       onKeywordCommit,
       onRecordTypeCommit,
@@ -516,6 +525,8 @@ export class BaseSearchToSelectModal extends Component {
         recordTypeInputRecordTypes={allowedRecordTypes}
         recordTypeInputServiceTypes={allowedServiceTypes}
         getAuthorityVocabCsid={getAuthorityVocabCsid}
+        buildRecordFieldOptionLists={buildRecordFieldOptionLists}
+        deleteOptionList={deleteOptionList}
         onAdvancedSearchConditionCommit={onAdvancedSearchConditionCommit}
         onKeywordCommit={onKeywordCommit}
         onRecordTypeCommit={onRecordTypeCommit}
@@ -527,7 +538,7 @@ export class BaseSearchToSelectModal extends Component {
 
   renderEditSearchLink() {
     return (
-      <button onClick={this.handleEditSearchLinkClick}>
+      <button type="button" onClick={this.handleEditSearchLinkClick}>
         <FormattedMessage {...messages.editSearch} />
       </button>
     );
@@ -596,7 +607,11 @@ export class BaseSearchToSelectModal extends Component {
       const totalItems = parseInt(list.get('totalItems'), 10);
       const pageSize = parseInt(list.get('pageSize'), 10);
       const pageNum = parseInt(list.get('pageNum'), 10);
-      const lastPage = Math.max(0, isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1);
+
+      const lastPage = Math.max(
+        0,
+        Number.isNaN(totalItems) ? 0 : Math.ceil(totalItems / pageSize) - 1,
+      );
 
       return (
         <footer>

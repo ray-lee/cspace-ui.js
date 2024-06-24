@@ -1,14 +1,14 @@
 import React from 'react';
-import { render } from 'react-dom';
 import { Simulate } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import OptionPickerInput from '../../../../src/components/record/OptionPickerInput';
 
 chai.should();
 
-describe('OptionPickerInput', function suite() {
+describe('OptionPickerInput', () => {
   const config = {};
 
   beforeEach(function before() {
@@ -21,7 +21,8 @@ describe('OptionPickerInput', function suite() {
         <ConfigProvider config={config}>
           <OptionPickerInput />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-input-DropdownMenuInput--common').should.not.equal(null);
   });
@@ -36,7 +37,8 @@ describe('OptionPickerInput', function suite() {
         <ConfigProvider config={config}>
           <OptionPickerInput />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input');
 
@@ -64,7 +66,8 @@ describe('OptionPickerInput', function suite() {
         <ConfigProvider config={config}>
           <OptionPickerInput options={items} />
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const input = this.container.querySelector('input');
 
@@ -72,5 +75,43 @@ describe('OptionPickerInput', function suite() {
 
     this.container.querySelectorAll('.cspace-input-MenuItem--common')[1].textContent.should
       .equal('Foo Label');
+  });
+
+  it('should call the labelFormatter function to format the option label, if provided', function test() {
+    const items = [
+      {
+        value: 'foo',
+        labelFormatter: (intl, option) => `labelFormatter(${option.value})`,
+      },
+      {
+        value: 'bar',
+        message: {
+          id: 'label',
+          defaultMessage: 'Bar Label',
+        },
+        labelFormatter: (intl, option) => `labelFormatter(${option.value})`,
+      },
+      {
+        value: 'baz',
+      },
+    ];
+
+    render(
+      <IntlProvider locale="en">
+        <ConfigProvider config={config}>
+          <OptionPickerInput options={items} />
+        </ConfigProvider>
+      </IntlProvider>, this.container,
+    );
+
+    const input = this.container.querySelector('input');
+
+    Simulate.mouseDown(input);
+
+    const menuItems = this.container.querySelectorAll('.cspace-input-MenuItem--common');
+
+    menuItems[1].textContent.should.equal('labelFormatter(foo)');
+    menuItems[2].textContent.should.equal('labelFormatter(bar)');
+    menuItems[3].textContent.should.equal('baz');
   });
 });

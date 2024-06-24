@@ -1,7 +1,7 @@
 import Immutable from 'immutable';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 
 import {
   PERMS_READ_STARTED,
@@ -21,8 +21,18 @@ import {
   readRoles,
 } from '../../../src/actions/authz';
 
-describe('authz action creator', function suite() {
-  describe('readPerms', function actionSuite() {
+describe('authz action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('readPerms', () => {
     const mockStore = configureMockStore([thunk]);
 
     const store = mockStore({
@@ -31,27 +41,33 @@ describe('authz action creator', function suite() {
     });
 
     const config = {};
-    const readPermsUrl = '/cspace-services/authorization/permissions?pgSz=0&actGrp=CRUDL';
+    const readPermsUrl = '/cspace-services/authorization/permissions';
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch PERMS_READ_FULFILLED on success', function test() {
-      moxios.stubRequest(readPermsUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch PERMS_READ_FULFILLED on success', () => {
+      worker.use(
+        rest.get(readPermsUrl, (req, res, ctx) => {
+          const {
+            searchParams,
+          } = req.url;
+
+          if (
+            searchParams.get('pgSz') === '0'
+            && searchParams.get('actGrp') === 'CRUDL'
+          ) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(readPerms(config))
         .then(() => {
@@ -63,26 +79,17 @@ describe('authz action creator', function suite() {
             type: PERMS_READ_STARTED,
           });
 
-          actions[1].should.deep.equal({
-            type: PERMS_READ_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              config,
-            },
-          });
+          actions[1].type.should.equal(PERMS_READ_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+          actions[1].meta.config.should.deep.equal(config);
         });
     });
 
-    it('should dispatch PERMS_READ_REJECTED on success', function test() {
-      moxios.stubRequest(readPermsUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch PERMS_READ_REJECTED on error', () => {
+      worker.use(
+        rest.get(readPermsUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(readPerms(config))
         .then(() => {
@@ -98,7 +105,7 @@ describe('authz action creator', function suite() {
         });
     });
 
-    it('should not dispatch any action if a read is already pending', function test() {
+    it('should not dispatch any action if a read is already pending', () => {
       const inProgressStore = mockStore({
         authz: Immutable.Map({
           isPermsReadPending: true,
@@ -113,7 +120,7 @@ describe('authz action creator', function suite() {
         });
     });
 
-    it('should not dispatch any action if permissions have already been retrieved', function test() {
+    it('should not dispatch any action if permissions have already been retrieved', () => {
       const permsRetrievedStore = mockStore({
         authz: Immutable.Map({
           resourceNames: Immutable.List(),
@@ -129,7 +136,7 @@ describe('authz action creator', function suite() {
     });
   });
 
-  describe('readRoles', function actionSuite() {
+  describe('readRoles', () => {
     const mockStore = configureMockStore([thunk]);
 
     const store = mockStore({
@@ -137,27 +144,32 @@ describe('authz action creator', function suite() {
       user: Immutable.Map(),
     });
 
-    const readRolesUrl = '/cspace-services/authorization/roles?pgSz=0';
+    const readRolesUrl = '/cspace-services/authorization/roles';
 
-    before(() =>
-      store.dispatch(configureCSpace())
-        .then(() => store.clearActions())
-    );
-
-    beforeEach(() => {
-      moxios.install();
-    });
+    before(() => store.dispatch(configureCSpace())
+      .then(() => store.clearActions()));
 
     afterEach(() => {
       store.clearActions();
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch ROLES_READ_FULFILLED on success', function test() {
-      moxios.stubRequest(readRolesUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch ROLES_READ_FULFILLED on success', () => {
+      worker.use(
+        rest.get(readRolesUrl, (req, res, ctx) => {
+          const {
+            searchParams,
+          } = req.url;
+
+          if (
+            searchParams.get('pgSz') === '0'
+          ) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       return store.dispatch(readRoles())
         .then(() => {
@@ -169,23 +181,16 @@ describe('authz action creator', function suite() {
             type: ROLES_READ_STARTED,
           });
 
-          actions[1].should.deep.equal({
-            type: ROLES_READ_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-          });
+          actions[1].type.should.equal(ROLES_READ_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
         });
     });
 
-    it('should dispatch ROLES_READ_REJECTED on success', function test() {
-      moxios.stubRequest(readRolesUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch ROLES_READ_REJECTED on error', () => {
+      worker.use(
+        rest.get(readRolesUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       return store.dispatch(readRoles())
         .then(() => {
@@ -201,7 +206,7 @@ describe('authz action creator', function suite() {
         });
     });
 
-    it('should not dispatch any action if a read is already pending', function test() {
+    it('should not dispatch any action if a read is already pending', () => {
       const inProgressStore = mockStore({
         authz: Immutable.Map({
           isRolesReadPending: true,
@@ -216,7 +221,7 @@ describe('authz action creator', function suite() {
         });
     });
 
-    it('should not dispatch any action if roles have already been retrieved', function test() {
+    it('should not dispatch any action if roles have already been retrieved', () => {
       const rolesRetrievedStore = mockStore({
         authz: Immutable.Map({
           roles: Immutable.List(),

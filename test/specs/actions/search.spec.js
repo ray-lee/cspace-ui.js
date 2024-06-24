@@ -1,8 +1,8 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import moxios from 'moxios';
 import Immutable from 'immutable';
 import chaiAsPromised from 'chai-as-promised';
+import { setupWorker, rest } from 'msw';
 
 import {
   CLEAR_SEARCH_RESULTS,
@@ -25,6 +25,7 @@ import {
   clearSelected,
   clearSearchResults,
   deselectResultItem,
+  findFirst,
   search,
   setResultItemSelected,
   setAllResultItemsSelected,
@@ -46,14 +47,24 @@ chai.should();
 
 const mockStore = configureMockStore([thunk]);
 
-describe('search action creator', function suite() {
-  describe('search', function actionSuite() {
+describe('search action creator', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await worker.start({ quiet: true });
+  });
+
+  after(() => {
+    worker.stop();
+  });
+
+  describe('search', () => {
     const recordType = 'person';
     const servicePath = 'personauthorities';
     const vocabulary = 'local';
     const vocabularyServicePath = 'urn:cspace:name(person)';
     const termsServicePath = 'authorityrefs';
-    const searchUrl = new RegExp(`^/cspace-services/${servicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items.*`);
+    const searchUrl = `/cspace-services/${servicePath}/:vocabulary/items`;
 
     const listTypes = {
       common: {
@@ -115,19 +126,22 @@ describe('search action creator', function suite() {
       return store.dispatch(configureCSpace());
     });
 
-    beforeEach(() => {
-      moxios.install();
-    });
-
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should dispatch SEARCH_FULFILLED on success', function test() {
-      moxios.stubRequest(searchUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch SEARCH_FULFILLED on success', () => {
+      worker.use(
+        rest.get(searchUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -148,28 +162,30 @@ describe('search action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              listTypeConfig: listTypes.common,
-              searchName,
-              searchDescriptor,
-            },
+          actions[1].type.should.equal(SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            listTypeConfig: listTypes.common,
+            searchName,
+            searchDescriptor,
           });
         });
     });
 
-    it('should dispatch SET_MOST_RECENT_SEARCH when a search with a given descriptor is already pending', function test() {
-      moxios.stubRequest(searchUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch SET_MOST_RECENT_SEARCH when a search with a given descriptor is already pending', () => {
+      worker.use(
+        rest.get(searchUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.fromJS({
@@ -198,11 +214,18 @@ describe('search action creator', function suite() {
       });
     });
 
-    it('should dispatch SET_MOST_RECENT_SEARCH when a search with a given descriptor already has a result', function test() {
-      moxios.stubRequest(searchUrl, {
-        status: 200,
-        response: {},
-      });
+    it('should dispatch SET_MOST_RECENT_SEARCH when a search with a given descriptor already has a result', () => {
+      worker.use(
+        rest.get(searchUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.fromJS({
@@ -231,7 +254,7 @@ describe('search action creator', function suite() {
       });
     });
 
-    it('should dispatch CREATE_EMPTY_SEARCH_RESULT on a related record query with empty csid', function test() {
+    it('should dispatch CREATE_EMPTY_SEARCH_RESULT on a related record query with empty csid', () => {
       const relSearchDescriptor = Immutable.fromJS({
         recordType,
         vocabulary,
@@ -273,13 +296,12 @@ describe('search action creator', function suite() {
       });
     });
 
-    it('should accept null/undefined vocabulary name', function test() {
-      const noVocabularySearchUrl = new RegExp(`^/cspace-services/${servicePath}.*`);
+    it('should accept null/undefined vocabulary name', () => {
+      const noVocabularySearchUrl = `/cspace-services/${servicePath}`;
 
-      moxios.stubRequest(noVocabularySearchUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(noVocabularySearchUrl, (req, res, ctx) => res(ctx.json({}))),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -305,32 +327,34 @@ describe('search action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              listTypeConfig: listTypes.common,
-              searchName,
-              searchDescriptor: noVocabularySearchDescriptor,
-            },
+          actions[1].type.should.equal(SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            listTypeConfig: listTypes.common,
+            searchName,
+            searchDescriptor: noVocabularySearchDescriptor,
           });
         });
     });
 
-    it('should accept searches for subresources', function test() {
+    it('should accept searches for subresources', () => {
       const csid = '1234';
       const subresource = 'terms';
-      const subresourceSearchUrl = new RegExp(`^/cspace-services/${servicePath}/${vocabularyServicePath.replace('(', '\\(').replace(')', '\\)')}/items/${csid}/${termsServicePath}.*`);
+      const subresourceSearchUrl = `/cspace-services/${servicePath}/:vocabulary/items/${csid}/${termsServicePath}`;
 
-      moxios.stubRequest(subresourceSearchUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(subresourceSearchUrl, (req, res, ctx) => {
+          const { params } = req;
+
+          if (params.vocabulary === vocabularyServicePath) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -364,30 +388,34 @@ describe('search action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              listTypeConfig: listTypes.common,
-              searchName,
-              searchDescriptor: subresourceSearchDescriptor,
-            },
+          actions[1].type.should.equal(SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            listTypeConfig: listTypes.common,
+            searchName,
+            searchDescriptor: subresourceSearchDescriptor,
           });
         });
     });
 
-    it('should generate the sort parameter', function test() {
-      const sortedSearchUrl = new RegExp('\\?.*sortBy=collectionspace_core%3AupdatedAt');
+    it('should generate the sort parameter', () => {
+      const noVocabularySearchUrl = `/cspace-services/${servicePath}`;
 
-      moxios.stubRequest(sortedSearchUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(noVocabularySearchUrl, (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('sortBy') === 'collectionspace_core:updatedAt'
+          ) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -395,9 +423,7 @@ describe('search action creator', function suite() {
 
       const sortedSearchDescriptor = Immutable.fromJS({
         recordType,
-        searchQuery: Object.assign({}, searchQuery, {
-          sort: 'updatedAt',
-        }),
+        searchQuery: { ...searchQuery, sort: 'updatedAt' },
       });
 
       return store.dispatch(search(config, searchName, sortedSearchDescriptor))
@@ -415,30 +441,34 @@ describe('search action creator', function suite() {
             },
           });
 
-          actions[1].should.deep.equal({
-            type: SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              listTypeConfig: listTypes.common,
-              searchName,
-              searchDescriptor: sortedSearchDescriptor,
-            },
+          actions[1].type.should.equal(SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            listTypeConfig: listTypes.common,
+            searchName,
+            searchDescriptor: sortedSearchDescriptor,
           });
         });
     });
 
-    it('should generate the sort parameter for descending searches', function test() {
-      const sortedSearchUrl = new RegExp('\\?.*sortBy=collectionspace_core%3AupdatedAt%20DESC');
+    it('should generate the sort parameter for descending searches', () => {
+      const noVocabularySearchUrl = `/cspace-services/${servicePath}`;
 
-      moxios.stubRequest(sortedSearchUrl, {
-        status: 200,
-        response: {},
-      });
+      worker.use(
+        rest.get(noVocabularySearchUrl, (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('sortBy') === 'collectionspace_core:updatedAt DESC'
+          ) {
+            return res(ctx.json({}));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -446,9 +476,7 @@ describe('search action creator', function suite() {
 
       const sortedSearchDescriptor = Immutable.fromJS({
         recordType,
-        searchQuery: Object.assign({}, searchQuery, {
-          sort: 'updatedAt desc',
-        }),
+        searchQuery: { ...searchQuery, sort: 'updatedAt desc' },
       });
 
       return store.dispatch(search(config, searchName, sortedSearchDescriptor))
@@ -466,42 +494,35 @@ describe('search action creator', function suite() {
             },
           });
 
+          actions[1].type.should.equal(SEARCH_FULFILLED);
+          actions[1].payload.status.should.equal(200);
+          actions[1].payload.data.should.deep.equal({});
+
+          actions[1].meta.should.deep.equal({
+            listTypeConfig: listTypes.common,
+            searchName,
+            searchDescriptor: sortedSearchDescriptor,
+          });
+        });
+    });
+
+    it('should dispatch SEARCH_REJECTED when an unknown search column is specified', () => {
+      const store = mockStore({
+        search: Immutable.Map(),
+      });
+
+      const sortedSearchDescriptor = Immutable.fromJS({
+        recordType,
+        searchQuery: { ...searchQuery, sort: 'foobar' },
+      });
+
+      return store.dispatch(search(config, searchName, sortedSearchDescriptor)).should.eventually
+        .be.rejected.then(() => {
+          const actions = store.getActions();
+
+          actions.should.have.lengthOf(2);
+
           actions[1].should.deep.equal({
-            type: SEARCH_FULFILLED,
-            payload: {
-              status: 200,
-              statusText: undefined,
-              headers: undefined,
-              data: {},
-            },
-            meta: {
-              listTypeConfig: listTypes.common,
-              searchName,
-              searchDescriptor: sortedSearchDescriptor,
-            },
-          });
-        });
-    });
-
-    it('should dispatch SEARCH_REJECTED when an unknown search column is specified', function test() {
-      const store = mockStore({
-        search: Immutable.Map(),
-      });
-
-      const sortedSearchDescriptor = Immutable.fromJS({
-        recordType,
-        searchQuery: Object.assign({}, searchQuery, {
-          sort: 'foobar',
-        }),
-      });
-
-      store.dispatch(search(config, searchName, sortedSearchDescriptor))
-        .catch(() => {
-          const actions = store.getActions();
-
-          actions.should.have.lengthOf(1);
-
-          actions[0].should.deep.equal({
             type: SEARCH_REJECTED,
             payload: {
               code: ERR_INVALID_SORT,
@@ -514,25 +535,23 @@ describe('search action creator', function suite() {
         });
     });
 
-    it('should dispatch SEARCH_REJECTED when an invalid search order is specified', function test() {
+    it('should dispatch SEARCH_REJECTED when an invalid search order is specified', () => {
       const store = mockStore({
         search: Immutable.Map(),
       });
 
       const sortedSearchDescriptor = Immutable.fromJS({
         recordType,
-        searchQuery: Object.assign({}, searchQuery, {
-          sort: 'updatedAt foo',
-        }),
+        searchQuery: { ...searchQuery, sort: 'updatedAt foo' },
       });
 
-      store.dispatch(search(config, searchName, sortedSearchDescriptor))
-        .catch(() => {
+      return store.dispatch(search(config, searchName, sortedSearchDescriptor)).should.eventually
+        .be.rejected.then(() => {
           const actions = store.getActions();
 
-          actions.should.have.lengthOf(1);
+          actions.should.have.lengthOf(2);
 
-          actions[0].should.deep.equal({
+          actions[1].should.deep.equal({
             type: SEARCH_REJECTED,
             payload: {
               code: ERR_INVALID_SORT,
@@ -545,11 +564,10 @@ describe('search action creator', function suite() {
         });
     });
 
-    it('should dispatch SEARCH_REJECTED on API error', function test() {
-      moxios.stubRequest(searchUrl, {
-        status: 400,
-        response: {},
-      });
+    it('should dispatch SEARCH_REJECTED on API error', () => {
+      worker.use(
+        rest.get(searchUrl, (req, res, ctx) => res(ctx.status(400))),
+      );
 
       const store = mockStore({
         search: Immutable.Map(),
@@ -578,7 +596,7 @@ describe('search action creator', function suite() {
         });
     });
 
-    it('should dispatch SEARCH_REJECTED if the record type is unknown', function test() {
+    it('should dispatch SEARCH_REJECTED if the record type is unknown', () => {
       const badSearchDescriptor = searchDescriptor.set('recordType', 'foobar');
 
       const store = mockStore({
@@ -604,7 +622,7 @@ describe('search action creator', function suite() {
         });
     });
 
-    it('should dispatch SEARCH_REJECTED if the record type does not have a service path', function test() {
+    it('should dispatch SEARCH_REJECTED if the record type does not have a service path', () => {
       const badConfig = {
         listTypes,
         recordTypes: {
@@ -637,7 +655,7 @@ describe('search action creator', function suite() {
         });
     });
 
-    it('should dispatch SEARCH_REJECTED if the vocabulary does not have a service path', function test() {
+    it('should dispatch SEARCH_REJECTED if the vocabulary does not have a service path', () => {
       const badConfig = {
         listTypes,
         recordTypes: {
@@ -678,21 +696,17 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('searchCsid', function actionSuite() {
-    beforeEach(() => {
-      moxios.install();
-    });
-
+  describe('findFirst', () => {
     afterEach(() => {
-      moxios.uninstall();
+      worker.resetHandlers();
     });
 
-    it('should make an advanced search request for procedures', function test() {
+    it('should make an advanced search request for procedures', () => {
       const config = {
         recordTypes: {
-          collectionobject: {
+          loanin: {
             serviceConfig: {
-              servicePath: 'collectionobjects',
+              servicePath: 'loansin',
             },
           },
         },
@@ -702,20 +716,29 @@ describe('search action creator', function suite() {
         foo: 'bar',
       };
 
-      moxios.stubRequest('/cspace-services/collectionobjects?as=%28ecm%3Aname%20%3D%20%221234%22%29&pgSz=1&wf_deleted=false', {
-        status: 200,
-        response: data,
-      });
+      worker.use(
+        rest.get('/cspace-services/loansin', (req, res, ctx) => {
+          const { searchParams } = req.url;
 
-      const store = mockStore({});
+          if (
+            searchParams.get('as') === '(part:baz = "1234")'
+            && searchParams.get('pgSz') === '1'
+            && searchParams.get('wf_deleted') === 'false'
+          ) {
+            return res(ctx.json(data));
+          }
 
-      return store.dispatch(searchCsid(config, 'collectionobject', '1234'))
+          return res(ctx.status(400));
+        }),
+      );
+
+      return findFirst(config, 'loanin', 'part:baz', '1234')
         .then((response) => {
-          response.data.should.equal(data);
+          response.data.should.deep.equal(data);
         });
     });
 
-    it('should make an advanced search request for authorities', function test() {
+    it('should make an advanced search request for authorities', () => {
       const config = {
         recordTypes: {
           person: {
@@ -738,20 +761,212 @@ describe('search action creator', function suite() {
         foo: 'bar',
       };
 
-      moxios.stubRequest('/cspace-services/personauthorities/_ALL_/items?as=%28ecm%3Aname%20%3D%20%221234%22%29&pgSz=1&wf_deleted=false', {
-        status: 200,
-        response: data,
-      });
+      worker.use(
+        rest.get('/cspace-services/personauthorities/_ALL_/items', (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('as') === '(part:baz = "1234")'
+            && searchParams.get('pgSz') === '1'
+            && searchParams.get('wf_deleted') === 'false'
+          ) {
+            return res(ctx.json(data));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
+
+      return findFirst(config, 'person', 'part:baz', '1234')
+        .then((response) => {
+          response.data.should.deep.equal(data);
+        });
+    });
+
+    it('should escape quotes in the value', () => {
+      const config = {
+        recordTypes: {
+          loanin: {
+            serviceConfig: {
+              servicePath: 'loansin',
+            },
+          },
+        },
+      };
+
+      const data = {
+        foo: 'bar',
+      };
+
+      worker.use(
+        rest.get('/cspace-services/loansin', (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('as') === '(part:baz = "\\"1234\\"")'
+            && searchParams.get('pgSz') === '1'
+            && searchParams.get('wf_deleted') === 'false'
+          ) {
+            return res(ctx.json(data));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
+
+      return findFirst(config, 'loanin', 'part:baz', '"1234"')
+        .then((response) => {
+          response.data.should.deep.equal(data);
+        });
+    });
+
+    it('should reject if no record type config is found', () => {
+      const config = {
+        recordTypes: {},
+      };
+
+      return findFirst(config, 'person', 'part:baz', '1234').should.eventually.be.rejected;
+    });
+
+    it('should reject if no record service path is found', () => {
+      const config = {
+        recordTypes: {
+          group: {
+            serviceConfig: {},
+          },
+        },
+      };
+
+      return findFirst(config, 'group', 'part:baz', '1234').should.eventually.be.rejected;
+    });
+
+    it('should reject if no vocabulary service path is found for an authority', () => {
+      const config = {
+        recordTypes: {
+          person: {
+            serviceConfig: {
+              servicePath: 'personauthorities',
+              serviceType: 'authority',
+            },
+            vocabularies: {
+              all: {
+                serviceConfig: {},
+              },
+            },
+          },
+        },
+      };
+
+      return findFirst(config, 'person', 'part:baz', '1234').should.eventually.be.rejected;
+    });
+
+    it('should reject if the field name is invalid', () => {
+      const config = {
+        recordTypes: {
+          loanin: {
+            serviceConfig: {
+              servicePath: 'loansin',
+            },
+          },
+        },
+      };
+
+      return findFirst(config, 'loanin', '"part:baz"', '1234').should.eventually.be.rejected;
+    });
+  });
+
+  describe('searchCsid', () => {
+    afterEach(() => {
+      worker.resetHandlers();
+    });
+
+    it('should make an advanced search request for procedures', () => {
+      const config = {
+        recordTypes: {
+          collectionobject: {
+            serviceConfig: {
+              servicePath: 'collectionobjects',
+            },
+          },
+        },
+      };
+
+      const data = {
+        foo: 'bar',
+      };
+
+      worker.use(
+        rest.get('/cspace-services/collectionobjects', (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('as') === '(ecm:name = "1234")'
+            && searchParams.get('pgSz') === '1'
+            && searchParams.get('wf_deleted') === 'false'
+          ) {
+            return res(ctx.json(data));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
+
+      const store = mockStore({});
+
+      return store.dispatch(searchCsid(config, 'collectionobject', '1234'))
+        .then((response) => {
+          response.data.should.deep.equal(data);
+        });
+    });
+
+    it('should make an advanced search request for authorities', () => {
+      const config = {
+        recordTypes: {
+          person: {
+            serviceConfig: {
+              servicePath: 'personauthorities',
+              serviceType: 'authority',
+            },
+            vocabularies: {
+              all: {
+                serviceConfig: {
+                  servicePath: '_ALL_',
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const data = {
+        foo: 'bar',
+      };
+
+      worker.use(
+        rest.get('/cspace-services/personauthorities/_ALL_/items', (req, res, ctx) => {
+          const { searchParams } = req.url;
+
+          if (
+            searchParams.get('as') === '(ecm:name = "1234")'
+            && searchParams.get('pgSz') === '1'
+            && searchParams.get('wf_deleted') === 'false'
+          ) {
+            return res(ctx.json(data));
+          }
+
+          return res(ctx.status(400));
+        }),
+      );
 
       const store = mockStore({});
 
       return store.dispatch(searchCsid(config, 'person', '1234'))
         .then((response) => {
-          response.data.should.equal(data);
+          response.data.should.deep.equal(data);
         });
     });
 
-    it('should reject if no record type config is found', function test() {
+    it('should reject if no record type config is found', () => {
       const config = {
         recordTypes: {},
       };
@@ -761,7 +976,7 @@ describe('search action creator', function suite() {
       return store.dispatch(searchCsid(config, 'person', '1234')).should.eventually.be.rejected;
     });
 
-    it('should reject if no record service path is found', function test() {
+    it('should reject if no record service path is found', () => {
       const config = {
         recordTypes: {
           group: {
@@ -775,7 +990,7 @@ describe('search action creator', function suite() {
       return store.dispatch(searchCsid(config, 'group', '1234')).should.eventually.be.rejected;
     });
 
-    it('should reject if no vocabulary service path is found for an authority', function test() {
+    it('should reject if no vocabulary service path is found for an authority', () => {
       const config = {
         recordTypes: {
           person: {
@@ -798,7 +1013,7 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('setResultItemSelected', function actionSuite() {
+  describe('setResultItemSelected', () => {
     const listTypes = {
       common: {
         listNodeName: 'ns2:abstract-common-list',
@@ -810,7 +1025,7 @@ describe('search action creator', function suite() {
       listTypes,
     };
 
-    it('should dispatch SET_RESULT_ITEM_SELECTED', function test() {
+    it('should dispatch SET_RESULT_ITEM_SELECTED', () => {
       const searchName = 'searchName';
 
       const searchDescriptor = Immutable.fromJS({
@@ -838,8 +1053,8 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('clearSearchResults', function actionSuite() {
-    it('should dispatch CLEAR_SEARCH_RESULTS', function test() {
+  describe('clearSearchResults', () => {
+    it('should dispatch CLEAR_SEARCH_RESULTS', () => {
       const searchName = 'searchName';
 
       clearSearchResults(searchName).should.deep.equal({
@@ -851,8 +1066,8 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('setAllResultItemsSelected', function actionSuite() {
-    it('should dispatch SET_ALL_RESULT_ITEMS_SELECTED', function test() {
+  describe('setAllResultItemsSelected', () => {
+    it('should dispatch SET_ALL_RESULT_ITEMS_SELECTED', () => {
       const listType = 'common';
 
       const listTypeConfig = {
@@ -876,7 +1091,7 @@ describe('search action creator', function suite() {
       const filter = () => true;
 
       setAllResultItemsSelected(
-        config, searchName, searchDescriptor, listType, isSelected, filter
+        config, searchName, searchDescriptor, listType, isSelected, filter,
       ).should.deep.equal({
         type: SET_ALL_RESULT_ITEMS_SELECTED,
         payload: isSelected,
@@ -890,8 +1105,8 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('clearSelected', function actionSuite() {
-    it('should dispatch CLEAR_SELECTED', function test() {
+  describe('clearSelected', () => {
+    it('should dispatch CLEAR_SELECTED', () => {
       const searchName = 'searchName';
 
       clearSelected(searchName).should.deep.equal({
@@ -903,8 +1118,8 @@ describe('search action creator', function suite() {
     });
   });
 
-  describe('deselectResultItem', function actionSuite() {
-    it('should dispatch DESELECT_RESULT_ITEM', function test() {
+  describe('deselectResultItem', () => {
+    it('should dispatch DESELECT_RESULT_ITEM', () => {
       const searchName = 'searchName';
       const csid = '1234';
 

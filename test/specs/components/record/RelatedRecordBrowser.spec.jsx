@@ -1,7 +1,7 @@
 /* global window, document */
 
 import React from 'react';
-import { render } from 'react-dom';
+import { unmountComponentAtNode } from 'react-dom';
 import { MemoryRouter as Router } from 'react-router';
 import { findRenderedComponentWithType, Simulate } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
@@ -9,17 +9,19 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Provider as StoreProvider } from 'react-redux';
 import Immutable from 'immutable';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
+import { Modal } from 'cspace-layout';
+import asyncQuerySelector from '../../../helpers/asyncQuerySelector';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import mockHistory from '../../../helpers/mockHistory';
 import { configureCSpace } from '../../../../src/actions/cspace';
 import RelationEditor from '../../../../src/components/record/RelationEditor';
 import RelatedRecordPanel from '../../../../src/components/record/RelatedRecordPanel';
 import RelatedRecordBrowser from '../../../../src/components/record/RelatedRecordBrowser';
 import SearchToRelateModal from '../../../../src/components/search/SearchToRelateModal';
-import RelatedRecordPanelContainer from '../../../../src/containers/record/RelatedRecordPanelContainer';
 
-const expect = chai.expect;
+const { expect } = chai;
 
 chai.should();
 
@@ -45,6 +47,7 @@ const perms = Immutable.fromJS({
 const store = mockStore({
   authority: Immutable.Map(),
   notification: Immutable.Map(),
+  optionList: Immutable.Map(),
   prefs: Immutable.Map(),
   record: Immutable.fromJS({
     '': {
@@ -127,20 +130,27 @@ const config = {
   },
 };
 
-describe('RelatedRecordBrowser', function suite() {
-  before(() =>
-    store.dispatch(configureCSpace())
-      .then(() => store.clearActions())
-  );
+describe('RelatedRecordBrowser', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await Promise.all([
+      worker.start({ quiet: true }),
+      store.dispatch(configureCSpace()).then(() => store.clearActions()),
+    ]);
+  });
 
   beforeEach(function before() {
     this.container = createTestContainer(this);
-
-    moxios.install();
+    Modal.setAppElement(this.container);
   });
 
   afterEach(() => {
-    moxios.uninstall();
+    worker.resetHandlers();
+  });
+
+  after(() => {
+    worker.stop();
   });
 
   it('should render as a div', function test() {
@@ -149,9 +159,12 @@ describe('RelatedRecordBrowser', function suite() {
         <StoreProvider store={store}>
           <RelatedRecordBrowser config={config} />
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
+    unmountComponentAtNode(this.container);
+    this.container.remove();
   });
 
   it('should render a relation editor if a related csid is provided', function test() {
@@ -168,7 +181,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const component = findRenderedComponentWithType(resultTree, RelationEditor);
 
@@ -206,7 +220,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     replacedLocation.should.deep.equal({
       pathname: `/record/${recordType}/${csid}/${relatedRecordType}/${relatedCsid}`,
@@ -246,7 +261,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const button = this.container.querySelector('button[name="clone"]');
 
@@ -290,7 +306,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const button = this.container.querySelector('button[name="create"]');
 
@@ -324,7 +341,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const component = findRenderedComponentWithType(resultTree, RelatedRecordPanel);
 
@@ -352,26 +370,20 @@ describe('RelatedRecordBrowser', function suite() {
 
     const newCsid = '9999';
 
-    moxios.stubRequest('/cspace-services/groups', {
-      status: 201,
-      headers: {
-        location: `groups/${newCsid}`,
-      },
-    });
-
-    moxios.stubRequest(`/cspace-services/groups/${newCsid}?wf_deleted=false`, {
-      status: 200,
-      headers: {
-        data: {},
-      },
-    });
-
-    moxios.stubRequest('/cspace-services/relations', {
-      status: 201,
-      headers: {
-        location: 'relations/somecsid',
-      },
-    });
+    worker.use(
+      rest.post('/cspace-services/groups', (req, res, ctx) => res(
+        ctx.status(201),
+        ctx.set('location', `groups/${newCsid}`),
+      )),
+      rest.get(
+        `/cspace-services/groups/${newCsid}`,
+        (req, res, ctx) => res(ctx.json({})),
+      ),
+      rest.post('/cspace-services/relations', (req, res, ctx) => res(
+        ctx.status(201),
+        ctx.set('location', 'relations/somecsid'),
+      )),
+    );
 
     render(
       <IntlProvider locale="en">
@@ -388,7 +400,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const saveButton = this.container.querySelector('button[name="save"]');
 
@@ -402,7 +415,7 @@ describe('RelatedRecordBrowser', function suite() {
         });
 
         resolve();
-      }, 10);
+      }, 500);
     });
   });
 
@@ -420,7 +433,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const button = this.container.querySelector('button[name="relate"]');
 
@@ -447,28 +461,37 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const button = this.container.querySelector('button[name="relate"]');
 
     Simulate.click(button);
 
-    let modalNode;
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        let modalNode;
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+        modalNode = document.querySelector('.ReactModal__Content--after-open');
 
-    modalNode.should.not.equal(null);
+        modalNode.should.not.equal(null);
 
-    const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
+        const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
 
-    modalComponent.props.onCloseButtonClick();
+        modalComponent.props.onCloseButtonClick();
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+        modalNode = document.querySelector('.ReactModal__Content--after-open');
 
-    expect(modalNode).to.equal(null);
+        expect(modalNode).to.equal(null);
+
+        unmountComponentAtNode(this.container);
+        this.container.remove();
+        resolve();
+      }, 0);
+    });
   });
 
-  it('should close the search to relate modal when the cancel button is clicked', function test() {
+  it('should close the search to relate modal when the cancel button is clicked', async function test() {
     const resultTree = render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
@@ -482,28 +505,37 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    const button = this.container.querySelector('button[name="relate"]');
+    const button = await asyncQuerySelector(this.container, 'button[name="relate"]');
 
     Simulate.click(button);
 
-    let modalNode;
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        let modalNode;
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+        modalNode = asyncQuerySelector(document, '.ReactModal__Content--after-open');
 
-    modalNode.should.not.equal(null);
+        modalNode.should.not.equal(null);
 
-    const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
+        const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
 
-    modalComponent.props.onCancelButtonClick();
+        modalComponent.props.onCancelButtonClick();
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+        modalNode = document.querySelector('.ReactModal__Content--after-open');
 
-    expect(modalNode).to.equal(null);
+        expect(modalNode).to.equal(null);
+
+        unmountComponentAtNode(this.container);
+        this.container.remove();
+        resolve();
+      }, 0);
+    });
   });
 
-  it('should close the search to relate modal when relations have been created', function test() {
+  it('should close the search to relate modal when relations have been created', async function test() {
     const resultTree = render(
       <IntlProvider locale="en">
         <StoreProvider store={store}>
@@ -517,25 +549,34 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    const button = this.container.querySelector('button[name="relate"]');
+    const button = await asyncQuerySelector(this.container, 'button[name="relate"]');
 
     Simulate.click(button);
 
     let modalNode;
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        modalNode = asyncQuerySelector(document, '.ReactModal__Content--after-open');
 
-    modalNode.should.not.equal(null);
+        modalNode.should.not.equal(null);
 
-    const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
+        const modalComponent = findRenderedComponentWithType(resultTree, SearchToRelateModal);
 
-    modalComponent.props.onRelationsCreated();
+        modalComponent.props.onRelationsCreated();
 
-    modalNode = document.querySelector('.ReactModal__Content--after-open');
+        modalNode = document.querySelector('.ReactModal__Content--after-open');
 
-    expect(modalNode).to.equal(null);
+        expect(modalNode).to.equal(null);
+
+        unmountComponentAtNode(this.container);
+        this.container.remove();
+        resolve();
+      }, 0);
+    });
   });
 
   it('should replace history when the related record is unrelated in the related record panel', function test() {
@@ -569,9 +610,10 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
-    const panel = findRenderedComponentWithType(resultTree, RelatedRecordPanelContainer);
+    const panel = findRenderedComponentWithType(resultTree, RelatedRecordPanel);
 
     panel.props.onUnrelated([
       { csid: '1111' },
@@ -609,7 +651,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const relationEditor = findRenderedComponentWithType(resultTree, RelationEditor);
 
@@ -650,7 +693,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const relationEditor = findRenderedComponentWithType(resultTree, RelationEditor);
 
@@ -687,7 +731,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     render(
       <IntlProvider locale="en">
@@ -703,7 +748,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     setRecordType.should.equal(relatedRecordType);
     setCsid.should.equal(newRelatedCsid);
@@ -737,7 +783,8 @@ describe('RelatedRecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const relationEditor = findRenderedComponentWithType(resultTree, RelationEditor);
 

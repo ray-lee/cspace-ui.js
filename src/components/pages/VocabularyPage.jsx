@@ -9,14 +9,20 @@ import { OP_CONTAIN } from '../../constants/searchOperators';
 import VocabularyUsedByPanelContainer from '../../containers/admin/VocabularyUsedByPanelContainer';
 import RecordEditorContainer from '../../containers/record/RecordEditorContainer';
 import SearchPanelContainer from '../../containers/search/SearchPanelContainer';
-import { canRead, disallowCreate, disallowDelete, disallowSoftDelete } from '../../helpers/permissionHelpers';
+import {
+  canRead, disallowCreate, disallowDelete, disallowSoftDelete,
+} from '../../helpers/permissionHelpers';
 import VocabularySearchBar from '../admin/VocabularySearchBar';
 import styles from '../../../styles/cspace-ui/AdminTab.css';
 
 const propTypes = {
   data: PropTypes.instanceOf(Immutable.Map),
-  history: PropTypes.object,
-  match: PropTypes.object,
+  history: PropTypes.shape({
+    replace: PropTypes.func,
+  }),
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   filterDelay: PropTypes.number,
   readVocabularyItemRefs: PropTypes.func,
@@ -28,7 +34,9 @@ const defaultProps = {
 };
 
 const contextTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
 };
 
 const recordType = 'vocabulary';
@@ -64,49 +72,6 @@ export default class VocabularyPage extends Component {
 
     if (setToolTab) {
       setToolTab(recordType);
-    }
-  }
-
-  filter(value) {
-    const {
-      searchDescriptor,
-    } = this.state;
-
-    const searchQuery = searchDescriptor.get('searchQuery');
-
-    let updatedSearchQuery;
-
-    if (value) {
-      updatedSearchQuery = searchQuery.set('as', Immutable.Map({
-        value,
-        op: OP_CONTAIN,
-        path: 'ns2:vocabularies_common/displayName',
-      }));
-    } else {
-      updatedSearchQuery = searchQuery.delete('as');
-    }
-
-    updatedSearchQuery = updatedSearchQuery.set('p', 0);
-
-    this.setState({
-      filterValue: value,
-      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
-    });
-  }
-
-  readItemRefs() {
-    const {
-      data,
-      readVocabularyItemRefs,
-    } = this.props;
-
-    if (readVocabularyItemRefs && data) {
-      const csid = data.getIn(['document', 'ns2:vocabularies_common', 'csid']);
-      const vocabularyName = data.getIn(['document', 'ns2:vocabularies_common', 'shortIdentifier']);
-
-      if (csid && vocabularyName) {
-        readVocabularyItemRefs(csid, vocabularyName);
-      }
     }
   }
 
@@ -168,6 +133,49 @@ export default class VocabularyPage extends Component {
     this.setState({
       searchDescriptor,
     });
+  }
+
+  filter(value) {
+    const {
+      searchDescriptor,
+    } = this.state;
+
+    const searchQuery = searchDescriptor.get('searchQuery');
+
+    let updatedSearchQuery;
+
+    if (value) {
+      updatedSearchQuery = searchQuery.set('as', Immutable.Map({
+        value,
+        op: OP_CONTAIN,
+        path: 'ns2:vocabularies_common/displayName',
+      }));
+    } else {
+      updatedSearchQuery = searchQuery.delete('as');
+    }
+
+    updatedSearchQuery = updatedSearchQuery.set('p', 0);
+
+    this.setState({
+      filterValue: value,
+      searchDescriptor: searchDescriptor.set('searchQuery', updatedSearchQuery),
+    });
+  }
+
+  readItemRefs() {
+    const {
+      data,
+      readVocabularyItemRefs,
+    } = this.props;
+
+    if (readVocabularyItemRefs && data) {
+      const csid = data.getIn(['document', 'ns2:vocabularies_common', 'csid']);
+      const vocabularyName = data.getIn(['document', 'ns2:vocabularies_common', 'shortIdentifier']);
+
+      if (csid && vocabularyName) {
+        readVocabularyItemRefs(csid, vocabularyName);
+      }
+    }
   }
 
   renderSearchBar() {

@@ -1,11 +1,15 @@
 /* global window */
 
+import { hasBlockingError } from '../helpers/validationHelpers';
+
 import {
   getOpenModalName,
+  getRecordValidationErrors,
 } from '../reducers';
 
 import {
   STATUS_ERROR,
+  STATUS_WARNING,
 } from '../constants/notificationStatusCodes';
 
 import {
@@ -27,24 +31,27 @@ export const showNotification = (notificationDescriptor, notificationID) => ({
   },
 });
 
-export const removeNotification = notificationID => ({
+export const removeNotification = (notificationID) => ({
   type: REMOVE_NOTIFICATION,
   meta: {
     notificationID,
   },
 });
 
-export const showValidationNotification = (recordType, csid) =>
+export const showValidationNotification = (recordType, csid) => (dispatch, getState) => dispatch(
   showNotification({
     recordType,
     csid,
     type: 'validation',
     date: new Date(),
-    status: STATUS_ERROR,
-  }, NOTIFICATION_ID_VALIDATION);
+    status:
+      hasBlockingError(getRecordValidationErrors(getState(), csid))
+        ? STATUS_ERROR
+        : STATUS_WARNING,
+  }, NOTIFICATION_ID_VALIDATION),
+);
 
-export const removeValidationNotification = () =>
-  removeNotification(NOTIFICATION_ID_VALIDATION);
+export const removeValidationNotification = () => removeNotification(NOTIFICATION_ID_VALIDATION);
 
 export const openModal = (name, onClose) => (dispatch, getState) => {
   const openModalName = getOpenModalName(getState());
@@ -89,7 +96,7 @@ export const openModal = (name, onClose) => (dispatch, getState) => {
   }
 };
 
-export const closeModal = result => (dispatch, getState) => {
+export const closeModal = (result) => (dispatch, getState) => {
   const modalName = getOpenModalName(getState());
 
   dispatch({

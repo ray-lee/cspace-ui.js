@@ -5,10 +5,12 @@ import pickBy from 'lodash/pickBy';
 import { baseComponents as inputComponents } from 'cspace-input';
 import { getRecordTypeNameByServiceObjectName } from '../../helpers/configHelpers';
 
-const RecordTypeInput = inputComponents.RecordTypeInput;
+const { RecordTypeInput } = inputComponents;
 
 const contextTypes = {
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }),
 };
 
 export default class ObjectNameInput extends Component {
@@ -16,22 +18,6 @@ export default class ObjectNameInput extends Component {
     super(props);
 
     this.handleCommit = this.handleCommit.bind(this);
-  }
-
-  getRecordTypes() {
-    const {
-      config,
-    } = this.context;
-
-    return pickBy(config.recordTypes, (recordTypeConfig) => {
-      const serviceType = get(recordTypeConfig, ['serviceConfig', 'serviceType']);
-
-      return (
-        serviceType === 'procedure'
-        || serviceType === 'object'
-        || serviceType === 'authority'
-      );
-    });
   }
 
   handleCommit(path, recordType) {
@@ -48,6 +34,22 @@ export default class ObjectNameInput extends Component {
 
       onCommit(path, objectName || recordType);
     }
+  }
+
+  getRecordTypes() {
+    const {
+      config,
+    } = this.context;
+
+    return pickBy(config.recordTypes, (recordTypeConfig) => {
+      const serviceType = get(recordTypeConfig, ['serviceConfig', 'serviceType']);
+
+      return (
+        serviceType === 'procedure'
+        || serviceType === 'object'
+        || serviceType === 'authority'
+      );
+    });
   }
 
   render() {

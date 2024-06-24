@@ -1,7 +1,7 @@
 /* global window */
 
 import React from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { unmountComponentAtNode } from 'react-dom';
 import { Simulate } from 'react-dom/test-utils';
 import { createRenderer } from 'react-test-renderer/shallow';
 import { findWithType } from 'react-shallow-testutils';
@@ -11,8 +11,9 @@ import thunk from 'redux-thunk';
 import { Provider as StoreProvider } from 'react-redux';
 import { MemoryRouter as Router } from 'react-router';
 import Immutable from 'immutable';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 import mockHistory from '../../../helpers/mockHistory';
 import { configureCSpace } from '../../../../src/actions/cspace';
 import RecordBrowser from '../../../../src/components/record/RecordBrowser';
@@ -88,19 +89,26 @@ const config = {
   },
 };
 
-describe('RecordBrowser', function suite() {
-  before(() =>
-    store.dispatch(configureCSpace())
-      .then(() => store.clearActions())
-  );
+describe('RecordBrowser', () => {
+  const worker = setupWorker();
+
+  before(async () => {
+    await Promise.all([
+      worker.start({ quiet: true }),
+      store.dispatch(configureCSpace()).then(() => store.clearActions()),
+    ]);
+  });
 
   beforeEach(function before() {
     this.container = createTestContainer(this);
-    moxios.install();
   });
 
   afterEach(() => {
-    moxios.uninstall();
+    worker.resetHandlers();
+  });
+
+  after(() => {
+    worker.stop();
   });
 
   it('should render as a div', function test() {
@@ -115,7 +123,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -128,7 +137,8 @@ describe('RecordBrowser', function suite() {
             <RecordBrowser config={config} recordType="collectionobject" />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-RecordBrowserNavBar--common').should.not.equal(null);
   });
@@ -144,7 +154,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-RecordEditor--common').should.not.equal(null);
   });
@@ -152,17 +163,16 @@ describe('RecordBrowser', function suite() {
   it('should replace history after a new record has been created', function test() {
     const createdCsid = '1234';
 
-    moxios.stubRequest('/cspace-services/collectionobjects', {
-      status: 201,
-      headers: {
-        location: `collectionobjects/${createdCsid}`,
-      },
-    });
-
-    moxios.stubRequest(`/cspace-services/collectionobjects/${createdCsid}?wf_deleted=false&showRelations=true&pgSz=0`, {
-      status: 200,
-      response: {},
-    });
+    worker.use(
+      rest.post('/cspace-services/collectionobjects', (req, res, ctx) => res(
+        ctx.status(201),
+        ctx.set('location', `collectionobjects/${createdCsid}`),
+      )),
+      rest.get(
+        `/cspace-services/collectionobjects/${createdCsid}`,
+        (req, res, ctx) => res(ctx.json({})),
+      ),
+    );
 
     let replacementUrl = null;
 
@@ -184,7 +194,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const saveButton = this.container.querySelector('button[name=save]');
 
@@ -195,7 +206,7 @@ describe('RecordBrowser', function suite() {
         replacementUrl.should.equal(`/record/collectionobject/${createdCsid}`);
 
         resolve();
-      }, 0);
+      }, 500);
     });
   });
 
@@ -222,7 +233,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const cloneButton = this.container.querySelector('button[name=clone]');
 
@@ -246,7 +258,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.querySelector('.cspace-ui-RelatedRecordBrowser--common').should.not.equal(null);
   });
@@ -269,7 +282,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     unmountComponentAtNode(this.container);
 
@@ -295,7 +309,8 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     render(
       <IntlProvider locale="en">
@@ -309,12 +324,13 @@ describe('RecordBrowser', function suite() {
             />
           </Router>
         </StoreProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     clearCalled.should.equal(true);
   });
 
-  it('should replace the history location with the index location when a record is soft-deleted and there is no search state', function test() {
+  it('should replace the history location with the index location when a record is soft-deleted and there is no search state', () => {
     let replacedLocation = null;
 
     const history = mockHistory({
@@ -333,7 +349,8 @@ describe('RecordBrowser', function suite() {
         csid={csid}
         recordType="collectionobject"
         history={history}
-      />);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
     const recordEditorContainer = findWithType(result, RecordEditorContainer);
@@ -343,7 +360,7 @@ describe('RecordBrowser', function suite() {
     replacedLocation.should.equal('/');
   });
 
-  it('should replace the history location with a search result page location when a record is soft-deleted and there is a search state', function test() {
+  it('should replace the history location with a search result page location when a record is soft-deleted and there is a search state', () => {
     let replacedLocation = null;
 
     const history = mockHistory({
@@ -378,7 +395,8 @@ describe('RecordBrowser', function suite() {
         recordType="collectionobject"
         history={history}
         location={location}
-      />);
+      />,
+    );
 
     const result = shallowRenderer.getRenderOutput();
     const recordEditorContainer = findWithType(result, RecordEditorContainer);

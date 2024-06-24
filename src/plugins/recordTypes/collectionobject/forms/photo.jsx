@@ -25,13 +25,20 @@ const template = (configContext) => {
         <Row>
           <Col>
             <Field name="objectNumber" />
-            <Field name="numberOfObjects" />
 
             <Field name="responsibleDepartments">
               <Field name="responsibleDepartment" />
             </Field>
 
-            <Field name="collection" />
+            <Row>
+              <Field name="collection" />
+
+              <Col>
+                <Field name="namedCollections">
+                  <Field name="namedCollection" />
+                </Field>
+              </Col>
+            </Row>
           </Col>
 
           <Col>
@@ -69,6 +76,7 @@ const template = (configContext) => {
 
         <Field name="objectNameList">
           <Field name="objectNameGroup">
+            <Field name="objectNameControlled" />
             <Field name="objectName" />
             <Field name="objectNameCurrency" />
             <Field name="objectNameLevel" />
@@ -76,6 +84,16 @@ const template = (configContext) => {
             <Field name="objectNameType" />
             <Field name="objectNameLanguage" />
             <Field name="objectNameNote" />
+          </Field>
+        </Field>
+
+        <Field name="objectCountGroupList">
+          <Field name="objectCountGroup">
+            <Field name="objectCount" />
+            <Field name="objectCountType" />
+            <Field name="objectCountCountedBy" />
+            <Field name="objectCountDate" />
+            <Field name="objectCountNote" />
           </Field>
         </Field>
       </Panel>
@@ -97,6 +115,7 @@ const template = (configContext) => {
 
         <Field name="materialGroupList">
           <Field name="materialGroup">
+            <Field name="materialControlled" />
             <Field name="material" />
             <Field name="materialComponent" />
             <Field name="materialComponentNote" />
@@ -208,7 +227,7 @@ const template = (configContext) => {
             </Field>
 
             <Field name="objectProductionPlaceGroupList">
-              <Field name="objectProductionPlaceGroup" >
+              <Field name="objectProductionPlaceGroup">
                 <Field name="objectProductionPlace" />
                 <Field name="objectProductionPlaceRole" />
               </Field>
@@ -251,7 +270,7 @@ const template = (configContext) => {
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.collectionobject.photo.name',

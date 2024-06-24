@@ -10,6 +10,7 @@ import {
   AUTH_RENEW_FULFILLED,
   LOGIN_FULFILLED,
   LOGOUT_FULFILLED,
+  PREFS_LOADED,
 } from '../constants/actionCodes';
 
 const handleAccountPermsReadFulfilled = (state, action) => {
@@ -47,7 +48,7 @@ const handleAccountRolesReadFulfilled = (state, action) => {
       roles = [roles];
     }
 
-    return state.set('roleNames', Immutable.List(roles.map(role => role.roleName)));
+    return state.set('roleNames', Immutable.List(roles.map((role) => role.roleName)));
   }
 
   return state;
@@ -62,7 +63,7 @@ export default (state = Immutable.Map(), action) => {
     case AUTH_RENEW_FULFILLED:
       return handleAccountPermsReadFulfilled(state, action);
     case CSPACE_CONFIGURED:
-      return state.set('username', action.payload.username);
+      return state.set('username', action.meta.username);
     case LOGIN_FULFILLED:
       return state.set('username', action.meta.username);
     case LOGOUT_FULFILLED:
@@ -72,14 +73,17 @@ export default (state = Immutable.Map(), action) => {
       // dev tools.
 
       return state.set('perms', state.get('perms').mergeDeep(Immutable.fromJS(action.payload)));
+    case PREFS_LOADED:
+      return state.set('prefsLoaded', true);
     default:
       return state;
   }
 };
 
-export const getUsername = state => state.get('username');
-export const getScreenName = state => state.getIn(['account', 'screenName']);
-export const getUserId = state => state.getIn(['account', 'userId']);
-export const getPerms = state => state.get('perms');
-export const getRoleNames = state => state.get('roleNames');
-export const arePrefsLoaded = state => (state.get('prefsLoaded') === true);
+export const getAccountId = (state) => state.getIn(['account', 'accountId']);
+export const getUsername = (state) => state.get('username');
+export const getScreenName = (state) => state.getIn(['account', 'screenName']);
+export const getUserId = (state) => state.getIn(['account', 'userId']);
+export const getPerms = (state) => state.get('perms');
+export const getRoleNames = (state) => state.get('roleNames');
+export const arePrefsLoaded = (state) => (state.get('prefsLoaded') === true);

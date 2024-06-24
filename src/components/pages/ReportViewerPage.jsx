@@ -2,7 +2,7 @@ import React from 'react';
 import { defineMessages, FormattedMessage } from 'react-intl';
 import ContentViewerPage from './ContentViewerPage';
 import getErrorDescription from '../../helpers/getErrorDescription';
-import styles from '../../../styles/cspace-ui/ReportViewerPage.css';
+import styles from '../../../styles/cspace-ui/ContentViewerPage.css';
 
 const messages = defineMessages({
   error: {
@@ -23,7 +23,7 @@ const renderLoading = () => (
   </div>
 );
 
-const renderError = error => (
+const renderError = (error) => (
   <div className={styles.error}>
     <FormattedMessage
       {...messages.error}

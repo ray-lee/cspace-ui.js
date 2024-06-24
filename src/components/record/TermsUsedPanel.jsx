@@ -14,6 +14,7 @@ const messages = defineMessages({
 
 const getSearchDescriptor = (props) => {
   const {
+    config,
     recordType,
     vocabulary,
     csid,
@@ -27,7 +28,7 @@ const getSearchDescriptor = (props) => {
     subresource: 'terms',
     searchQuery: {
       p: 0,
-      size: 5,
+      size: config.defaultSearchPanelSize || 5,
     },
     seqID: getUpdatedTimestamp(recordData),
   });
@@ -35,9 +36,10 @@ const getSearchDescriptor = (props) => {
 
 const propTypes = {
   color: PropTypes.string,
-  config: PropTypes.object,
+  config: PropTypes.shape({
+    listTypes: PropTypes.object,
+  }),
   csid: PropTypes.string,
-  history: PropTypes.object,
   recordData: PropTypes.instanceOf(Immutable.Map),
   recordType: PropTypes.string,
   vocabulary: PropTypes.string,
@@ -54,16 +56,17 @@ export default class TermsUsedPanel extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    const searchDescriptor = this.state.searchDescriptor;
+  // eslint-disable-next-line camelcase
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const { searchDescriptor } = this.state;
 
     let nextSearchDescriptor = getSearchDescriptor(nextProps);
 
     if (!Immutable.is(searchDescriptor, nextSearchDescriptor)) {
       if (
-        searchDescriptor.get('csid') === nextSearchDescriptor.get('csid') &&
-        searchDescriptor.get('recordType') === nextSearchDescriptor.get('recordType') &&
-        searchDescriptor.get('vocabulary') === nextSearchDescriptor.get('vocabulary')
+        searchDescriptor.get('csid') === nextSearchDescriptor.get('csid')
+        && searchDescriptor.get('recordType') === nextSearchDescriptor.get('recordType')
+        && searchDescriptor.get('vocabulary') === nextSearchDescriptor.get('vocabulary')
       ) {
         // The record type, vocabulary, and csid didn't change, so carry over the page number, size,
         // and sort from the current search descriptor.
@@ -95,7 +98,6 @@ export default class TermsUsedPanel extends Component {
       color,
       config,
       csid,
-      history,
       recordType,
       vocabulary,
       recordData,
@@ -118,7 +120,6 @@ export default class TermsUsedPanel extends Component {
         columnSetName="narrow"
         config={config}
         csid={csid}
-        history={history}
         listType="authRef"
         name="termsUsedPanel"
         searchDescriptor={searchDescriptor}

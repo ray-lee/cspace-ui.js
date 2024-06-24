@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { render } from 'react-dom';
 import { Simulate } from 'react-dom/test-utils';
 import { IntlProvider } from 'react-intl';
 import Immutable from 'immutable';
@@ -10,17 +9,27 @@ import RangeSearchField from '../../../../src/components/search/RangeSearchField
 import ConfigProvider from '../../../../src/components/config/ConfigProvider';
 import RecordTypeProvider from '../../../helpers/RecordTypeProvider';
 import createTestContainer from '../../../helpers/createTestContainer';
+import { render } from '../../../helpers/renderHelpers';
 
 chai.use(chaiImmutable);
 chai.should();
 
-const TestInput = props => (
-  <input
-    name={props.name}
-    defaultValue={props.value}
-    onBlur={event => props.onCommit([...props.parentPath, props.name], event.target.value)}
-  />
-);
+const TestInput = (props) => {
+  const {
+    name,
+    parentPath,
+    value,
+    onCommit,
+  } = props;
+
+  return (
+    <input
+      name={name}
+      defaultValue={value}
+      onBlur={(event) => onCommit([...parentPath, name], event.target.value)}
+    />
+  );
+};
 
 TestInput.propTypes = {
   parentPath: PropTypes.arrayOf(PropTypes.string),
@@ -49,7 +58,7 @@ const config = {
   },
 };
 
-describe('RangeSearchField', function suite() {
+describe('RangeSearchField', () => {
   const parentPath = ['document', 'ns2:collectionobjects_common'];
   const name = 'objectNumber';
 
@@ -68,7 +77,8 @@ describe('RangeSearchField', function suite() {
             />
           </RecordTypeProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     this.container.firstElementChild.nodeName.should.equal('DIV');
   });
@@ -85,7 +95,8 @@ describe('RangeSearchField', function suite() {
             />
           </RecordTypeProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const inputs = this.container.querySelectorAll('input');
 
@@ -115,7 +126,8 @@ describe('RangeSearchField', function suite() {
             />
           </RecordTypeProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const inputs = this.container.querySelectorAll('input');
 
@@ -149,7 +161,8 @@ describe('RangeSearchField', function suite() {
             />
           </RecordTypeProvider>
         </ConfigProvider>
-      </IntlProvider>, this.container);
+      </IntlProvider>, this.container,
+    );
 
     const inputs = this.container.querySelectorAll('input');
 

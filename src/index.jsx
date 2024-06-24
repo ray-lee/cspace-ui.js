@@ -11,6 +11,7 @@ import { Modal } from 'cspace-layout';
 import logoUrl from '../images/collectionspace.svg';
 import { configureCSpace, readSystemInfo } from './actions/cspace';
 import { addIDGenerators } from './actions/idGenerator';
+import { login, loginWindowClosed } from './actions/login';
 import { addOptionLists } from './actions/optionList';
 import { savePrefs } from './actions/prefs';
 import { OP_OR } from './constants/searchOperators';
@@ -31,6 +32,8 @@ const defaultConfig = mergeConfig({
   container: '#cspace',
   defaultAdvancedSearchBooleanOp: OP_OR,
   defaultDropdownFilter: 'substring',
+  defaultSearchPageSize: 20,
+  defaultSearchPanelSize: 5,
   defaultUserPrefs: {
     panels: {
       collectionobject: {
@@ -40,6 +43,7 @@ const defaultConfig = mergeConfig({
       },
     },
   },
+  disableAltTerms: false,
   index: '/search',
   locale: 'en-US',
   logo: logoUrl,
@@ -54,7 +58,7 @@ const defaultConfig = mergeConfig({
   tenantId: '1',
   termDeprecationEnabled: false,
 }, {
-  plugins: defaultPlugins.map(plugin => plugin()),
+  plugins: defaultPlugins.map((plugin) => plugin()),
 }, configContext);
 
 export default (uiConfig) => {
@@ -89,12 +93,19 @@ export default (uiConfig) => {
     const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
     const store = createStore(reducer, composeEnhancers(
-      applyMiddleware(thunk.withExtraArgument(intl))
+      applyMiddleware(thunk.withExtraArgument(intl)),
     ));
 
     window.addEventListener('beforeunload', () => {
       store.dispatch(savePrefs());
     });
+
+    // A callback for logins occurring in a separate window.
+
+    window.onAuthCodeReceived = (authCode, authCodeRequestData) => {
+      store.dispatch(login(config, authCode, authCodeRequestData));
+      store.dispatch(loginWindowClosed());
+    };
 
     store.dispatch(configureCSpace(config));
     store.dispatch(addOptionLists(optionLists));

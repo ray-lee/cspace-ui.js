@@ -3,7 +3,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createRenderer } from 'react-test-renderer/shallow';
 import Immutable from 'immutable';
-import moxios from 'moxios';
+import { setupWorker, rest } from 'msw';
 import get from 'lodash/get';
 import ReportViewerPage from '../../../../src/components/pages/ReportViewerPage';
 import { ConnectedReportViewerPage } from '../../../../src/containers/pages/ReportViewerPageContainer';
@@ -20,27 +20,29 @@ const store = mockStore({
   user: Immutable.Map(),
 });
 
-describe('ReportViewerPageContainer', function suite() {
-  before(() =>
-    store.dispatch(configureCSpace())
-      .then(() => store.clearActions())
-  );
+describe('ReportViewerPageContainer', () => {
+  const worker = setupWorker();
 
-  beforeEach(() => {
-    moxios.install();
+  before(async () => {
+    await Promise.all([
+      worker.start({ quiet: true }),
+      store.dispatch(configureCSpace()).then(() => store.clearActions()),
+    ]);
   });
 
   afterEach(() => {
     store.clearActions();
-    moxios.uninstall();
+    worker.resetHandlers();
   });
 
-  it('should set props on ReportViewerPage', function test() {
-    const context = { store };
+  after(() => {
+    worker.stop();
+  });
 
+  it('should set props on ReportViewerPage', () => {
     const shallowRenderer = createRenderer();
 
-    shallowRenderer.render(<ConnectedReportViewerPage />, context);
+    shallowRenderer.render(<ConnectedReportViewerPage store={store} />);
 
     const result = shallowRenderer.getRenderOutput();
 
@@ -48,22 +50,26 @@ describe('ReportViewerPageContainer', function suite() {
     result.props.should.have.property('readContent').that.is.a('function');
   });
 
-  it('should connect readContent to an action that invokes the report', function test() {
-    moxios.stubRequest(/./, {
-      status: 200,
-      response: {},
-    });
-
-    const context = { store };
-
-    const shallowRenderer = createRenderer();
-
-    shallowRenderer.render(<ConnectedReportViewerPage />, context);
-
-    const result = shallowRenderer.getRenderOutput();
+  it('should connect readContent to an action that invokes the report', () => {
     const reportCsid = 'abcd';
     const recordCsid = '1234';
     const recordType = 'collectionobject';
+
+    let requestPayload = null;
+
+    worker.use(
+      rest.post(`/cspace-services/reports/${reportCsid}/invoke`, async (req, res, ctx) => {
+        requestPayload = await req.json();
+
+        return res(ctx.json({}));
+      }),
+    );
+
+    const shallowRenderer = createRenderer();
+
+    shallowRenderer.render(<ConnectedReportViewerPage store={store} />);
+
+    const result = shallowRenderer.getRenderOutput();
 
     const reportParams = {
       foo: 'abc',
@@ -83,15 +89,10 @@ describe('ReportViewerPageContainer', function suite() {
     };
 
     return result.props.readContent(location, match)
-      .then(() => {
-        const request = moxios.requests.mostRecent();
+      .then((readContentResult) => {
+        readContentResult.data.constructor.name.should.equal('Blob');
 
-        request.url.should.equal(`/cspace-services/reports/${reportCsid}`);
-        request.responseType.should.equal('blob');
-
-        const jsonData = request.config.data;
-        const data = JSON.parse(jsonData);
-        const params = get(data, ['ns2:invocationContext', 'params', 'param']);
+        const params = get(requestPayload, ['ns2:invocationContext', 'params', 'param']);
 
         params.should.deep.equal([
           {

@@ -18,6 +18,7 @@ import pageBodyStyles from '../../../styles/cspace-ui/PageBody.css';
 export const getParams = (props) => {
   const {
     config,
+    match,
   } = props;
 
   const {
@@ -25,7 +26,7 @@ export const getParams = (props) => {
     path1,
     path2,
     path3,
-  } = props.match.params;
+  } = match.params;
 
   let vocabulary;
   let csid;
@@ -58,14 +59,24 @@ export const getParams = (props) => {
 };
 
 const propTypes = {
-  config: PropTypes.object.isRequired,
+  config: PropTypes.shape({
+    recordTypes: PropTypes.object,
+  }).isRequired,
   data: PropTypes.instanceOf(Immutable.Map),
   error: PropTypes.instanceOf(Immutable.Map),
-  history: PropTypes.object,
+  history: PropTypes.shape({
+    replace: PropTypes.func,
+  }),
   isSidebarOpen: PropTypes.bool,
-  location: PropTypes.object,
+  location: PropTypes.shape({
+    search: PropTypes.string,
+    state: PropTypes.object,
+  }),
   // Use of the match prop isn't being detected by eslint.
-  match: PropTypes.object, // eslint-disable-line react/no-unused-prop-types
+  // eslint-disable-next-line react/no-unused-prop-types
+  match: PropTypes.shape({
+    params: PropTypes.object,
+  }),
   perms: PropTypes.instanceOf(Immutable.Map),
   clearRecord: PropTypes.func,
   readRecord: PropTypes.func,
@@ -106,6 +117,7 @@ export default class RecordPage extends Component {
       config,
       data,
       history,
+      location,
       perms,
       clearRecord,
     } = this.props;
@@ -129,10 +141,13 @@ export default class RecordPage extends Component {
       // relations will be included.
 
       if (clearRecord) {
-        clearRecord(dataCsid);
+        clearRecord(dataCsid, true);
       }
 
-      history.replace(refNameToUrl(config, getRefName(data), dataCsid));
+      history.replace({
+        pathname: refNameToUrl(config, getRefName(data), dataCsid),
+        state: location.state,
+      });
     }
   }
 
@@ -144,6 +159,34 @@ export default class RecordPage extends Component {
     if (setRecordPagePrimaryCsid) {
       setRecordPagePrimaryCsid(undefined);
     }
+  }
+
+  handleShowRelated(relatedRecordType, relatedCsid) {
+    const {
+      recordType,
+      vocabulary,
+      csid,
+    } = getParams(this.props);
+
+    const {
+      history,
+      location,
+    } = this.props;
+
+    const path = [recordType, vocabulary, csid, relatedRecordType, relatedCsid]
+      .filter((part) => !!part)
+      .join('/');
+
+    history.replace({
+      pathname: `/record/${path}`,
+      state: location.state,
+    });
+  }
+
+  handleTitleBarDocked(height) {
+    this.setState({
+      headerDockPosition: height,
+    });
   }
 
   initRecord() {
@@ -170,8 +213,7 @@ export default class RecordPage extends Component {
       // an authority without specifying a vocabulary, but we can get a record by csid without
       // specifying any record type.
 
-      const recordTypeConfig =
-        get(config, ['recordTypes', vocabulary === 'all' ? 'all' : recordType]);
+      const recordTypeConfig = get(config, ['recordTypes', vocabulary === 'all' ? 'all' : recordType]);
 
       const vocabularyConfig = (vocabulary && vocabulary !== 'all')
         ? get(recordTypeConfig, ['vocabularies', vocabulary])
@@ -179,35 +221,6 @@ export default class RecordPage extends Component {
 
       readRecord(config, recordTypeConfig, vocabularyConfig, normalizedCsid);
     }
-  }
-
-  handleShowRelated(relatedRecordType, relatedCsid) {
-    const {
-      recordType,
-      vocabulary,
-      csid,
-    } = getParams(this.props);
-
-    const {
-      history,
-      location,
-    } = this.props;
-
-    const path =
-      [recordType, vocabulary, csid, relatedRecordType, relatedCsid]
-        .filter(part => !!part)
-        .join('/');
-
-    history.replace({
-      pathname: `/record/${path}`,
-      state: location.state,
-    });
-  }
-
-  handleTitleBarDocked(height) {
-    this.setState({
-      headerDockPosition: height,
-    });
   }
 
   render() {
@@ -266,22 +279,16 @@ export default class RecordPage extends Component {
       );
     }
 
-    const locationState = location.state;
-
-    let searchName;
-    let searchDescriptor;
-
-    if (locationState) {
-      searchName = locationState.searchName;
-      searchDescriptor = Immutable.fromJS(locationState.searchDescriptor);
-    }
+    const searchName = get(location, ['state', 'searchName']);
+    const searchDescriptor = Immutable.fromJS(get(location, ['state', 'searchDescriptor']));
+    const originSearchPageState = get(location, ['state', 'originSearchPage']);
 
     const serviceType = get(config, ['recordTypes', recordType, 'serviceConfig', 'serviceType']);
     const workflowState = getWorkflowState(data);
 
     const isRelatable = (
-      workflowState !== 'locked' &&
-      canRelate(recordType, perms, config)
+      workflowState !== 'locked'
+      && canRelate(recordType, perms, config)
     );
 
     return (
@@ -292,6 +299,7 @@ export default class RecordPage extends Component {
           vocabulary={vocabulary}
           searchName={searchName}
           searchDescriptor={searchDescriptor}
+          originSearchPageState={originSearchPageState}
           updateDocumentTitle
           onDocked={this.handleTitleBarDocked}
         />
