@@ -378,8 +378,8 @@ describe('InvocationModal', () => {
   it('should call onInvokeButtonClick when the invoke button is clicked', async function test() {
     let invokeButtonClicked;
 
-    const handleInvokeButtonClick = (dataArg, invocationDescriptorArg) => {
-      invokedDescriptor = invocationDescriptorArg;
+    const handleInvokeButtonClick = () => {
+      invokeButtonClicked = true;
     };
 
     render(

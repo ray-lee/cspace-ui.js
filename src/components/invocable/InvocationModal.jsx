@@ -57,7 +57,6 @@ const propTypes = {
   onCancelButtonClick: PropTypes.func,
   onCloseButtonClick: PropTypes.func,
   onInvokeButtonClick: PropTypes.func,
-  getMimeTypes: PropTypes.func,
 };
 
 export default class InvocationModal extends Component {

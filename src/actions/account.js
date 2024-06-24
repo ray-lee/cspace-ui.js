@@ -53,21 +53,6 @@ export const readAccountRoles = () => (dispatch, getState) => {
     });
 };
 
-export const readAccountRoles = () => dispatch =>
-  getSession().read('accounts/0/accountroles')
-    .then(response => dispatch({
-      type: ACCOUNT_ROLES_READ_FULFILLED,
-      payload: response,
-    }))
-    .catch((error) => {
-      dispatch({
-        type: ACCOUNT_ROLES_READ_REJECTED,
-        payload: error,
-      });
-
-      return Promise.reject(error);
-    });
-
 export const requestPasswordReset = (email, tenantId) => () => {
   const config = {
     params: {
