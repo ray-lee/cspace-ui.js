@@ -14,7 +14,6 @@ const template = (configContext) => {
 
   const {
     Field,
-    InputTable,
   } = configContext.recordComponents;
 
   return (
@@ -43,13 +42,11 @@ const template = (configContext) => {
           <Col />
         </Cols>
       </Panel>
-
-
     </Field>
   );
 };
 
-export default configContext => ({
+export default (configContext) => ({
   messages: defineMessages({
     name: {
       id: 'form.concept.student.name',
