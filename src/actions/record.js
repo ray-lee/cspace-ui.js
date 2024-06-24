@@ -34,7 +34,6 @@ import {
   isRecordReadPending,
 } from '../reducers';
 
-
 import {
   dataPathToFieldDescriptorPath,
 } from '../helpers/configHelpers';
