@@ -80,6 +80,11 @@ describe('partialTermSearch action creator', () => {
       recordPage: Immutable.Map({
         primaryCsid: primaryRecordCsid,
       }),
+      prefs: Immutable.fromJS({
+        form: {
+          [recordType]: 'default',
+        },
+      }),
       user: Immutable.Map(),
     });
 

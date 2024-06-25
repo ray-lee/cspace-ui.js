@@ -1,8 +1,14 @@
 import Immutable from 'immutable';
 import get from 'lodash/get';
 import getSession from '../helpers/session';
-import { getRecordData, getRecordPagePrimaryCsid } from '../reducers';
 import { cloneRecordData, prepareForSending } from '../helpers/recordDataHelpers';
+
+import {
+  getForm,
+  getRecordData,
+  getRecordPagePrimaryCsid,
+  getUserRoleNames,
+} from '../reducers';
 
 import {
   ADD_TERM_STARTED,
@@ -37,13 +43,26 @@ export const addTerm = (recordTypeConfig, vocabulary, displayName, partialTerm, 
     let newRecordData = Immutable.Map();
 
     if (clone) {
-      const cloneFromCsid = getRecordPagePrimaryCsid(getState());
+      const state = getState();
+      const cloneFromCsid = getRecordPagePrimaryCsid(state);
 
       if (cloneFromCsid) {
-        const cloneFromData = getRecordData(getState(), cloneFromCsid);
+        const cloneFromData = getRecordData(state, cloneFromCsid);
 
         if (cloneFromData) {
-          newRecordData = cloneRecordData(recordTypeConfig, cloneFromCsid, cloneFromData);
+          const computeContext = {
+            form: getForm(state, recordTypeConfig.name),
+            roleNames: getUserRoleNames(state),
+          };
+
+          const cloneContext = {
+            recordTypeConfig,
+            csid: cloneFromCsid,
+            data: cloneFromData,
+            computeContext,
+          };
+
+          newRecordData = cloneRecordData(cloneContext);
         }
       }
     }
