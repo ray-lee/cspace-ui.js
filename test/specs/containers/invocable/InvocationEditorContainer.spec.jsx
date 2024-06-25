@@ -33,6 +33,7 @@ const store = mockStore({
       },
     },
   }),
+  user: Immutable.Map(),
 });
 
 describe('InvocationEditorContainer', () => {

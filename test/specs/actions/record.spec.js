@@ -124,6 +124,7 @@ describe('record action creator', () => {
     it('should dispatch CREATE_NEW_RECORD', () => {
       const store = mockStore({
         prefs: Immutable.Map(),
+        user: Immutable.Map(),
       });
 
       const config = {
@@ -153,6 +154,10 @@ describe('record action creator', () => {
               recordTypeConfig,
               cloneCsid,
               stickyFields: undefined,
+              computeContext: {
+                form: undefined,
+                roleNames: undefined,
+              },
             },
           });
         });
@@ -182,6 +187,7 @@ describe('record action creator', () => {
       const store = mockStore({
         prefs: Immutable.Map(),
         record: Immutable.Map(),
+        user: Immutable.Map(),
       });
 
       return store.dispatch(createNewRecord(config, recordTypeConfig, vocabularyConfig, cloneCsid))
@@ -215,6 +221,10 @@ describe('record action creator', () => {
               recordTypeConfig,
               cloneCsid,
               stickyFields: undefined,
+              computeContext: {
+                form: undefined,
+                roleNames: undefined,
+              },
             },
           });
         });
@@ -275,6 +285,7 @@ describe('record action creator', () => {
               config,
               csid,
               csidField,
+              form: undefined,
               subrecordName,
               subrecordTypeConfig,
               cloneCsid,
@@ -349,6 +360,7 @@ describe('record action creator', () => {
               config,
               csid,
               csidField,
+              form: undefined,
               subrecordName,
               subrecordTypeConfig,
               cloneCsid,

@@ -221,6 +221,7 @@ const doCreateNew = (state, config, recordTypeConfig, computeContext, options = 
           nextState,
           config,
           subrecordTypeConfig,
+          computeContext,
           {
             cloneCsid: subrecordCsid,
             subrecordName: name,
