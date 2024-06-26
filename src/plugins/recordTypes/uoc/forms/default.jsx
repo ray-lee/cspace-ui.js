@@ -19,52 +19,59 @@ const template = (configContext) => {
   return (
     <Field name="document">
       <Panel name="useOfCollections" collapsible>
+        <Cols>
+          <Col>
+            <Field name="referenceNumber" />
 
-        <Row>
-          <Field name="referenceNumber" />
-          <Field name="projectId" />
-        </Row>
+            <Row>
+              <Col>
+                <Field name="methodList">
+                  <Field name="method" />
+                </Field>
+              </Col>
 
-        <Row>
-          <Cols>
-            <Col>
-              <Field name="methodList">
-                <Field name="method" />
-              </Field>
-            </Col>
+              <Col>
+                <Field name="collectionTypeList">
+                  <Field name="collectionType" />
+                </Field>
+              </Col>
+            </Row>
+          </Col>
 
-            <Col>
-              <Field name="collectionTypeList">
-                <Field name="collectionType" />
-              </Field>
-            </Col>
+          <Col>
+            <Field name="projectId" />
 
-            <Col>
-              <Field name="subcollection" />
-            </Col>
+            <Row>
+              <Col>
+                <Field name="subcollection" />
+              </Col>
 
-            <Col>
-              <Field name="materialTypeList">
-                <Field name="materialType" />
-              </Field>
-            </Col>
-          </Cols>
-        </Row>
+              <Col>
+                <Field name="materialTypeList">
+                  <Field name="materialType" />
+                </Field>
+              </Col>
+            </Row>
+          </Col>
+        </Cols>
 
         <Field name="userGroupList">
           <Field name="userGroup">
             <Field name="user" />
-            <Field name="userInstitutionRole" />
             <Field name="userUocRole" />
             <Field name="userInstitution" />
+            <Field name="userInstitutionRole" />
           </Field>
         </Field>
 
         <Field name="title" />
+
         <Cols>
           <Col>
-            <Field name="dateRequested" />
-            <Field name="dateCompleted" />
+            <Row>
+              <Field name="dateRequested" />
+              <Field name="dateCompleted" />
+            </Row>
 
             <Field name="occasionList">
               <Field name="occasion" />
@@ -78,10 +85,14 @@ const template = (configContext) => {
 
         <Field name="authorizationGroupList">
           <Field name="authorizationGroup">
-            <Field name="authorizedBy" />
-            <Field name="authorizationDate" />
-            <Field name="authorizationNote" />
-            <Field name="authorizationStatus" />
+            <Panel>
+              <Row>
+                <Field name="authorizedBy" />
+                <Field name="authorizationDate" />
+                <Field name="authorizationStatus" />
+              </Row>
+              <Field name="authorizationNote" />
+            </Panel>
           </Field>
         </Field>
 
@@ -99,6 +110,7 @@ const template = (configContext) => {
           <Col>
             <Field name="endDate" />
           </Col>
+
           <Col />
         </Cols>
 
@@ -114,21 +126,22 @@ const template = (configContext) => {
         <Row>
           <Field name="locationList">
             <Field name="location" />
-
           </Field>
+
           <Row>
             <Field name="feeGroupList">
               <Field name="feeGroup">
                 <Field name="feeCurrency" />
                 <Field name="feeValue" />
-                <Field name="feeNote" />
                 <Field name="feePaid" />
+                <Field name="feeNote" />
               </Field>
             </Field>
           </Row>
         </Row>
 
         <Field name="note" />
+
         <Row>
           <Field name="provisos" />
           <Field name="obligationsFulfilled" />
