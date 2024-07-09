@@ -141,6 +141,11 @@ describe('record action creator', () => {
 
       const cloneCsid = undefined;
 
+      const computeContext = {
+        form: undefined,
+        roleNames: undefined,
+      };
+
       return store.dispatch(createNewRecord(config, recordTypeConfig, vocabularyConfig, cloneCsid))
         .then(() => {
           const actions = store.getActions();
@@ -165,7 +170,6 @@ describe('record action creator', () => {
 
     it('should read the record to be cloned', () => {
       const servicePath = 'collectionobjects';
-
       const config = {
         foo: 'abc',
       };
@@ -189,6 +193,11 @@ describe('record action creator', () => {
         record: Immutable.Map(),
         user: Immutable.Map(),
       });
+
+      const computeContext = {
+        form: undefined,
+        roleNames: undefined,
+      };
 
       return store.dispatch(createNewRecord(config, recordTypeConfig, vocabularyConfig, cloneCsid))
         .then(() => {
@@ -249,6 +258,8 @@ describe('record action creator', () => {
     it('should dispatch CREATE_NEW_SUBRECORD', () => {
       const store = mockStore({
         prefs: Immutable.Map(),
+        user: Immutable.Map(),
+        authz: Immutable.Map(),
       });
 
       const config = {
@@ -269,6 +280,11 @@ describe('record action creator', () => {
 
       const cloneCsid = undefined;
       const isDefault = true;
+
+      // const computeContext = {
+      //   form: undefined,
+      //   roleNames: undefined,
+      // };
 
       return store.dispatch(createNewSubrecord(
         config, csid, csidField, subrecordName,
@@ -291,6 +307,7 @@ describe('record action creator', () => {
               cloneCsid,
               isDefault,
               stickyFields: undefined,
+              form: undefined,
             },
           });
         });
@@ -300,6 +317,9 @@ describe('record action creator', () => {
       const store = mockStore({
         prefs: Immutable.Map(),
         record: Immutable.Map(),
+        user: Immutable.Map(),
+        authz: Immutable.Map(),
+        // form: Immutable.Map(),
       });
 
       const config = {
@@ -366,6 +386,7 @@ describe('record action creator', () => {
               cloneCsid,
               isDefault,
               stickyFields: undefined,
+              form: undefined,
             },
           });
         });

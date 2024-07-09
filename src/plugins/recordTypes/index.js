@@ -1,7 +1,7 @@
 import account from './account';
 import acquisition from './acquisition';
 import all from './all';
-import audit from './audit';
+// import audit from './audit';
 import authority from './authority';
 import authrole from './authrole';
 import batch from './batch';
@@ -18,6 +18,7 @@ import exhibition from './exhibition';
 import exxport from './export';
 import group from './group';
 // import heldintrust from './heldintrust';
+import hit from './hit';
 import idgenerator from './idgenerator';
 import insurance from './insurance';
 import intake from './intake';
@@ -47,7 +48,7 @@ export default [
   account,
   acquisition,
   all,
-  audit,
+  // audit,
   authority,
   authrole,
   batch,
@@ -64,6 +65,7 @@ export default [
   exxport,
   group,
   // heldintrust,
+  hit,
   idgenerator,
   insurance,
   intake,
