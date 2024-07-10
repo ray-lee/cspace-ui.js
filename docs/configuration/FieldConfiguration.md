@@ -98,7 +98,7 @@ The field configuration object may contain the following properties:
 
 ### cloneable
 ```
-required: boolean | (computeContext) => boolean
+cloneable: boolean | (computeContext) => boolean
 ```
 If true, when a record is cloned, the value of this field is cloned to the new record. Otherwise, the field in the new record will be set to the default value if one exists; otherwise, it will be empty.
 
