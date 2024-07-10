@@ -391,13 +391,13 @@ describe('record reducer', () => {
         document: {},
       }));
 
-      // getSubrecordCsid(state, '', 'contact').should.equal(contactSubrecordCsid);
+      getSubrecordCsid(state, '', 'contact').should.equal(contactSubrecordCsid);
 
-      // getSubrecordData(state, '').should.equal(Immutable.fromJS({
-      //   contact: {
-      //     document: {},
-      //   },
-      // }));
+      getSubrecordData(state, '').should.equal(Immutable.fromJS({
+        contact: {
+          document: {},
+        },
+      }));
     });
 
     it('should create new subrecord data for a subrecord referenced by a csid field', () => {
