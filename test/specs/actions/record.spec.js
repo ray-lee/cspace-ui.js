@@ -141,11 +141,6 @@ describe('record action creator', () => {
 
       const cloneCsid = undefined;
 
-      const computeContext = {
-        form: undefined,
-        roleNames: undefined,
-      };
-
       return store.dispatch(createNewRecord(config, recordTypeConfig, vocabularyConfig, cloneCsid))
         .then(() => {
           const actions = store.getActions();
@@ -193,11 +188,6 @@ describe('record action creator', () => {
         record: Immutable.Map(),
         user: Immutable.Map(),
       });
-
-      const computeContext = {
-        form: undefined,
-        roleNames: undefined,
-      };
 
       return store.dispatch(createNewRecord(config, recordTypeConfig, vocabularyConfig, cloneCsid))
         .then(() => {
@@ -301,7 +291,6 @@ describe('record action creator', () => {
               config,
               csid,
               csidField,
-              form: undefined,
               subrecordName,
               subrecordTypeConfig,
               cloneCsid,
@@ -380,7 +369,6 @@ describe('record action creator', () => {
               config,
               csid,
               csidField,
-              form: undefined,
               subrecordName,
               subrecordTypeConfig,
               cloneCsid,

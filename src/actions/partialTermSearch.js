@@ -55,14 +55,12 @@ export const addTerm = (recordTypeConfig, vocabulary, displayName, partialTerm, 
             roleNames: getUserRoleNames(state),
           };
 
-          const cloneContext = {
+          newRecordData = cloneRecordData(
             recordTypeConfig,
-            csid: cloneFromCsid,
-            data: cloneFromData,
+            cloneFromCsid,
+            cloneFromData,
             computeContext,
-          };
-
-          newRecordData = cloneRecordData(cloneContext);
+          );
         }
       }
     }

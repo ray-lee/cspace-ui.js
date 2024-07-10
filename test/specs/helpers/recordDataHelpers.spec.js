@@ -1896,7 +1896,7 @@ describe('recordDataHelpers', () => {
         },
       });
 
-      cloneRecordData({ recordTypeConfig, csid, data }).toJS().should.deep.equal({
+      cloneRecordData(recordTypeConfig, csid, data).toJS().should.deep.equal({
         document: {
           'ns2:groups_common': {
             owner: 'Owner',
@@ -1917,7 +1917,7 @@ describe('recordDataHelpers', () => {
         },
       });
 
-      cloneRecordData({ recordTypeConfig, csid, data }).toJS().should.deep.equal({
+      cloneRecordData(recordTypeConfig, csid, data).toJS().should.deep.equal({
         document: {
           'ns2:groups_common': {
             owner: 'Owner',
@@ -1956,7 +1956,7 @@ describe('recordDataHelpers', () => {
         },
       });
 
-      cloneRecordData({ recordTypeConfig, csid, data }).should.equal(Immutable.fromJS({
+      cloneRecordData(recordTypeConfig, csid, data).should.equal(Immutable.fromJS({
         document: {
           'rel:relations-common-list': {
             'relation-list-item': [
@@ -1974,7 +1974,7 @@ describe('recordDataHelpers', () => {
     });
 
     it('should return undefined for undefined data', () => {
-      expect(cloneRecordData({ recordTypeConfig, csid, data: undefined })).to.equal(undefined);
+      expect(cloneRecordData(recordTypeConfig, csid, undefined)).to.equal(undefined);
     });
   });
 
